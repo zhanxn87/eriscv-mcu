@@ -11,9 +11,6 @@ claim.
 - [Family documentation map](docs/README.md) — contracts, evidence, and history.
 - [Architecture claim](docs/eriscv-mcu-architecture-claim.md) — frozen product
   profiles and deliberate exclusions.
-- [Product manual](https://eriscv-mcu-product-manual.zhanxnse.chatgpt.site) —
-  reader-facing family guide and preliminary datasheets; its versioned HTML
-  source remains in [`docs/product-manual/`](docs/product-manual/).
 - [Verification evidence snapshot](docs/Verification/eriscv-mcu-simulation-evidence-snapshot.md)
   — sole owner of current regression totals and status.
 - [Changelog](CHANGELOG.md) — public release history and known limitations.
@@ -27,6 +24,14 @@ claim.
 | [eRISCV-M0](eriscv-m0/README.md) | `RV32IC_Zicsr_Zifencei_Zicntr_Zihpm_Zihintpause` | Compact M-mode control MCU |
 | [eRISCV-M1](eriscv-m1/README.md) | `RV32IMC_Zicsr_Zifencei_Zicntr_Zihpm_Zihintpause` | Mainstream M/U-mode MCU with PMP |
 | [eRISCV-M2](eriscv-m2/README.md) | `RV32IMFC_Zicsr_Zifencei_Zicntr_Zihpm_Zihintpause_Zba_Zcf` | Performance MCU with FPU, TCM, System SRAM, and DMA |
+
+## Product manual
+
+> [**Open the eRISCV MCU Product Manual**](https://eriscv-mcu-product-manual.zhanxnse.chatgpt.site)
+
+The public manual is the reader-facing family guide and preliminary datasheet
+set. Its versioned HTML source remains in
+[`docs/product-manual/`](docs/product-manual/).
 
 ## Quick start
 
