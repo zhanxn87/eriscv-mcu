@@ -5,133 +5,131 @@ PYTHON ?= python3
 SIM_BACKEND ?= verilator
 LINT_PRODUCT ?= m2
 LINT_TARGET ?= soc
-M0_CORE_SMOKE_TESTS ?= --directed-only --act-smoke
+ACT_SMOKE_PHASE ?= compliance/riscv-arch-test/ci-smoke
+M0_CORE_SMOKE_TESTS ?= --directed-only --compliance-smoke
+M0_ACT_SMOKE_TESTS ?= --act-smoke
 M0_SOC_SMOKE_TESTS ?= MCU-C-01 MCU-BOOT-DATA-INIT-01 MCU-CLKRST-01 MCU-LP-WFI-TIMER-01 UART-HELLO-01 GPIO-BASIC-01 SPI-BASIC-01 TIMER-POLL-01 MCU-CLINT-MTIP-IRQ-01 MCU-PLIC-IRQ-01
-M1_CORE_SMOKE_TESTS ?= --directed-only --act-smoke
+M1_CORE_SMOKE_TESTS ?= --directed-only --compliance-smoke
+M1_ACT_SMOKE_TESTS ?= --act-smoke
 M1_SOC_SMOKE_TESTS ?= MCU-C-01 MCU-BOOT-DATA-INIT-01 MCU-CLKRST-01 MCU-LP-WFI-TIMER-01 UART-HELLO-01 GPIO-BASIC-01 SPI-BASIC-01 TIMER-POLL-01 MCU-CLINT-MTIP-IRQ-01 MCU-PLIC-IRQ-01
-M2_CORE_SMOKE_TESTS ?= --directed-only --act-smoke
+M2_CORE_SMOKE_TESTS ?= --directed-only --compliance-smoke
+M2_ACT_SMOKE_TESTS ?= --act-smoke
 M2_SOC_SMOKE_TESTS ?= MCU-C-01 MCU-TCM-UPPER-HALF-01 MCU-BOOT-DATA-INIT-01 MCU-CLKRST-01 MCU-LP-WFI-TIMER-01 UART-HELLO-01 GPIO-BASIC-01 SPI-BASIC-01 TIMER-POLL-01 MCU-CLINT-MTIP-IRQ-01 MCU-PLIC-IRQ-01
+PPA_PERIOD_NS ?= 10.0
+PPA_LIBERTY ?=
+PPA_OUT_DIR ?= build/ppa
+EMBENCH_BENCH ?= matmult-int
+EMBENCH_PROFILE ?= speed
+EMBENCH_SCALE ?= 1
 
-.PHONY: all help wizard lint lint-m0 lint-m1 lint-m2 lint-all copyright-check tb-contract \
+.PHONY: all help check smoke act-smoke wizard lint lint-m0 lint-m1 lint-m2 lint-all copyright-check tb-contract \
 	act-generate-m0 act-generate-m1 act-generate-m2 act-generate-all \
 	act-generate-m0-container act-generate-m1-container act-generate-m2-container act-generate-all-container \
 	act-bootstrap-native \
 	eriscv-m0-core eriscv-m0-core-smoke eriscv-m0-soc eriscv-m0-soc-smoke eriscv-m0-act eriscv-m0-clk-rst eriscv-m0-tcm-arbitration eriscv-m0-openocd-gdb \
+	eriscv-m0-act-smoke eriscv-m0-smoke \
 	eriscv-m1-core eriscv-m1-core-smoke eriscv-m1-soc eriscv-m1-soc-smoke eriscv-m1-act eriscv-m1-tcm-arbitration eriscv-m1-openocd-gdb \
+	eriscv-m1-act-smoke eriscv-m1-smoke \
 	eriscv-m2-core eriscv-m2-core-smoke eriscv-m2-soc eriscv-m2-soc-smoke eriscv-m2-act eriscv-m2-tcm-arbitration eriscv-m2-dma-system-sram eriscv-m2-openocd-gdb \
+	eriscv-m2-act-smoke eriscv-m2-smoke \
 	eriscv-m0-bsp eriscv-m0-bsp-async eriscv-m0-sw eriscv-m0-sw-async eriscv-m0-coremark eriscv-m0-dhrystone eriscv-m0-embench eriscv-m0-microbench eriscv-m0-freertos eriscv-m0-freertos-qualification eriscv-m0-zephyr \
 	eriscv-m1-bsp eriscv-m1-bsp-async eriscv-m1-sw eriscv-m1-sw-async eriscv-m1-mcycle-counter eriscv-m1-coremark eriscv-m1-dhrystone eriscv-m1-embench eriscv-m1-microbench eriscv-m1-freertos eriscv-m1-freertos-qualification eriscv-m1-freertos-umode eriscv-m1-zephyr \
 	eriscv-m2-bsp eriscv-m2-bsp-async eriscv-m2-bsp-fpu-dma-sram eriscv-m2-sw eriscv-m2-sw-async eriscv-m2-sw-fpu-dma-sram eriscv-m2-mcycle-counter eriscv-m2-coremark eriscv-m2-dhrystone eriscv-m2-embench eriscv-m2-microbench eriscv-m2-freertos eriscv-m2-freertos-qualification eriscv-m2-freertos-umode eriscv-m2-zephyr \
 	eriscv-m0-full eriscv-m1-full eriscv-m2-full \
-	eriscv-m0-smoke-no-act eriscv-m1-smoke-no-act eriscv-m2-smoke-no-act \
 	eriscv-m0-full-no-act eriscv-m1-full-no-act eriscv-m2-full-no-act \
-	eriscv-mcu-full clean clean-dry-run
+	eriscv-mcu-full ppa-m0 ppa-m1 ppa-m2 ppa-all ppa-setup ppa-setup-wsl clean clean-dry-run
 
 all: help
+
+# Recommended entry points. Product-specific targets remain available below.
+check: copyright-check tb-contract lint-all
+
+act-smoke: eriscv-m0-act-smoke eriscv-m1-act-smoke eriscv-m2-act-smoke
+
+smoke: eriscv-m0-smoke eriscv-m1-smoke eriscv-m2-smoke
 
 wizard:
 	$(PYTHON) tools/project/run_test_wizard.py
 
 help:
-	@echo "Static RTL checks:"
-
-	@echo "  make lint-m0|lint-m1|lint-m2 [LINT_TARGET=core|soc] - run Verilator RTL lint for one product"
-	@echo "  make lint-all                    - run Verilator SoC RTL lint for M0, M1, and M2"
-	@echo "  make copyright-check              - verify SPDX headers on original source files"
+	@echo "eRISCV-MCU top-level commands (replace m0 with m1 or m2 where shown):"
 	@echo ""
-	@echo "ACT4 native environment (default; see README for setup):"
-	@echo "  make act-bootstrap-native         - opt-in Debian/Ubuntu bootstrap; pass ACT_BOOTSTRAP_ARGS=--all"
-	@echo "  make act-generate-m0|m1|m2       - generate a local cache with the installed native environment"
-	@echo "  make act-generate-all             - generate M0, M1, and M2 caches serially"
+	@echo "Checks and lint:"
+	@echo "  make check                       - SPDX, TB contracts, and M0/M1/M2 RTL lint at selected boundary"
+	@echo "  make lint-all                    - lint M0/M1/M2 (LINT_TARGET=core or soc)"
+	@echo "  make lint-m0                     - lint M0 (replace m0 with m1 or m2)"
+	@echo "  make copyright-check             - check original-source SPDX headers"
+	@echo "  make tb-contract                 - check M0/M1 testbench contracts"
 	@echo ""
-	@echo "ACT4 Docker fallback (isolated, larger first-run setup):"
-	@echo "  make act-generate-m0-container   - build/use the pinned Docker environment and generate M0"
-	@echo "  make act-generate-m1-container   - build/use the pinned Docker environment and generate M1"
-	@echo "  make act-generate-m2-container   - build/use the pinned Docker environment and generate M2"
-	@echo "  make act-generate-all-container  - generate M0, M1, and M2 caches serially in the shared image"
+	@echo "RTL regressions:"
+	@echo "  make smoke                       - core + SoC + ci-smoke ACT4, all products"
+	@echo "  make act-smoke                   - ci-smoke ACT4 only, all products"
+	@echo "  make eriscv-m0-smoke             - one-product core + SoC + ci-smoke ACT4"
+	@echo "  make eriscv-m0-act-smoke         - one-product ci-smoke ACT4 only"
+	@echo "  make eriscv-m0-core-smoke        - directed core tests plus any configured compliance smoke (no ACT4)"
+	@echo "  make eriscv-m0-soc-smoke         - one-product SoC integration smoke"
+	@echo "  make eriscv-m0-core              - default core regression; skip ACT4 smoke if cache is missing/incomplete"
+	@echo "  make eriscv-m0-soc               - default SoC directed regression (replace m0 with m1 or m2)"
+	@echo "  make eriscv-m0-act               - one-product full ACT4 core regression"
+	@echo "  make eriscv-m0-full              - full directed core + ACT4 + SoC when cache exists; no-ACT baseline otherwise"
+	@echo "  make eriscv-m0-full-no-act       - full directed/compliance core + SoC, no generated ACT4"
+	@echo "  make eriscv-mcu-full             - full M0/M1/M2; each uses ACT4 if its generated cache exists, else no-ACT"
 	@echo ""
-	@echo "Regression:"
-	@echo "  make eriscv-m0-core              - run the M0 core regression; skip unavailable ACT smoke with a warning"
-	@echo "  make eriscv-m0-core-smoke        - run the eRISCV-M0 core smoke regression"
-	@echo "  make eriscv-m0-soc               - run the eRISCV-M0 SoC regression"
-	@echo "  make eriscv-m0-soc-smoke         - run the eRISCV-M0 SoC integration smoke regression"
-	@echo "  make eriscv-m0-act               - run the eRISCV-M0 full ACT4 regression"
-	@echo "  make eriscv-m1-core              - run the M1 core regression; skip unavailable ACT smoke with a warning"
-	@echo "  make eriscv-m1-core-smoke        - run the eRISCV-M1 core smoke regression"
-	@echo "  make eriscv-m1-soc               - run the eRISCV-M1 SoC regression"
-	@echo "  make eriscv-m1-soc-smoke         - run the eRISCV-M1 SoC integration smoke regression"
-	@echo "  make eriscv-m1-act               - run the eRISCV-M1 full ACT4 regression"
-	@echo "  make eriscv-m2-core              - run the M2 core regression; skip unavailable ACT smoke with a warning"
-	@echo "  make eriscv-m2-core-smoke        - run the eRISCV-M2 core smoke regression"
-	@echo "  make eriscv-m2-soc               - run the eRISCV-M2 SoC regression"
-	@echo "  make eriscv-m2-soc-smoke         - run the eRISCV-M2 SoC integration smoke regression"
-	@echo "  make eriscv-m2-act               - run the eRISCV-M2 full ACT4 regression"
-	@echo "  make eriscv-m0-full              - run M0 ACT-full + SoC; fall back to full no-ACT if cache is absent"
-	@echo "  make eriscv-m1-full              - run M1 ACT-full + SoC; fall back to full no-ACT if cache is absent"
-	@echo "  make eriscv-m2-full              - run M2 ACT-full + SoC; fall back to full no-ACT if cache is absent"
-	@echo "  make eriscv-m0-smoke-no-act      - run directed/compliance-smoke core and SoC checks without ACT4"
-	@echo "  make eriscv-m1-smoke-no-act      - run directed/compliance-smoke core and SoC checks without ACT4"
-	@echo "  make eriscv-m2-smoke-no-act      - run directed/compliance-smoke core and SoC checks without ACT4"
-	@echo "  make eriscv-m0-full-no-act       - run directed/compliance-full core and full SoC regression without ACT4"
-	@echo "  make eriscv-m1-full-no-act       - run directed/compliance-full core and full SoC regression without ACT4"
-	@echo "  make eriscv-m2-full-no-act       - run directed/compliance-full core and full SoC regression without ACT4"
-	@echo "  make eriscv-mcu-full             - run M0, M1, and M2 full regressions"
+	@echo "ACT4 generation:"
+	@echo "  make act-bootstrap-native ACT_BOOTSTRAP_ARGS='--system-packages --mise --sail' - install selected native prerequisites"
+	@echo "  make act-generate-m0             - generate M0 ACT4 cache on host (replace m0 with m1 or m2)"
+	@echo "  make act-generate-all            - generate M0/M1/M2 ACT4 caches on host"
+	@echo "  make act-generate-m0-container   - generate M0 ACT4 cache in container (replace m0 with m1 or m2)"
+	@echo "  make act-generate-all-container  - generate all ACT4 caches in containers"
 	@echo ""
-	@echo "Focused ModelSim diagnostics (not part of standard regression):"
-	@echo "  make eriscv-m0-clk-rst           - run M0 clock/reset diagnostic"
-	@echo "  make eriscv-m0-tcm-arbitration   - run M0 TCM arbitration diagnostic"
-	@echo "  make eriscv-m1-tcm-arbitration   - run M1 TCM arbitration diagnostic"
-	@echo "  make eriscv-m2-tcm-arbitration   - run M2 TCM arbitration diagnostic"
-	@echo "  make eriscv-m2-dma-system-sram   - run M2 DMA/System-SRAM diagnostic"
+	@echo "Software and performance:"
+	@echo "  make eriscv-m0-bsp               - build/run M0 BSP hello-UART simulation"
+	@echo "  make eriscv-m0-bsp-async         - build/run M0 asynchronous-UART BSP simulation"
+	@echo "  make eriscv-m0-sw                - alias of the M0 BSP simulation"
+	@echo "  make eriscv-m0-sw-async          - alias of the M0 asynchronous BSP simulation"
+	@echo "  make eriscv-m0-coremark          - build/run M0 CoreMark"
+	@echo "  make eriscv-m0-dhrystone         - build/run M0 Dhrystone"
+	@echo "  make eriscv-m0-embench           - build/run M0 Embench (default matmult-int/speed/1)"
+	@echo "  make eriscv-m0-microbench        - build/run M0 microbenchmarks"
+	@echo "  make eriscv-m0-freertos          - build/run M0 FreeRTOS"
+	@echo "  make eriscv-m0-freertos-qualification - M0 FreeRTOS fail-stop qualification"
+	@echo "  make eriscv-m0-zephyr            - build/run M0 Zephyr"
+	@echo "  eriscv-m1-* and eriscv-m2-*       - corresponding M1/M2 software targets"
+	@echo "  M1 extras: eriscv-m1-mcycle-counter, eriscv-m1-freertos-umode"
+	@echo "  M2 extras: eriscv-m2-mcycle-counter, eriscv-m2-bsp-fpu-dma-sram"
+	@echo "              eriscv-m2-sw-fpu-dma-sram, eriscv-m2-freertos-umode"
 	@echo ""
-	@echo "Software and benchmarks:"
-	@echo "  make eriscv-m0-bsp               - run the eRISCV-M0 BSP workload"
-	@echo "  make eriscv-m0-bsp-async         - run the eRISCV-M0 async BSP workload"
-	@echo "  make eriscv-m0-coremark          - build and run CoreMark on M0"
-	@echo "  make eriscv-m0-dhrystone         - build and run Dhrystone on M0"
-	@echo "  make eriscv-m0-embench           - build and run Embench-IoT on M0"
-	@echo "  make eriscv-m0-microbench        - build and run M0 microbenchmarks"
-	@echo "  make eriscv-m0-freertos          - build and run FreeRTOS on M0"
-	@echo "  make eriscv-m0-freertos-qualification - run M0 FreeRTOS fail-stop qualification"
-	@echo "  make eriscv-m0-zephyr            - build and run Zephyr on M0"
-	@echo "  make eriscv-m1-bsp               - run the eRISCV-M1 BSP workload"
-	@echo "  make eriscv-m1-bsp-async         - run the eRISCV-M1 async BSP workload"
-	@echo "  make eriscv-m1-mcycle-counter    - run the eRISCV-M1 mcycle-counter workload"
-	@echo "  make eriscv-m1-coremark          - build and run CoreMark on M1"
-	@echo "  make eriscv-m1-dhrystone         - build and run Dhrystone on M1"
-	@echo "  make eriscv-m1-embench           - build and run Embench-IoT on M1"
-	@echo "  make eriscv-m1-microbench        - build and run M1 microbenchmarks"
-	@echo "  make eriscv-m1-freertos          - build and run FreeRTOS on M1"
-	@echo "  make eriscv-m1-freertos-qualification - run M1 FreeRTOS fail-stop qualification"
-	@echo "  make eriscv-m1-freertos-umode    - build and run FreeRTOS U-mode on M1"
-	@echo "  make eriscv-m1-zephyr            - build and run Zephyr on M1"
-	@echo "  make eriscv-m2-bsp               - run the eRISCV-M2 BSP workload"
-	@echo "  make eriscv-m2-bsp-async         - run the eRISCV-M2 async BSP workload"
-	@echo "  make eriscv-m2-bsp-fpu-dma-sram  - run the eRISCV-M2 FPU/DMA/System-SRAM BSP workload"
-	@echo "  make eriscv-m2-mcycle-counter    - run the eRISCV-M2 mcycle-counter workload"
-	@echo "  make eriscv-m2-coremark          - build and run CoreMark on M2"
-	@echo "  make eriscv-m2-dhrystone         - build and run Dhrystone on M2"
-	@echo "  make eriscv-m2-embench           - build and run Embench-IoT on M2"
-	@echo "  make eriscv-m2-microbench        - build and run M2 microbenchmarks"
-	@echo "  make eriscv-m2-freertos          - build and run M2 FreeRTOS"
-	@echo "  make eriscv-m2-freertos-qualification - run M2 FreeRTOS fail-stop qualification"
-	@echo "  make eriscv-m2-freertos-umode    - build and run M2 FreeRTOS U-mode"
-	@echo "  make eriscv-m2-zephyr            - build and run Zephyr on M2"
+	@echo "PPA (generic Liberty; no PDK, OpenLane, or P&R):"
+	@echo "  1) make ppa-setup                 - first-time Linux/WSL toolchain setup"
+	@echo "  2) source tools/ppa/env.sh         - load the local Yosys/OpenSTA environment"
+	@echo "  3) make ppa-m0                    - evaluate M0 (use ppa-m1/ppa-m2 for others)"
+	@echo "     make ppa-all                   - evaluate M0, M1, and M2"
+	@echo "  One-line example: source tools/ppa/env.sh && make ppa-m0"
+	@echo "  Example override: source tools/ppa/env.sh && make ppa-m1 PPA_PERIOD_NS=5 PPA_OUT_DIR=build/ppa-fast"
+	@echo "  Overrides: PPA_PERIOD_NS=<ns> PPA_LIBERTY=<file> PPA_OUT_DIR=<dir>"
+	@echo "  SDC: tools/ppa/constraints.sdc (clock/reset/IO, generated-clock, load/transition/fanout)"
+	@echo "       defaults: sys_clk 10ns, jtag 100ns, IO delay 20%, uncertainty 5%"
 	@echo ""
-	@echo "Simulation wizard:"
-	@echo "  make wizard                      - interactively select and run simulation targets"
+	@echo "Debug and focused platform tests:"
+	@echo "  make eriscv-m0-openocd-gdb       - M0 OpenOCD/GDB smoke; ADAPTER_CFG required, FIRMWARE_ELF optional"
+	@echo "  make eriscv-m0-clk-rst           - M0 clock/reset ModelSim diagnostic"
+	@echo "  make eriscv-m0-tcm-arbitration   - M0 TCM arbitration ModelSim test (replace m0 with m1 or m2)"
+	@echo "  make eriscv-m2-dma-system-sram   - M2 DMA/System SRAM ModelSim test"
+	@echo "  make wizard                      - interactive simulation selector"
 	@echo ""
-	@echo "Board debug and maintenance:"
-	@echo "  make eriscv-m0-openocd-gdb       - run board debug smoke (requires ADAPTER_CFG)"
-	@echo "  make eriscv-m1-openocd-gdb       - run board debug smoke (requires ADAPTER_CFG)"
-	@echo "  make eriscv-m2-openocd-gdb       - run board debug smoke (requires ADAPTER_CFG)"
-	@echo "  make clean                         - remove all repository-generated simulation/script artifacts"
-	@echo "  make clean-dry-run                 - list artifacts that make clean would remove"
+	@echo "Cleanup:"
+	@echo "  make clean-dry-run               - list generated artifacts to remove"
+	@echo "  make clean                       - remove generated sim/ACT4 caches; leave source, ci-smoke vectors, PPA cache"
 	@echo ""
-	@echo "  SIM_BACKEND=verilator|modelsim|auto selects the full-target simulator (default: verilator)"
+	@echo "Common options:"
+	@echo "  SIM_BACKEND=<value>              one of: verilator, modelsim, auto"
+	@echo "  ACT_SMOKE_PHASE=<path>           ACT4 smoke vector dir; default: compliance/riscv-arch-test/ci-smoke"
+	@echo "  ACT_BOOTSTRAP_ARGS=<args>        (native ACT4 bootstrap options)"
+	@echo "  LINT_PRODUCT=<value> LINT_TARGET=<value>  product m0/m1/m2; boundary core/soc"
+	@echo "  M0_CORE_SMOKE_TESTS=<list> M0_ACT_SMOKE_TESTS=<list> (M1/M2 equivalents)"
+	@echo "  EMBENCH_BENCH=<name> EMBENCH_PROFILE=<value> EMBENCH_SCALE=<n>  profile speed/size"
 	@echo ""
-	@echo "Other:"
-	@echo "  make tb-contract                 - check M0/M1 local-TB parity contract"
+	@echo "Use 'make -qp' for the complete compatibility target database."
 
 lint:
 	$(PYTHON) tools/lint/run_eriscv_lint.py --product $(LINT_PRODUCT) --target $(LINT_TARGET)
@@ -185,11 +183,33 @@ act-generate-all-container:
 act-bootstrap-native:
 	tools/compliance/riscv-arch-test/bootstrap_act4_native.sh $(ACT_BOOTSTRAP_ARGS)
 
+ppa-setup:
+	tools/ppa/setup_wsl.sh
+
+ppa-setup-wsl: ppa-setup
+
+ppa-m0:
+	$(PYTHON) tools/ppa/run_ppa.py --product m0 --period-ns $(PPA_PERIOD_NS) --liberty "$(PPA_LIBERTY)" --output-dir "$(PPA_OUT_DIR)/m0"
+
+ppa-m1:
+	$(PYTHON) tools/ppa/run_ppa.py --product m1 --period-ns $(PPA_PERIOD_NS) --liberty "$(PPA_LIBERTY)" --output-dir "$(PPA_OUT_DIR)/m1"
+
+ppa-m2:
+	$(PYTHON) tools/ppa/run_ppa.py --product m2 --period-ns $(PPA_PERIOD_NS) --liberty "$(PPA_LIBERTY)" --output-dir "$(PPA_OUT_DIR)/m2"
+
+ppa-all:
+	$(MAKE) ppa-m0
+	$(MAKE) ppa-m1
+	$(MAKE) ppa-m2
+
 eriscv-m0-core:
 	$(MAKE) -C eriscv-m0/dv/core/sim $(SIM_BACKEND)
 
 eriscv-m0-core-smoke:
 	$(MAKE) -C eriscv-m0/dv/core/sim $(SIM_BACKEND) TESTS="$(M0_CORE_SMOKE_TESTS)"
+
+eriscv-m0-act-smoke:
+	ERISCV_ACT_PHASE="$(ACT_SMOKE_PHASE)" $(MAKE) -C eriscv-m0/dv/core/sim $(SIM_BACKEND) TESTS="$(M0_ACT_SMOKE_TESTS)"
 
 eriscv-m0-soc:
 	$(MAKE) -C eriscv-m0/dv/soc/sim $(SIM_BACKEND)
@@ -199,6 +219,8 @@ eriscv-m0-soc-smoke:
 
 eriscv-m0-act:
 	$(MAKE) -C eriscv-m0/dv/core/sim $(SIM_BACKEND) TESTS=--act-full
+
+eriscv-m0-smoke: eriscv-m0-core-smoke eriscv-m0-soc-smoke eriscv-m0-act-smoke
 
 eriscv-m0-clk-rst:
 	$(MAKE) -C eriscv-m0/dv/clk_rst/sim modelsim
@@ -212,6 +234,9 @@ eriscv-m1-core:
 eriscv-m1-core-smoke:
 	$(MAKE) -C eriscv-m1/dv/core/sim $(SIM_BACKEND) TESTS="$(M1_CORE_SMOKE_TESTS)"
 
+eriscv-m1-act-smoke:
+	ERISCV_ACT_PHASE="$(ACT_SMOKE_PHASE)" $(MAKE) -C eriscv-m1/dv/core/sim $(SIM_BACKEND) TESTS="$(M1_ACT_SMOKE_TESTS)"
+
 eriscv-m1-soc:
 	$(MAKE) -C eriscv-m1/dv/soc/sim $(SIM_BACKEND)
 
@@ -220,6 +245,8 @@ eriscv-m1-soc-smoke:
 
 eriscv-m1-act:
 	$(MAKE) -C eriscv-m1/dv/core/sim $(SIM_BACKEND) TESTS=--act-full
+
+eriscv-m1-smoke: eriscv-m1-core-smoke eriscv-m1-soc-smoke eriscv-m1-act-smoke
 
 eriscv-m1-tcm-arbitration:
 	$(MAKE) -C eriscv-m1/dv/soc/sim tcm-arbitration
@@ -230,6 +257,9 @@ eriscv-m2-core:
 eriscv-m2-core-smoke:
 	$(MAKE) -C eriscv-m2/dv/core/sim $(SIM_BACKEND) TESTS="$(M2_CORE_SMOKE_TESTS)"
 
+eriscv-m2-act-smoke:
+	ERISCV_ACT_PHASE="$(ACT_SMOKE_PHASE)" $(MAKE) -C eriscv-m2/dv/core/sim $(SIM_BACKEND) TESTS="$(M2_ACT_SMOKE_TESTS)"
+
 eriscv-m2-soc:
 	$(MAKE) -C eriscv-m2/dv/soc/sim $(SIM_BACKEND)
 
@@ -238,6 +268,8 @@ eriscv-m2-soc-smoke:
 
 eriscv-m2-act:
 	$(MAKE) -C eriscv-m2/dv/core/sim $(SIM_BACKEND) TESTS=--act-full
+
+eriscv-m2-smoke: eriscv-m2-core-smoke eriscv-m2-soc-smoke eriscv-m2-act-smoke
 
 eriscv-m2-tcm-arbitration:
 	$(MAKE) -C eriscv-m2/dv/soc/sim tcm-arbitration
@@ -389,18 +421,6 @@ eriscv-m2-full:
 	  printf '*** Generate ACT4 later with make act-generate-m2 or make act-generate-m2-container. ***\n\n'; \
 	  $(MAKE) eriscv-m2-full-no-act; \
 	fi
-
-eriscv-m0-smoke-no-act:
-	$(MAKE) -C eriscv-m0/dv/core/sim $(SIM_BACKEND) TESTS="--directed-only --compliance-smoke"
-	$(MAKE) -C eriscv-m0/dv/soc/sim $(SIM_BACKEND) TESTS="$(M0_SOC_SMOKE_TESTS)"
-
-eriscv-m1-smoke-no-act:
-	$(MAKE) -C eriscv-m1/dv/core/sim $(SIM_BACKEND) TESTS="--directed-only --compliance-smoke"
-	$(MAKE) -C eriscv-m1/dv/soc/sim $(SIM_BACKEND) TESTS="$(M1_SOC_SMOKE_TESTS)"
-
-eriscv-m2-smoke-no-act:
-	$(MAKE) -C eriscv-m2/dv/core/sim $(SIM_BACKEND) TESTS="--directed-only --compliance-smoke"
-	$(MAKE) -C eriscv-m2/dv/soc/sim $(SIM_BACKEND) TESTS="$(M2_SOC_SMOKE_TESTS)"
 
 eriscv-m0-full-no-act:
 	$(MAKE) -C eriscv-m0/dv/core/sim $(SIM_BACKEND) TESTS="--directed-only --compliance-full"

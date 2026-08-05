@@ -31,6 +31,7 @@
 ../../../../peripherals/timer/timer_apb.sv
 ../../../../peripherals/spi/spi_apb.sv
 ../../../../peripherals/clk_rst/clk_rst_ctrl.sv
+../../../../peripherals/watchdog/watchdog_apb.sv
 ../../../rtl/soc/soc_pkg.sv
 ../../../rtl/soc/bus/dbus_interconnect.sv
 ../../../rtl/soc/bus/dbus_to_apb.sv
@@ -54,9 +55,9 @@
 ../../../rtl/soc/boot/uart_boot_slave.sv
 ../../../rtl/soc/boot/boot_subsystem.sv
 ../../../rtl/soc/sys_ctrl.sv
+../../../rtl/soc/reset_sync.sv
 ../../../rtl/soc/clock_gate.sv
 ../../../rtl/soc/soc.sv
-../../../../peripherals/watchdog/watchdog_apb.sv
 ../tb/tb_plic_agent.sv
 ../tb/soc_tb.sv
 ../tb/tcm_arbitration_tb.sv

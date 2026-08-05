@@ -123,8 +123,9 @@ module soc #(
   logic        clk_rst_psel, clk_rst_pready, clk_rst_pslverr;
   logic [31:0] clk_rst_prdata;
   // Clock/reset control and hart interrupt aggregation
-  logic        sys_rst_n, cpu_wake, core_wfi_sleep, core_clk_en, core_clk;
-  logic [4:0]  peri_clk_en, peri_rst_n, peri_clk;
+  logic        sys_rst_req_n, sys_rst_n, core_rst_n;
+  logic        cpu_wake, core_wfi_sleep, core_clk_en, core_clk;
+  logic [4:0]  peri_clk_en, peri_rst_req_n, peri_rst_n, peri_clk;
   logic [31:0] core_irq;
   // PLIC and CLINT DBus transactions
   logic        plic_req, plic_we, plic_resp_valid, plic_write_accept, plic_err;
@@ -218,11 +219,28 @@ module soc #(
     .clk_o   (core_clk)
   );
 
+  reset_sync sys_reset_sync_i (
+    .clk_i    (clk),
+    .arst_n_i (sys_rst_req_n),
+    .srst_n_o (sys_rst_n)
+  );
+
+  reset_sync core_reset_sync_i (
+    .clk_i    (core_clk),
+    .arst_n_i (sys_rst_n),
+    .srst_n_o (core_rst_n)
+  );
+
   for (genvar clock_index = 0; clock_index < 5; clock_index++) begin : gen_peri_clock_gate
     clock_gate peripheral_clock_gate_i (
       .clk_i   (clk),
       .en_i    (peri_clk_en[clock_index]),
       .clk_o   (peri_clk[clock_index])
+    );
+    reset_sync peripheral_reset_sync_i (
+      .clk_i    (peri_clk[clock_index]),
+      .arst_n_i (peri_rst_req_n[clock_index]),
+      .srst_n_o (peri_rst_n[clock_index])
     );
   end
 
@@ -243,7 +261,7 @@ module soc #(
   ) riscv_core_i (
     // Clock/reset and fetch startup
     .clk                 (core_clk),
-    .rst_n               (sys_rst_n),
+    .rst_n               (core_rst_n),
     .fetch_enable_i      (core_fetch_enable),
     .boot_addr_i         (boot_addr_i),
     // Debug control and abstract register access
@@ -633,8 +651,8 @@ module soc #(
     .cpu_wake_o        (cpu_wake),
     .core_clk_en_o     (core_clk_en),
     .peri_clk_en_o     (peri_clk_en),
-    .peri_rst_n_o      (peri_rst_n),
-    .sys_rst_n_o       (sys_rst_n)
+    .peri_rst_n_o      (peri_rst_req_n),
+    .sys_rst_n_o       (sys_rst_req_n)
   );
 
   uart_apb #(

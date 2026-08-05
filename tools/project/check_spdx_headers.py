@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 from pathlib import Path
 
 
@@ -16,7 +17,10 @@ SOURCE_SUFFIXES = {
     ".sh", ".sv", ".svh", ".tcl", ".xdc", ".yaml", ".yml",
 }
 EXCLUDED_PARTS = {
-    ".git", "build", "generated", "obj_dir", "third_party", "vendor",
+    ".git", ".cache", ".pytest_cache", ".venv", "venv",
+    "build", "generated", "obj_dir", "work",
+    "regression_data", "regression_logs", "lint_logs",
+    "visual_waves", "waves", "third_party", "vendor",
     "zephyr", "__pycache__",
 }
 BSD2_PATHS = {
@@ -48,18 +52,21 @@ def main() -> int:
 
     missing: list[Path] = []
     checked = 0
-    for path in sorted(root.rglob("*")):
-        if not path.is_file() or not is_original_source(root, path):
-            continue
-        checked += 1
-        header_lines = path.read_text(encoding="utf-8", errors="replace").splitlines()[:20]
-        relative = path.relative_to(root)
-        required_license = "SPDX-License-Identifier: BSD-2-Clause" if relative in BSD2_PATHS else LICENSE
-        comment_prefixes = ("#", "//", "/*", "*")
-        has_copyright = any(COPYRIGHT in line and line.lstrip().startswith(comment_prefixes) for line in header_lines)
-        has_license = any(required_license in line and line.lstrip().startswith(comment_prefixes) for line in header_lines)
-        if not has_copyright or not has_license:
-            missing.append(path.relative_to(root))
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = sorted(name for name in dirnames if name not in EXCLUDED_PARTS)
+        for filename in sorted(filenames):
+            path = Path(dirpath) / filename
+            if not is_original_source(root, path):
+                continue
+            checked += 1
+            header_lines = path.read_text(encoding="utf-8", errors="replace").splitlines()[:20]
+            relative = path.relative_to(root)
+            required_license = "SPDX-License-Identifier: BSD-2-Clause" if relative in BSD2_PATHS else LICENSE
+            comment_prefixes = ("#", "//", "/*", "*")
+            has_copyright = any(COPYRIGHT in line and line.lstrip().startswith(comment_prefixes) for line in header_lines)
+            has_license = any(required_license in line and line.lstrip().startswith(comment_prefixes) for line in header_lines)
+            if not has_copyright or not has_license:
+                missing.append(relative)
 
     if missing:
         print("Missing required SPDX header:")

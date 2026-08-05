@@ -42,6 +42,7 @@ make lint LINT_PRODUCT=m2 \
 make lint-m0
 make lint-m1
 make lint-m2</code></pre></article></div>
+      <p class="profile-note"><strong>GitHub Actions.</strong> The <a href="../Verification/eriscv-mcu-github-ci.md">CI guide</a> documents push/PR checks, nightly ACT4/PPA/benchmark jobs, cache behavior, and uploaded reports. It is the workflow guide; this page remains the reader-facing verification boundary.</p>
     </section>
     <section id="regression" class="section profile-section muted-section">
       <div class="section-heading"><p class="eyebrow">04 / REGRESSION</p><h2>Start broad, then narrow.</h2><p>Verilator is the default regression simulator. A product <code>full</code> target is the normal closure entry point; it runs core-directed tests, the product ACT4 selection, and SoC-directed tests. Use the narrower targets when one layer is under change. Use ModelSim only when a focused testcase needs interactive diagnosis or waves.</p></div>
@@ -49,7 +50,7 @@ make lint-m2</code></pre></article></div>
         <tr><th>One product</th><td><code>make eriscv-m0-full</code><br><code>make eriscv-m1-full</code><br><code>make eriscv-m2-full</code></td><td>That product's directed core, ACT4, and directed SoC regression.</td></tr>
         <tr><th>All implemented products</th><td><code>make eriscv-mcu-full</code></td><td>M0, M1, and M2 product-full gates.</td></tr>
         <tr><th>One layer</th><td><code>make eriscv-m2-core</code><br><code>make eriscv-m2-soc</code><br><code>make eriscv-m2-act</code></td><td>Core-directed, SoC-directed, or ACT4 only. Replace <code>m2</code> with <code>m0</code> or <code>m1</code> as applicable.</td></tr>
-        <tr><th>Quick feedback</th><td><code>make eriscv-m0-core-smoke</code><br><code>make eriscv-m0-soc-smoke</code><br><code>make eriscv-m2-core-smoke</code><br><code>make eriscv-m2-soc-smoke</code></td><td>Reduced directed plus ACT smoke selection where provided.</td></tr>
+        <tr><th>Quick feedback</th><td><code>make eriscv-m0-smoke</code><br><code>make eriscv-m1-smoke</code><br><code>make eriscv-m2-smoke</code></td><td>Reduced core-directed/compliance smoke, SoC smoke, and committed ACT smoke.</td></tr>
       </tbody></table></div>
       <div class="table-wrap doc-grid-gap"><table><thead><tr><th>Regression layer</th><th>Representative content</th><th>Purpose</th></tr></thead><tbody>
         <tr><th>Core directed</th><td><code>P1-ALU-01</code>, <code>P2-CFLOW-01</code>, <code>P4-FWD-01</code>, <code>P4-LDST-01</code>, <code>P5-CSR-TRAP-01</code>, P7 stress/kill/dependency cases, counters/HPM, IRQ, memory wait, halt, EBREAK/DRET, and single-step.</td><td>Pipeline execution, hazards, traps, CSRs, counters, interrupt entry, and Debug 1.0 behavior.</td></tr>

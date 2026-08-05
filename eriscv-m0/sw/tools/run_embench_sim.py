@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: 2025-2026 Xianning Zhan
 # SPDX-License-Identifier: BSD-3-Clause
 
-"""Build and ModelSim-check one M1 Embench-IoT workload."""
+"""Build and simulator-check one M0 Embench-IoT workload."""
 
 from __future__ import annotations
 
@@ -21,7 +21,14 @@ sys.path.insert(0, str(TOOLS_DIR / "sim"))
 
 from elf_to_mem import elf_entry_point
 from resolve_filelist import write_resolved_filelist
-from sim_backend import default_vsim, path_for_vsim, run_modelsim
+from sim_backend import (
+    build_verilator,
+    default_vsim,
+    path_for_vsim,
+    run_modelsim,
+    run_verilator,
+    select_backend,
+)
 
 DMEM_BASE = 0x11000000
 RESULT_SYMBOL = "eriscv_embench_result"
@@ -50,7 +57,9 @@ def main() -> int:
     parser.add_argument("--profile", choices=("speed", "size"), default="speed")
     parser.add_argument("--scale", type=int, default=1)
     parser.add_argument("--max-cycles", type=int, default=2_000_000)
+    parser.add_argument("--backend", choices=("auto", "modelsim", "verilator"), default="auto")
     parser.add_argument("--vsim", default=default_vsim())
+    parser.add_argument("--verilator", default="verilator")
     args = parser.parse_args()
     if args.max_cycles <= 0 or args.scale <= 0:
         parser.error("max-cycles and scale must be positive")
@@ -77,20 +86,43 @@ def main() -> int:
     log_path = build_dir / f"{args.bench}.sim.log"
 
     write_resolved_filelist(SIM_DIR / "filelist.f", SIM_DIR / "file.list")
-    command = (
-        "if {![file exists work]} { vlib work }; "
-        "vmap work work; "
-        "vlog +acc -work work -incr -f file.list; "
-        f"vsim -lib work -t 1ps +tc=EMBENCH-{args.bench.upper()}-{args.profile.upper()} "
-        f"+instr_mem_file={path_for_vsim(args.vsim, imem)} "
-        f"+data_mem_file={path_for_vsim(args.vsim, dmem)} "
-        f"+boot_addr={elf_entry_point(elf):x} +tohost_addr={result_index:x} "
-        "+expected_tohost=80000000 +expected_tohost_mask=c0000000 "
-        f"+max_cycles={args.max_cycles} soc_tb; run -all; quit -f"
-    )
-    passed, reason, elapsed = run_modelsim(
-        SIM_DIR, args.vsim, command, log_path, PASS_MARKER, FAIL_MARKERS
-    )
+    backend = select_backend(args.backend, args.vsim, args.verilator)
+    plusargs = [
+        f"+tc=EMBENCH-{args.bench.upper()}-{args.profile.upper()}",
+        f"+instr_mem_file={imem.resolve().as_posix()}",
+        f"+data_mem_file={dmem.resolve().as_posix()}",
+        f"+boot_addr={elf_entry_point(elf):x}",
+        f"+tohost_addr={result_index:x}",
+        "+expected_tohost=80000000",
+        "+expected_tohost_mask=c0000000",
+        f"+max_cycles={args.max_cycles}",
+    ]
+    if backend == "modelsim":
+        command = (
+            "if {![file exists work]} { vlib work }; "
+            "vmap work work; "
+            "vlog +acc -work work -incr -f file.list; "
+            f"vsim -lib work -t 1ps +tc=EMBENCH-{args.bench.upper()}-{args.profile.upper()} "
+            f"+instr_mem_file={path_for_vsim(args.vsim, imem)} "
+            f"+data_mem_file={path_for_vsim(args.vsim, dmem)} "
+            f"+boot_addr={elf_entry_point(elf):x} +tohost_addr={result_index:x} "
+            "+expected_tohost=80000000 +expected_tohost_mask=c0000000 "
+            f"+max_cycles={args.max_cycles} soc_tb; run -all; quit -f"
+        )
+        passed, reason, elapsed = run_modelsim(
+            SIM_DIR, args.vsim, command, log_path, PASS_MARKER, FAIL_MARKERS
+        )
+    else:
+        built, reason, binary = build_verilator(
+            SIM_DIR, build_dir, args.verilator, "soc_tb",
+            binary_name="Vsoc_tb_embench",
+        )
+        if not built:
+            print(f"EMBENCH SIM FAIL: {reason}", file=sys.stderr)
+            return 1
+        passed, reason, elapsed = run_verilator(
+            binary, plusargs, log_path, PASS_MARKER, FAIL_MARKERS
+        )
     if not passed:
         print(f"EMBENCH SIM FAIL: {reason}", file=sys.stderr)
         return 1
@@ -104,7 +136,7 @@ def main() -> int:
         print(f"EMBENCH SIM FAIL: verification failed (result=0x{result:08x})", file=sys.stderr)
         return 1
     mcycle = result & 0x3fffffff
-    print(f"EMBENCH SIM PASS: bench={args.bench} profile={args.profile} scale={args.scale} "
+    print(f"EMBENCH SIM PASS: backend={backend} bench={args.bench} profile={args.profile} scale={args.scale} "
           f"mcycle={mcycle} mcycle_per_scale={mcycle / args.scale:.3f} wall_s={elapsed:.1f}")
     return 0
 

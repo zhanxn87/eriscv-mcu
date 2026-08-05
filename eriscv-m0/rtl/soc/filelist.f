@@ -36,6 +36,7 @@ boot/imem_boot_ctrl.sv
 boot/uart_boot_slave.sv
 boot/boot_subsystem.sv
 sys_ctrl.sv
+reset_sync.sv
 clock_gate.sv
 soc.sv
 -f ../../../peripherals/watchdog/filelist.f

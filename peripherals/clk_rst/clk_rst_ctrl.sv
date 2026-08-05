@@ -163,7 +163,11 @@ module clk_rst_ctrl (
     end
   end
 
-  assign sys_rst_n_o = por_n_i & ext_rst_n_i & (sys_reset_count_q == 5'd0);
+  // Keep asynchronous assertion, but prevent an external-reset release from
+  // reaching downstream domains before it has passed the root-clock
+  // synchronizer and the warm-reset hold interval.
+  assign sys_rst_n_o = por_n_i & ext_rst_n_i & ext_rst_sync_q &
+                       (sys_reset_count_q == 5'd0);
 
   // Synchronize asynchronous pin wake inputs and detect falling edges.
   always_ff @(posedge clk_sys or negedge por_n_i) begin

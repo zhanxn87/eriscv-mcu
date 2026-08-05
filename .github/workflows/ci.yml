@@ -1,31 +1,245 @@
 # SPDX-FileCopyrightText: 2025-2026 Xianning Zhan
 # SPDX-License-Identifier: BSD-3-Clause
 
-name: RTL checks
+name: eRISCV CI
 
 on:
   push:
   pull_request:
+  schedule:
+    - cron: "17 2 * * *"
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: eriscv-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
-  verilator-lint:
+  static-rtl-checks:
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: false
-      - name: Check original-source SPDX headers
-        run: make copyright-check
       - name: Install Verilator
         run: sudo apt-get update && sudo apt-get install --yes verilator
-      - name: Lint M0, M1, and M2 SoC RTL
-        run: make lint-all
-      - name: Run M0 smoke without ACT4 cache
-        run: make eriscv-m0-smoke-no-act
-      - name: Run M1 smoke without ACT4 cache
-        run: make eriscv-m1-smoke-no-act
-      - name: Run M2 smoke without ACT4 cache
-        run: make eriscv-m2-smoke-no-act
+      - name: Run source, TB-contract, and RTL checks
+        run: |
+          set -o pipefail
+          mkdir -p build/ci
+          make check 2>&1 | tee build/ci/static-checks.log
+      - name: Upload static-check reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: static-rtl-checks
+          path: build/ci
+          if-no-files-found: warn
+
+  pr-verilator-full:
+    if: github.event_name == 'pull_request'
+    name: PR full Verilator (${{ matrix.product }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        product: [m0, m1, m2]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - name: Install Verilator
+        run: sudo apt-get update && sudo apt-get install --yes verilator
+      - name: Run full core and SoC regression without generated ACT4
+        run: |
+          set -o pipefail
+          mkdir -p build/ci
+          make eriscv-${{ matrix.product }}-full-no-act 2>&1 | tee build/ci/${{ matrix.product }}-full-no-act.log
+      - name: Run committed ACT smoke
+        run: |
+          set -o pipefail
+          mkdir -p build/ci
+          make eriscv-${{ matrix.product }}-act-smoke 2>&1 | tee build/ci/${{ matrix.product }}-act-smoke.log
+      - name: Upload PR regression reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-verilator-${{ matrix.product }}
+          path: |
+            build/ci
+            eriscv-${{ matrix.product }}/dv/core/sim/regression_logs
+            eriscv-${{ matrix.product }}/dv/soc/sim/regression_logs
+          if-no-files-found: warn
+
+  nightly-change-gate:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    name: Check nightly change window
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.detect.outputs.should_run }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Detect changes since the previous daily window
+        id: detect
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            echo "Manual dispatch: run nightly jobs."
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+          elif [[ -n "$(git log HEAD --since='24 hours ago' --format='%H' -1)" ]]; then
+            echo "Commits found in the last 24 hours: run nightly jobs."
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No commits found in the last 24 hours: skip nightly jobs."
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  nightly-full:
+    needs: nightly-change-gate
+    if: needs.nightly-change-gate.outputs.should_run == 'true'
+    name: Nightly full ACT4 (${{ matrix.product }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        product: [m0, m1, m2]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Install Verilator
+        run: sudo apt-get update && sudo apt-get install --yes verilator
+      - name: Identify ACT4 revision
+        id: act4-revision
+        run: echo "revision=$(git -C third_party/riscv-arch-test rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Restore ACT4 native environment
+        id: act4-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            .cache/act4
+            eriscv-${{ matrix.product }}/compliance/riscv-arch-test/generated
+          key: ${{ runner.os }}-act4-${{ matrix.product }}-${{ steps.act4-revision.outputs.revision }}-${{ hashFiles('third_party/riscv-arch-test/.mise.toml', 'tools/compliance/riscv-arch-test/bootstrap_act4_native.sh', 'tools/compliance/riscv-arch-test/act4-standard-env.sh', 'eriscv-m0/compliance/riscv-arch-test/profile.json', 'eriscv-m1/compliance/riscv-arch-test/profile.json', 'eriscv-m2/compliance/riscv-arch-test/profile.json') }}
+          restore-keys: |
+            ${{ runner.os }}-act4-${{ matrix.product }}-
+            ${{ runner.os }}-act4-
+      - name: Bootstrap ACT4 host environment
+        if: steps.act4-cache.outputs.cache-hit != 'true'
+        run: |
+          set -o pipefail
+          mkdir -p build/ci
+          make act-bootstrap-native ACT_BOOTSTRAP_ARGS="--system-packages --mise --sail" 2>&1 | tee build/ci/act-bootstrap.log
+      - name: Generate complete ACT4 cache
+        if: steps.act4-cache.outputs.cache-hit != 'true'
+        run: |
+          set -o pipefail
+          mkdir -p build/ci
+          make act-generate-${{ matrix.product }} 2>&1 | tee build/ci/${{ matrix.product }}-act-generate.log
+      - name: Run full core, ACT4, and SoC regression
+        run: |
+          set -o pipefail
+          mkdir -p build/ci
+          make eriscv-${{ matrix.product }}-full 2>&1 | tee build/ci/${{ matrix.product }}-full.log
+      - name: Upload nightly regression reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-full-${{ matrix.product }}
+          path: |
+            build/ci
+            eriscv-${{ matrix.product }}/dv/core/sim/regression_logs
+            eriscv-${{ matrix.product }}/dv/soc/sim/regression_logs
+          if-no-files-found: warn
+
+  nightly-ppa:
+    needs: nightly-change-gate
+    if: needs.nightly-change-gate.outputs.should_run == 'true'
+    name: Nightly generic Liberty PPA
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - name: Restore Yosys/OpenSTA environment
+        uses: actions/cache@v4
+        with:
+          path: |
+            .cache/ppa/oss-cad
+            .cache/ppa/prefix
+            .cache/ppa/src
+            .cache/ppa/build
+            .cache/ppa/liberty
+          key: ${{ runner.os }}-ppa-${{ hashFiles('tools/ppa/**', 'eriscv-m0/rtl/soc/clock_gate.sv', 'eriscv-m1/rtl/soc/clock_gate.sv', 'eriscv-m2/rtl/soc/clock_gate.sv') }}
+          restore-keys: |
+            ${{ runner.os }}-ppa-
+      - name: Bootstrap Yosys/OpenSTA and generic Liberty
+        run: make ppa-setup
+      - name: Evaluate M0, M1, and M2
+        run: |
+          set -o pipefail
+          source tools/ppa/env.sh
+          mkdir -p build/ppa
+          make ppa-all 2>&1 | tee build/ppa/nightly-ppa.log
+      - name: Upload PPA reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-ppa-generic-liberty
+          path: build/ppa
+          if-no-files-found: warn
+
+  nightly-benchmarks:
+    needs: nightly-change-gate
+    if: needs.nightly-change-gate.outputs.should_run == 'true'
+    name: Nightly benchmarks (${{ matrix.product }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        product: [m0, m1, m2]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - name: Checkout Embench-IoT submodule
+        run: git submodule update --init --depth 1 third_party/embench-iot
+      - name: Install benchmark tools
+        run: sudo apt-get update && sudo apt-get install --yes gcc-riscv64-unknown-elf verilator
+      - name: Run CoreMark
+        run: |
+          set -o pipefail
+          mkdir -p build/nightly-benchmarks
+          make eriscv-${{ matrix.product }}-coremark 2>&1 | tee build/nightly-benchmarks/${{ matrix.product }}-coremark.log
+      - name: Run Dhrystone
+        run: |
+          set -o pipefail
+          mkdir -p build/nightly-benchmarks
+          make eriscv-${{ matrix.product }}-dhrystone 2>&1 | tee build/nightly-benchmarks/${{ matrix.product }}-dhrystone.log
+      - name: Run Embench-IoT performance smoke
+        run: |
+          set -o pipefail
+          mkdir -p build/nightly-benchmarks
+          make eriscv-${{ matrix.product }}-embench EMBENCH_BENCH=matmult-int EMBENCH_PROFILE=speed EMBENCH_SCALE=1 2>&1 | tee build/nightly-benchmarks/${{ matrix.product }}-embench.log
+      - name: Upload benchmark reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-benchmarks-${{ matrix.product }}
+          path: |
+            build/nightly-benchmarks
+            eriscv-${{ matrix.product }}/sw/benchmarks/dhrystone/dmips_runs.csv
+            eriscv-${{ matrix.product }}/sw/build/coremark
+            eriscv-${{ matrix.product }}/sw/build/dhrystone*
+            eriscv-${{ matrix.product }}/sw/build/embench
+          if-no-files-found: warn

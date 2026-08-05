@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -149,7 +150,17 @@ INHERITED_TESTS = {
 COMPLIANCE_SMOKE = ()
 # Zicsr-csrrw-00's ACT oracle is RV32I-misa-specific; eRISCV-M2's RV32IC
 # CSR evidence is product-local in the SoC regression.
-ACT_SMOKE = ("I-add-00", "I-jal-00", "I-nop-00")
+ACT_SMOKE = (
+    "I-add-00",
+    "I-lw-00",
+    "I-beq-00",
+    "I-jalr-00",
+    "Zca-c.add-00",
+    "M-mul-00",
+    "F-fadd.s-00",
+    "F-flw-00",
+    "Zba-sh1add-00",
+)
 
 CONFIG = PhaseRegressionConfig(
     script_file=__file__,
@@ -160,7 +171,10 @@ CONFIG = PhaseRegressionConfig(
     compliance_smoke=COMPLIANCE_SMOKE,
     compliance_exclude=("I-MISALIGN_JMP-01",),
     act_smoke=ACT_SMOKE,
-    act_phase="compliance/riscv-arch-test/generated",
+    act_phase=os.environ.get(
+        "ERISCV_ACT_PHASE",
+        "compliance/riscv-arch-test/generated",
+    ),
     allow_act=True,
     compliance_max_cycles=50000,
     act_max_cycles=50000,

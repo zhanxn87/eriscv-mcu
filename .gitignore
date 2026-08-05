@@ -45,6 +45,15 @@ venv/
 eriscv-m0/compliance/riscv-arch-test/generated/
 eriscv-m1/compliance/riscv-arch-test/generated/
 eriscv-m2/compliance/riscv-arch-test/generated/
+# A small, committed ACT4 runtime corpus used by CI. Keep it separate from
+# the product-local generated cache because ACT4 regeneration removes that
+# cache directory before rebuilding it.
+!eriscv-m0/compliance/riscv-arch-test/ci-smoke/
+!eriscv-m0/compliance/riscv-arch-test/ci-smoke/**
+!eriscv-m1/compliance/riscv-arch-test/ci-smoke/
+!eriscv-m1/compliance/riscv-arch-test/ci-smoke/**
+!eriscv-m2/compliance/riscv-arch-test/ci-smoke/
+!eriscv-m2/compliance/riscv-arch-test/ci-smoke/**
 **/*.bit
 **/*.ltx
 **/*.jou

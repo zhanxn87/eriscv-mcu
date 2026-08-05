@@ -88,7 +88,7 @@ embench:
 	$(MAKE) -C benchmarks/embench SW_DIR=$(CURDIR) ISA=$(ISA) ABI=$(ABI) UART_DIVISOR=$(UART_DIVISOR) BENCH=$(EMBENCH_BENCH) PROFILE=$(EMBENCH_PROFILE) SCALE=$(EMBENCH_SCALE) images
 
 sim-embench:
-	$(PYTHON) tools/run_embench_sim.py
+	$(PYTHON) tools/run_embench_sim.py --backend $(SIM_BACKEND)
 
 microbench:
 	$(MAKE) -C benchmarks/microbench SW_DIR=$(CURDIR) ISA=$(ISA) ABI=$(ABI) UART_DIVISOR=$(UART_DIVISOR) images

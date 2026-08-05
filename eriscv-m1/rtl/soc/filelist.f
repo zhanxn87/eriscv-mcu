@@ -11,6 +11,7 @@
 -f ../../../peripherals/timer/filelist.f
 -f ../../../peripherals/spi/filelist.f
 -f ../../../peripherals/clk_rst/filelist.f
+-f ../../../peripherals/watchdog/filelist.f
 
 // --- soc infrastructure ---
 soc_pkg.sv
@@ -36,6 +37,6 @@ boot/imem_boot_ctrl.sv
 boot/uart_boot_slave.sv
 boot/boot_subsystem.sv
 sys_ctrl.sv
+reset_sync.sv
 clock_gate.sv
 soc.sv
--f ../../../peripherals/watchdog/filelist.f

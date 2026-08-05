@@ -30,6 +30,7 @@ the recommended first checks.
 | Topic | Owner | Scope |
 | --- | --- | --- |
 | Dated verification evidence | [MCU Evidence Snapshot](Verification/eriscv-mcu-simulation-evidence-snapshot.md) | Regression totals, backend, date, and result boundaries. |
+| GitHub Actions CI behavior | [GitHub Actions CI Guide](Verification/eriscv-mcu-github-ci.md) | Trigger matrix, PR/nightly coverage, caches, uploaded artifacts, and CI evidence boundaries. |
 | FPGA timing and area | [FPGA Timing and Area Evidence](Performance/eriscv-mcu-fpga-timing-area-evidence.md) | Routed report provenance and current M0/M1/M2 figures. |
 | Performance dashboard and method | [Product Manual: Performance](product-manual/performance.html) | Current measurement boundaries plus reader-facing M0/M1/M2 trends and workload snapshots. |
 | External debug smoke contract | [OpenOCD/GDB Board-Smoke Contract](Verification/eriscv-mcu-openocd-gdb-smoke.md) | Required hardware-debug interoperability evidence. |

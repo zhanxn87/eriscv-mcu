@@ -13,6 +13,8 @@ claim.
   profiles and deliberate exclusions.
 - [Verification evidence snapshot](docs/Verification/eriscv-mcu-simulation-evidence-snapshot.md)
   — sole owner of current regression totals and status.
+- [GitHub Actions CI guide](docs/Verification/eriscv-mcu-github-ci.md)
+  — triggers, PR/nightly coverage, caches, artifacts, and evidence boundaries.
 - [Changelog](CHANGELOG.md) — public release history and known limitations.
 - [Contributing](CONTRIBUTING.md) and [security reporting](SECURITY.md) —
   contribution and private-disclosure expectations.
@@ -54,8 +56,18 @@ git clone https://github.com/zhanxn87/eriscv-mcu.git
 cd eriscv-mcu
 make help                         # list supported repository commands and their scope
 make lint-all                     # screen synthesizable M0/M1/M2 RTL with Verilator
-make eriscv-m0-smoke-no-act       # run the M0 directed/SoC smoke baseline without ACT4
+make eriscv-m0-smoke              # run M0 core/SoC/committed-ACT smoke
 ```
+
+### GitHub Actions CI
+
+The [GitHub Actions CI guide](docs/Verification/eriscv-mcu-github-ci.md)
+documents the repository workflow. Pull requests run static checks, full
+Verilator core/SoC regression without generated ACT4, and committed ACT smoke.
+The scheduled or manually dispatched nightly path runs cached full ACT4,
+generic-Liberty Yosys/OpenSTA PPA, and bounded CoreMark/Dhrystone/Embench
+benchmarks. Logs and reports are uploaded as workflow artifacts; the PPA job is
+pre-layout evidence, not ASIC signoff.
 
 The benchmark and RTOS submodules are optional for RTL lint and standard
 core/SoC regression.  Initialize only a dependency needed by a selected

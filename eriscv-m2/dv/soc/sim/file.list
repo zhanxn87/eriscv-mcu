@@ -125,6 +125,7 @@
 ../../../rtl/soc/boot/uart_boot_slave.sv
 ../../../rtl/soc/boot/boot_subsystem.sv
 ../../../rtl/soc/sys_ctrl.sv
+../../../rtl/soc/reset_sync.sv
 ../../../rtl/soc/clock_gate.sv
 ../../../rtl/soc/soc.sv
 ../../../../peripherals/watchdog/watchdog_apb.sv

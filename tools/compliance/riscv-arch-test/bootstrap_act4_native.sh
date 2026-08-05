@@ -82,11 +82,12 @@ if [[ "${install_mise}" -eq 1 ]]; then
 fi
 
 if [[ "${install_sail}" -eq 1 ]]; then
-  rm -rf -- "${sail_root}"
-  mkdir -p "${sail_root}"
-  curl --fail --location --retry 3 \
-    https://github.com/riscv/sail-riscv/releases/download/0.12/sail-riscv-Linux-x86_64.tar.gz \
-    | tar -xz --directory="${sail_root}" --strip-components=1
+  if [[ ! -x "${sail_root}/bin/sail_riscv_sim" ]]; then
+    mkdir -p "${sail_root}"
+    curl --fail --location --retry 3 \
+      https://github.com/riscv/sail-riscv/releases/download/0.12/sail-riscv-Linux-x86_64.tar.gz \
+      | tar -xz --directory="${sail_root}" --strip-components=1
+  fi
 fi
 
 if [[ "${install_toolchain}" -eq 1 ]]; then
