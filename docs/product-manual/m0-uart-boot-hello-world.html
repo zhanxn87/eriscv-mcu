@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Reproducible eRISCV-M0 VCU108 UART boot and Hello World board bring-up record.">
+  <title>eRISCV-M0 UART Boot Hello World</title>
+  <link rel="stylesheet" href="assets/site.css">
+  <script defer src="assets/site.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#content">Skip to content</a>
+  <header class="site-header">
+    <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">eR</span><span>eRISCV <small>MCU FAMILY</small></span></a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="main-nav">Menu</button>
+    <nav id="main-nav" class="main-nav" aria-label="Primary navigation"><a href="index.html">Family Guide</a><a href="architecture.html">Architecture</a><a href="software.html">Software</a><a href="performance.html">Performance</a><a href="verification.html">Verification</a><a href="fpga-evaluation.html">FPGA</a><a href="board-jtag-debug.html">Board/JTAG</a></nav>
+  </header>
+  <main id="content">
+    <section class="profile-hero m0-profile">
+      <div>
+        <p class="eyebrow">M0 / VCU108 / PHYSICAL BOARD SMOKE</p>
+        <h1>UART boot to<br><em>Hello World.</em></h1>
+        <p class="lede">A retained, end-to-end board record: Windows sends a program over UART, M0 loads it into instruction SRAM, the CPU executes it, and the program returns <code>Hello World</code> through the FPGA UART.</p>
+      </div>
+      <dl class="profile-hero-facts"><div><dt>BOARD RESULT</dt><dd>PASS — exact runtime text observed</dd></div><div><dt>HOST PORT</dt><dd>CP2105 Standard UART, COM4</dd></div><div><dt>FRAMING</dt><dd>115200 baud · 8-N-1 · no flow control</dd></div><div><dt>TEST IMAGE</dt><dd>61 IMEM words / 310 boot bytes</dd></div></dl>
+    </section>
+
+    <section class="notice"><strong>Evidence boundary.</strong> This record proves the specific UART boot and UART TX smoke path on the recorded M0 VCU108 session. It does not qualify JTAG DMI, GPIO, SPI, interrupts, persistent boot storage, or every reset and error path.</section>
+
+    <section class="section profile-section">
+      <div class="section-heading"><p class="eyebrow">01 / WHAT HAPPENED</p><h2>One cable, two UART roles, one complete execution path.</h2><p>The CP2105 Standard serial port is first the host-to-boot-loader transport, then the CPU program’s runtime UART output path. They share physical pins but are distinct RTL functions and protocol phases.</p></div>
+      <figure class="doc-figure"><img src="assets/diagrams/m0-uart-boot-hello-world.svg" alt="Signal path from the Windows UART boot loader through the M0 boot parser and instruction SRAM to CPU execution and APB UART Hello World output."><figcaption>UART boot loads instruction SRAM before CPU fetch; after release, the loaded program configures the normal APB UART and transmits the expected text.</figcaption></figure>
+    </section>
+
+    <section class="section profile-section muted-section">
+      <div class="section-heading"><p class="eyebrow">02 / BOARD AND HOST CONTRACT</p><h2>Get the physical route and reset-time selection right first.</h2></div>
+      <div class="table-wrap"><table><thead><tr><th>Item</th><th>Required value</th><th>Why it matters</th></tr></thead><tbody>
+        <tr><th>FPGA target</th><td>AMD VCU108 / <code>xcvu095</code></td><td>The M0 wrapper derives a 100 MHz SoC clock from the board 300 MHz system clock.</td></tr>
+        <tr><th>Bitstream</th><td><code>eriscv_m0_vcu108_wrapper.bit</code></td><td>The configured FPGA contains the M0 SoC, boot parser, UART, and board pin bindings.</td></tr>
+        <tr><th>UART USB port</th><td>CP2105 <strong>Standard</strong> port, observed as <code>COM4</code></td><td>The Enhanced port (<code>COM3</code> in this session) is the board system controller, not FPGA UART.</td></tr>
+        <tr><th>FPGA UART pins</th><td><code>BC24</code> RX, <code>BE24</code> TX</td><td>They connect the FPGA wrapper to the CP2105 Standard UART path.</td></tr>
+        <tr><th>Boot mode</th><td>RTL value <code>3'b010</code>, selected before reset</td><td>It selects UART boot. Boot source is sampled at reset; changing the DIP alone does not restart the loader.</td></tr>
+        <tr><th>Host framing</th><td>115200 baud, 8 data bits, no parity, 1 stop bit, no flow control</td><td>The boot parser uses this fixed serial contract.</td></tr>
+      </tbody></table></div>
+      <p class="profile-note"><strong>Configuration-session context.</strong> The image was <code>eriscv_m0_vcu108_wrapper.bit</code>, SHA-256 <code>cb868276093b4cc3da102d1db26c7cf24f7004e5806fe06e4a8f878649fa23a0</code>. Vivado identified <code>xcvu095_0</code> (IDCODE <code>0x13842093</code>) as ES2-compatible and required the session-local <code>set_param xicom.use_bitstream_version_check false</code> waiver before programming. This is a tool-version workaround, not a silicon-revision compatibility claim. No Vivado soft debug core is expected because M0 uses a custom <code>BSCANE2</code> DTM rather than ILA/VIO.</p>
+      <p class="profile-note">Press and release <code>CPU_RESET</code> after selecting UART boot, then transmit the image. The exact physical DIP on/off polarity remains a board-session detail; the logical RTL value is the portable contract.</p>
+    </section>
+
+    <section class="section architecture">
+      <div class="section-heading"><p class="eyebrow">03 / CREATE THE BOARD IMAGE</p><h2>Build a word-addressed instruction-SRAM image.</h2><p>The board-specific program is deliberately separate from the fast simulation test. It programs the runtime UART divisor for the actual 100 MHz FPGA clock.</p></div>
+      <div class="code-grid">
+        <article><h3>1. Assemble and link</h3><pre><code>riscv64-unknown-elf-gcc \
+  -march=rv32imc -mabi=ilp32 \
+  -nostdlib -nostartfiles \
+  -Wl,-Ttext=0 -Wl,--no-relax \
+  -Wl,--build-id=none \
+  -o UART-HELLO-115200.elf \
+  UART-HELLO-115200.S</code></pre></article>
+        <article><h3>2. Emit an ELF byte dump</h3><pre><code>riscv64-unknown-elf-objcopy \
+  -O verilog \
+  UART-HELLO-115200.elf \
+  UART-HELLO-115200.bytes</code></pre></article>
+        <article><h3>3. Pack 32-bit IMEM words</h3><pre><code>python3 tools/compliance/common/
+bin_dump_to_mem.py \
+  UART-HELLO-115200.bytes \
+  UART-HELLO-115200.mem</code></pre></article>
+      </div>
+      <p class="profile-note">Source: <a href="../../eriscv-m0/fpga/vcu108/tests/UART-HELLO-115200.S">UART-HELLO-115200.S</a>. Generated image: <a href="../../eriscv-m0/fpga/vcu108/tests/UART-HELLO-115200.mem">UART-HELLO-115200.mem</a>. The image begins at word address zero, which maps to the CPU boot address <code>0x1000_0000</code>.</p>
+    </section>
+
+    <section class="section profile-section">
+      <div class="section-heading"><p class="eyebrow">04 / UART BOOT TRANSACTION</p><h2>The loader holds execution until IMEM is complete.</h2><p><a href="../../eriscv-m0/fpga/vcu108/tools/send_uart_boot.ps1">send_uart_boot.ps1</a> uses Windows <code>System.IO.Ports.SerialPort</code>; it does not use Vivado, OpenOCD, or a preloaded FPGA memory image.</p></div>
+      <div class="table-wrap"><table><thead><tr><th>Order</th><th>Opcode</th><th>Payload</th><th>Effect</th></tr></thead><tbody>
+        <tr><th>1</th><td><code>0x03 HOLD</code></td><td>None</td><td>Stops instruction fetch before changing instruction memory.</td></tr>
+        <tr><th>2</th><td><code>0x06 RESET_ADDR</code></td><td>None</td><td>Sets the boot write pointer to word zero.</td></tr>
+        <tr><th>3</th><td><code>0x05 AUTO_INC</code></td><td><code>0x01</code></td><td>Advances the word address automatically after each write.</td></tr>
+        <tr><th>4</th><td><code>0x02 WRITE32</code></td><td>One 32-bit little-endian word, repeated</td><td>Writes the 61 words of the program into M0 instruction SRAM.</td></tr>
+        <tr><th>5</th><td><code>0x04 RELEASE</code></td><td>None</td><td>Enables fetch; CPU begins executing at <code>0x1000_0000</code>.</td></tr>
+      </tbody></table></div>
+      <pre><code># From the M0 VCU108 directory:
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\m0_uart.ps1 `
+  -Mode Boot -Port COM4 `
+  -Image .\tests\UART-HELLO-115200.mem</code></pre>
+      <p class="profile-note">The loader opens COM4 at 115200 baud, 8-N-1, no flow control; transmits 310 total protocol bytes; waits for the wire time; releases fetch; and keeps the port open to capture the program’s runtime output. Use <code>-DryRun</code> to parse an image without opening COM4. <code>send_uart_boot.ps1</code> remains a compatible Boot-mode wrapper.</p>
+    </section>
+
+    <section class="section profile-section muted-section">
+      <div class="section-heading"><p class="eyebrow">05 / HELLO WORLD AT RUNTIME</p><h2>After boot, the CPU uses the normal APB UART—not the boot parser.</h2></div>
+      <div class="table-wrap"><table><thead><tr><th>APB UART0 register</th><th>Address</th><th>Program action</th></tr></thead><tbody>
+        <tr><th>TXDATA</th><td><code>0x4000_0000</code></td><td>Write one byte after TX-ready is set.</td></tr>
+        <tr><th>STATUS</th><td><code>0x4000_0008</code></td><td>Poll bit 0 until the transmitter can accept a byte.</td></tr>
+        <tr><th>BAUDDIV</th><td><code>0x4000_000c</code></td><td>Write <code>868</code>.</td></tr>
+        <tr><th>CTRL</th><td><code>0x4000_0010</code></td><td>Write <code>3</code> to enable runtime UART operation.</td></tr>
+      </tbody></table></div>
+      <div class="profile-grid two"><article><h3>Baud calculation</h3><p>The VCU108 wrapper clocks the SoC at 100 MHz. <code>100,000,000 / 868 = 115,207.37</code> baud, an error of approximately +0.0064%, well within normal asynchronous-UART tolerance.</p></article><article><h3>Why the prior image printed <code>?</code></h3><p>The regression image writes divisor 8 to shorten serial simulation. At 100 MHz it becomes about 12.5 Mbaud, so a Windows receiver set to 115200 cannot decode the runtime data correctly.</p></article></div>
+    </section>
+
+    <section class="section architecture">
+      <div class="section-heading"><p class="eyebrow">06 / OBSERVED RESULT AND INTERPRETATION</p><h2>The exact expected text was returned over the physical FPGA UART.</h2></div>
+      <div class="code-grid"><article><h3>Host transcript</h3><pre><code>M0 UART boot: 61 words, 310 bytes, 115200 baud
+M0 UART boot: transfer complete; instruction fetch released.
+M0 UART runtime output:
+Hello World</code></pre></article><article><h3>What this proves</h3><p>Host USB serial TX, CP2105 Standard routing, boot-parser reception, instruction-SRAM writes, fetch release, M0 execution, APB UART programming, FPGA TX, CP2105 receive, and Windows serial capture.</p></article><article><h3>What remains outside this test</h3><p>Private BSCANE2/RISC-V DMI, GPIO, SPI, timer/PLIC behavior, persistent boot media, all boot errors, and a formal board-release campaign.</p></article></div>
+      <p class="profile-note">The full dated session record, bitstream hash, and configuration-JTAG context are retained in the M0 VCU108 debug record.</p>
+    </section>
+
+    <section class="section profile-section muted-section">
+      <div class="section-heading"><p class="eyebrow">07 / REUSE THE LINK FOR DEMOS</p><h2>A local browser console provides boot loading and runtime serial interaction.</h2><p>Double-click <a href="../../eriscv-m0/fpga/vcu108/tools/open_uart_console.cmd">open_uart_console.cmd</a> in Windows Explorer. It starts the local-only <a href="../../eriscv-m0/fpga/vcu108/tools/uart_console.html">Web Serial console</a> and opens it in the default Chromium browser.</p></div>
+      <div class="code-grid"><article><h3>Browser flow</h3><p>Select the CP2105 Standard UART in the browser chooser, keep 115200 baud for boot, choose a compatible runtime <code>.mem</code> image, then click <strong>Boot image</strong>. The bundled Hello World image proves boot and runtime TX; interactive terminal behavior depends on a separately supplied monitor image.</p></article><article><h3>Security boundary</h3><p>The page runs only through a loopback local server and requires explicit browser permission for the serial device. It cannot select COM4 silently or control the physical boot DIP/reset.</p></article><article><h3>Script fallback</h3><p><a href="../../eriscv-m0/fpga/vcu108/tools/m0_uart.ps1">m0_uart.ps1</a> remains available for automation and non-browser environments, but the browser page is the intended interactive demo interface.</p></article></div>
+      <p class="profile-note">This is a raw board transport console, not a full VT100 terminal. It intentionally omits local echo, escape-sequence parsing, and line editing; those can be added when a demo firmware requires them.</p>
+    </section>
+
+    <section class="section next"><p class="eyebrow">RELATED EVIDENCE</p><h2><a href="board-jtag-debug.html">Board bring-up and JTAG debug</a> defines the remaining physical validation work.</h2><p><a href="products/eriscv-m0.html">Open the M0 datasheet</a> · <a href="fpga-evaluation.html">View FPGA implementation results</a></p></section>
+  </main>
+  <footer class="site-footer"><span>eRISCV-M0 UART Boot Hello World</span><span>Physical board smoke record · 2026-07-28</span></footer>
+</body>
+</html>

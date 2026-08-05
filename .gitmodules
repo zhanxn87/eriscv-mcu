@@ -1,0 +1,20 @@
+[submodule "third_party/FreeRTOS-Kernel"]
+	path = third_party/FreeRTOS-Kernel
+	url = https://github.com/FreeRTOS/FreeRTOS-Kernel.git
+	ignore = dirty
+[submodule "third_party/CoreMark"]
+	path = third_party/CoreMark
+	url = https://github.com/eembc/coremark.git
+	ignore = dirty
+[submodule "third_party/embench-iot"]
+	path = third_party/embench-iot
+	url = https://github.com/embench/embench-iot.git
+	ignore = dirty
+[submodule "third_party/zephyr"]
+	path = third_party/zephyr
+	url = https://github.com/zephyrproject-rtos/zephyr.git
+	ignore = dirty
+[submodule "third_party/riscv-arch-test"]
+	path = third_party/riscv-arch-test
+	url = https://github.com/riscv/riscv-arch-test.git
+	ignore = dirty

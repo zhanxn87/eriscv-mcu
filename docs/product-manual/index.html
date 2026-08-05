@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="eRISCV MCU Family Product Manual engineering documentation set.">
+  <title>eRISCV MCU Family Product Manual</title>
+  <link rel="stylesheet" href="assets/site.css">
+  <script defer src="assets/site.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#content">Skip to content</a>
+  <header class="site-header">
+    <a class="brand" href="index.html" aria-label="eRISCV product manual home">
+      <span class="brand-mark" aria-hidden="true">eR</span>
+      <span>eRISCV <small>MCU FAMILY</small></span>
+    </a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="main-nav">Menu</button>
+    <nav id="main-nav" class="main-nav" aria-label="Primary navigation">
+      <a href="index.html" aria-current="page">Family Guide</a>
+      <a href="architecture.html">Architecture</a>
+      <a href="software.html">Software</a>
+      <a href="performance.html">Performance</a>
+      <a href="verification.html">Verification</a>
+      <a href="fpga-evaluation.html">FPGA</a>
+      <a href="board-jtag-debug.html">Board/JTAG</a>
+    </nav>
+  </header>
+
+  <main id="content">
+    <section id="top" class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">ENGINEERING DOCUMENTATION REVIEW SET 1.0</p>
+        <h1>eRISCV MCU<br><em>Family Product Manual</em></h1>
+        <p class="lede">A single technical entry point for the eRISCV-M0, eRISCV-M1, and eRISCV-M2 microcontroller family.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="#portfolio">Explore the family</a>
+          <a class="button quiet" href="architecture.html">Explore architecture</a>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <img src="assets/diagrams/family-overview.svg" alt="eRISCV family overview showing the common platform and M0, M1, and M2 additions.">
+      </div>
+    </section>
+
+    <section class="notice" aria-label="Publication status">
+      <strong>Publication status.</strong> These are source-controlled preliminary engineering datasheets. They are not a commercial release, certification statement, performance guarantee, package/electrical specification, or product-availability announcement.
+    </section>
+
+    <section id="portfolio" class="section section-portfolio">
+      <div class="section-heading">
+        <p class="eyebrow">01 / PRELIMINARY PRODUCT DATASHEETS</p>
+        <h2>One platform. Three independent product configurations.</h2>
+        <p>Each datasheet fixes a specific architectural configuration while the shared programming model and platform contracts remain stable across the family.</p>
+      </div>
+      <div class="product-grid">
+        <article class="product-card m0">
+          <p class="product-number">M0</p>
+          <h3>Compact control</h3>
+          <p>RV32IC control for deterministic, small-footprint embedded firmware.</p>
+          <ul>
+            <li>Machine mode</li>
+            <li>Local IMEM and DTCM</li>
+            <li>PLIC, CLINT, Debug, HPM</li>
+          </ul>
+          <a href="products/eriscv-m0.html">Open M0 datasheet <span aria-hidden="true">→</span></a>
+        </article>
+        <article class="product-card m1">
+          <p class="product-number">M1</p>
+          <h3>Protected control</h3>
+          <p>RV32IMC control with user mode and physical memory protection.</p>
+          <ul>
+            <li>Machine and user modes</li>
+            <li>16-entry PMP</li>
+            <li>Multi-cycle M extension</li>
+          </ul>
+          <a href="products/eriscv-m1.html">Open M1 datasheet <span aria-hidden="true">→</span></a>
+        </article>
+        <article class="product-card m2">
+          <p class="product-number">M2</p>
+          <h3>Compute and data movement</h3>
+          <p>RV32IMFC with shared System SRAM and firewall-restricted DMA.</p>
+          <ul>
+            <li>RV32F, Zcf, and Zba</li>
+            <li>Eight-bank System SRAM</li>
+            <li>Direct and descriptor DMA</li>
+          </ul>
+          <a href="products/eriscv-m2.html">Open M2 datasheet <span aria-hidden="true">→</span></a>
+        </article>
+      </div>
+    </section>
+
+    <section id="selection" class="section selection-section" aria-labelledby="selection-title">
+      <div class="section-heading">
+        <p class="eyebrow">02 / PRODUCT SELECTION</p>
+        <h2 id="selection-title">Choose the smallest profile that preserves the required boundary.</h2>
+        <p>Selection is based on architectural needs, not on an implied frequency, power, package, or availability tier.</p>
+      </div>
+      <div class="selection-layout">
+        <img class="selection-diagram" src="assets/diagrams/product-selection.svg" alt="Decision flow: choose M2 for binary32 floating point, shared System SRAM, or generic DMA; otherwise choose M1 for U-mode isolation or PMP; otherwise choose M0.">
+        <ol class="selection-flow">
+          <li>
+            <span class="flow-number">01</span>
+            <div><h3>Need binary32 compute or controlled data movement?</h3><p>Choose <strong>M2</strong> for RV32F, Zcf, Zba, shared System SRAM, or the one-channel generic DMA contract.</p></div>
+          </li>
+          <li>
+            <span class="flow-number">02</span>
+            <div><h3>Need hardware multiply/divide, M/U isolation, or PMP?</h3><p>Choose <strong>M1</strong> for RV32M, U-mode, MPRV, and the 16-entry PMP contract.</p></div>
+          </li>
+          <li>
+            <span class="flow-number">03</span>
+            <div><h3>Otherwise, keep the compact control profile.</h3><p>Choose <strong>M0</strong> for M-mode firmware that needs the common interrupt, debug, counter, and peripheral platform without M-extension or PMP hardware.</p></div>
+          </li>
+        </ol>
+      </div>
+      <div class="selection-notes" aria-label="Selection boundaries">
+        <article><h3>Use M0 when</h3><p>Firmware is M-mode only and software arithmetic is acceptable for multiply/divide-heavy paths.</p></article>
+        <article><h3>Use M1 when</h3><p>Task isolation or protected boot/firmware regions are required, but floating point and shared DMA buffers are not.</p></article>
+        <article><h3>Use M2 when</h3><p>Binary32 work, shared CPU/DMA buffers, or linked-descriptor transfers are part of the product requirement.</p></article>
+      </div>
+    </section>
+
+    <section id="architecture" class="section architecture">
+      <div class="section-heading">
+        <p class="eyebrow">03 / COMMON ARCHITECTURE</p>
+        <h2>One software-visible platform; deliberate product-specific boundaries.</h2>
+        <p>The common platform fixes the services that firmware can carry across the family. Product pages add privilege, memory, compute, and data-movement capability without changing the basic interrupt, debug, or counter vocabulary.</p>
+      </div>
+      <div class="common-platform-layout">
+        <img class="common-platform-diagram" src="assets/diagrams/common-platform.svg" alt="eRISCV common platform: a single cacheless hart connected to CLINT local interrupts, a 32-source PLIC, JTAG Debug 1.0 Minimal, and Zicntr plus Zihpm counters.">
+        <div class="common-platform-list">
+          <article><h3>Interrupt model</h3><p>CLINT provides MSIP and MTIP. The one-context PLIC presents eligible device interrupts as MEIP; source allocation is a product ABI.</p></article>
+          <article><h3>Debug boundary</h3><p>All products expose one JTAG DTM/DMI Debug 1.0 Minimal target. RTL coverage does not yet claim board-level OpenOCD/GDB interoperability.</p></article>
+          <article><h3>Counter model</h3><p><code>cycle</code>, <code>time</code>, <code>instret</code>, and four programmable 64-bit counters HPM3–HPM6 use one family event encoding.</p></article>
+          <article><h3>Memory rule</h3><p>Execution uses directly addressed local memories. No family product supplies a cache, cacheable alias, or DMA cache-maintenance protocol.</p></article>
+        </div>
+      </div>
+      <div class="architecture-grid">
+        <article><span>01</span><h3>Execution and privilege</h3><p>RV32 little-endian execution, machine-mode traps, <code>mret</code>, CSR access, and product-defined M or M/U privilege boundaries.</p></article>
+        <article><span>02</span><h3>Interrupt and debug</h3><p>Software enables the peripheral, configures PLIC priority and threshold, then claims, services, and completes the selected source.</p></article>
+        <article><span>03</span><h3>Observability</h3><p>HPM event identifiers remain stable across products; M1 and M2 additionally gate U-mode counter aliases through <code>mcounteren</code>.</p></article>
+        <article><span>04</span><h3>Deterministic memory</h3><p>Published maps define TCM, MMIO, and bus-error behavior. M2 System SRAM is explicitly non-cacheable and shared only where documented.</p></article>
+      </div>
+    </section>
+
+    <section class="section matrix-section" aria-labelledby="matrix-title">
+      <div class="section-heading compact">
+        <p class="eyebrow">04 / CAPABILITY MATRIX</p>
+        <h2 id="matrix-title">Use product pages for detail; use this table for selection.</h2>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Capability</th><th>M0</th><th>M1</th><th>M2</th></tr></thead>
+          <tbody>
+            <tr><th>ISA profile</th><td>RV32IC + Zicsr, Zifencei, Zicntr, Zihpm, Zihintpause</td><td>RV32IMC + Zicsr, Zifencei, Zicntr, Zihpm, Zihintpause</td><td>RV32IMFC + Zicsr, Zifencei, Zicntr, Zihpm, Zihintpause, Zba, Zcf</td></tr>
+            <tr><th>ABI</th><td>ilp32</td><td>ilp32</td><td>ilp32f</td></tr>
+            <tr><th>Privilege modes</th><td>M</td><td>M, U</td><td>M, U</td></tr>
+            <tr><th>Integer multiply / divide</th><td>Software library routines</td><td>RV32M hardware</td><td>RV32M hardware</td></tr>
+            <tr><th>PMP</th><td>—</td><td>16 entries</td><td>16 entries</td></tr>
+            <tr><th>Floating point</th><td>—</td><td>—</td><td>RV32F binary32; Zcf memory operations</td></tr>
+            <tr><th>CPU-local TCM</th><td>64 KiB ITCM + 64 KiB DTCM</td><td>64 KiB ITCM + 64 KiB DTCM</td><td>128 KiB ITCM + 128 KiB DTCM</td></tr>
+            <tr><th>Shared System SRAM</th><td>—</td><td>—</td><td>512 KiB; eight 64 KiB banks</td></tr>
+            <tr><th>Generic DMA</th><td>—</td><td>—</td><td>One channel; direct, descriptors, fixed UART0 TX</td></tr>
+            <tr><th>Common platform</th><td colspan="3">CLINT, 32-source PLIC, Debug 1.0 Minimal over JTAG, four 64-bit programmable HPM counters</td></tr>
+            <tr><th>Shared exclusions</th><td colspan="3">Caches, MMU, S-mode, atomics, AIA, custom ISA instructions; package, electrical, and availability data are not yet published</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="software" class="section software">
+      <div class="section-heading">
+        <p class="eyebrow">05 / SOFTWARE</p>
+        <h2>One freestanding workflow, with explicit profile boundaries.</h2>
+        <p>Each product owns a BSP, linker script, startup sequence, and image-generation flow. Software must select the exact product ISA/ABI shown above; it must not rely on a generic <code>rv32imac</code> default.</p>
+      </div>
+      <div class="software-layout">
+        <ol class="steps">
+          <li><strong>Select the exact profile</strong><span><code>isa.mk</code> fixes the product <code>-march</code> and ABI: M0/M1 use <code>ilp32</code>; M2 uses <code>ilp32f</code>.</span></li>
+          <li><strong>Link to the product map</strong><span><code>crt0</code> installs the trap entry and initializes data; product linker scripts define ITCM, DTCM, boot, and—on M2—optional System SRAM buffer placement.</span></li>
+          <li><strong>Program the common platform</strong><span>Firmware owns trap setup, CLINT, PLIC priority/claim/complete, device-local status handling, and the counter measurement scope.</span></li>
+          <li><strong>Enable extensions deliberately</strong><span>M1/M2 U-mode code needs a PMP and <code>mcounteren</code> policy. M2 floating-point code enables <code>mstatus.FS</code>; DMA buffers and descriptors reside in System SRAM.</span></li>
+        </ol>
+        <aside class="callout"><p class="eyebrow">SOFTWARE CONTRACT</p><p>Every published example names its ISA, ABI, memory placement, execution mode, and completion oracle.</p></aside>
+      </div>
+      <div class="software-support">
+        <article><h3>Freestanding BSP</h3><p>All products provide startup, traps, linker definitions, UART, GPIO, timer, SPI, CLINT, PLIC, and watchdog programming surfaces.</p></article>
+        <article><h3>RTOS scope</h3><p>FreeRTOS and Zephyr collateral are development and simulation profiles. They are not a board-qualified or production-support claim.</p></article>
+        <article><h3>M2 FP and DMA rule</h3><p>The current FreeRTOS profiles retain the integer ABI until FP register and FCSR task-context save/restore is defined. DMA software uses non-cacheable System SRAM ownership rules.</p></article>
+      </div>
+    </section>
+
+    <section id="publication" class="section publication">
+      <div class="section-heading">
+        <p class="eyebrow">06 / DOCUMENTATION SYSTEM</p>
+        <h2>Publish the right document to the right audience.</h2>
+      </div>
+      <div class="document-grid">
+        <article><h3>Product Guide</h3><p>Selection, positioning, capability matrix, and explicit exclusions.</p></article>
+        <article><h3>Preliminary Product Datasheets</h3><p>Architecture configurations, capacities, interfaces, and explicit exclusions for <a href="products/eriscv-m0.html">M0</a>, <a href="products/eriscv-m1.html">M1</a>, and <a href="products/eriscv-m2.html">M2</a>. Package and electrical data remain unannounced.</p></article>
+        <article><h3>Architecture</h3><p>Programming model, exact ISA/ABI declarations, address map, interrupts, debug, and PLIC source allocation. <a href="architecture.html">Architecture →</a></p></article>
+        <article><h3>Integration and FPGA</h3><p>Routed FPGA evidence, constraints boundary, and board evidence plan. <a href="fpga-evaluation.html">FPGA evaluation →</a> · <a href="board-jtag-debug.html">Board/JTAG →</a></p></article>
+        <article><h3>SDK Guide</h3><p>Toolchain, BSP, linker, examples, RTOS boundaries, and reproducible workflows. <a href="software.html">Software guide →</a></p></article>
+        <article><h3>Performance Evidence</h3><p>Controlled Dhrystone conditions, raw-cycle results, and profile-level attribution for retained core optimizations. <a href="performance.html">Performance evidence →</a></p></article>
+        <article><h3>Verification and Errata</h3><p>Evidence hierarchy, release boundaries, and correction rules. <a href="verification.html">Verification guide →</a></p></article>
+      </div>
+    </section>
+
+    <section class="section next">
+      <p class="eyebrow">REVIEW GATE</p>
+      <h2>The engineering product-manual set is ready for review.</h2>
+      <p>Next publication gates are register-level specification generation and physical-board evidence. This product manual is the reader-facing family guide; source-authoring collateral is intentionally kept outside the published site.</p>
+    </section>
+  </main>
+  <footer class="site-footer"><span>eRISCV MCU Family Product Manual</span><span>Engineering Documentation Review Set 1.0 · Source-controlled review set</span></footer>
+</body>
+</html>

@@ -1,0 +1,11 @@
+# eRISCV-M1 board configuration
+# Copyright (c) 2024 eRISCV-MCU Contributors
+# SPDX-License-Identifier: Apache-2.0
+
+config BOARD_ERISCV_MCU
+	bool "eRISCV-M1 Board"
+	depends on SOC_ERISCV_MCU
+	help
+	  eRISCV-M1 is the M-extension + PMP product variant of the
+	  eRISCV-MCU educational RISC-V MCU.  Features RV32IMC_Zicsr_Zifencei,
+	  64 KB ITCM, 64 KB DTCM, UART, GPIO, APB Timer, SPI, WDT, and PLIC.

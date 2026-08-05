@@ -1,0 +1,17 @@
+# eRISCV-M0 board default Kconfig
+# Copyright (c) 2024 eRISCV-MCU Contributors
+# SPDX-License-Identifier: Apache-2.0
+
+if BOARD_ERISCV_MCU
+
+config BOARD
+	default "eriscv_mcu"
+
+config SOC
+	default "eriscv_mcu"
+
+# Use CLINT for timer
+config RISCV_MACHINE_TIMER
+	default y
+
+endif # BOARD_ERISCV_MCU

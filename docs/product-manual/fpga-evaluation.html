@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="eRISCV VCU108 FPGA evaluation summary.">
+  <title>eRISCV FPGA Evaluation</title>
+  <link rel="stylesheet" href="assets/site.css">
+  <script defer src="assets/site.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">eR</span><span>eRISCV <small>MCU FAMILY</small></span></a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="main-nav">Menu</button>
+    <nav id="main-nav" class="main-nav" aria-label="Primary navigation"><a href="index.html">Family Guide</a><a href="architecture.html">Architecture</a><a href="software.html">Software</a><a href="performance.html">Performance</a><a href="verification.html">Verification</a><a href="fpga-evaluation.html" aria-current="page">FPGA</a><a href="board-jtag-debug.html">Board/JTAG</a></nav>
+  </header>
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">FPGA EVALUATION / ROUTED RESULTS</p>
+        <h1>Implementation<br><em>at 100 MHz</em></h1>
+        <p class="lede">Comparable routed implementation evidence for the eRISCV-M0, eRISCV-M1, and eRISCV-M2 MCU products on AMD Virtex UltraScale+ VCU108. M0 and M1 meet the target; M2 timing closure remains open.</p>
+      </div>
+      <div class="hero-visual">
+        <img src="assets/diagrams/family-overview.svg" alt="eRISCV MCU family overview.">
+      </div>
+    </section>
+
+    <section class="notice">
+      <strong>Evaluation boundary.</strong> These are post-route FPGA implementation results, not ASIC PPA estimates, guaranteed Fmax, board-I/O timing sign-off, power figures, or a production release statement.
+    </section>
+
+    <section id="results" class="section matrix-section">
+      <div class="section-heading">
+        <p class="eyebrow">01 / EVALUATION CONDITIONS</p>
+        <h2>One device, one target clock, three product-local builds.</h2>
+        <p>AMD Virtex UltraScale+ VCU108, device <code>xcvu095-ffva2104-2-e</code>, Vivado 2025.2. The retained routed reports are M0 2026-07-31 and M1/M2 2026-08-04. The target <code>soc_clk_mmcm</code> period is 9.999 ns (100.010 MHz).</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Product</th><th>WNS</th><th>TNS</th><th>Setup failing endpoints</th><th>CLB LUTs</th><th>Registers</th><th>BRAM tiles</th><th>DSPs</th></tr></thead>
+          <tbody>
+            <tr><th>eRISCV-M0</th><td>+0.425 ns</td><td>0.000 ns</td><td>0</td><td>9,266 (1.72%)</td><td>5,339 (0.50%)</td><td>32 (1.85%)</td><td>0 (0.00%)</td></tr>
+            <tr><th>eRISCV-M1</th><td>+0.107 ns</td><td>0.000 ns</td><td>0</td><td>16,141 (3.00%)</td><td>6,758 (0.63%)</td><td>32 (1.85%)</td><td>4 (0.52%)</td></tr>
+            <tr><th>eRISCV-M2</th><td>-0.050 ns</td><td>-0.838 ns</td><td>37</td><td>25,116 (4.67%)</td><td>9,850 (0.92%)</td><td>192 (11.11%)</td><td>6 (0.78%)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section architecture">
+      <div class="section-heading">
+        <p class="eyebrow">02 / INTERPRETATION</p>
+        <h2>M0 and M1 meet 100 MHz; M2 timing closure is open.</h2>
+      </div>
+      <div class="architecture-grid">
+        <article><span>M0</span><h3>Compact baseline</h3><p>+0.425 ns WNS. The local-memory control product uses no DSP blocks and 32 BRAM tiles.</p></article>
+        <article><span>M1</span><h3>Protection and load path</h3><p>+0.107 ns WNS. M extension and protection logic add LUT, register, and DSP usage while retaining the 100 MHz target.</p></article>
+        <article><span>M2</span><h3>Compute and memory cost</h3><p>The 2026-08-04 routed build is fully routed but still misses 100 MHz by 0.050 ns: TNS -0.838 ns and 37 setup failing endpoints. RV32F, System SRAM, and DMA account for the additional resources; 192 BRAM tiles include the 512 KiB banked System SRAM.</p></article>
+        <article><span>DRC</span><h3>No reported errors</h3><p>Reports contain CFGBVS/CONFIG_VOLTAGE and DSP pipelining recommendations as Warnings. They are not timing failures, but board constraints and DSP trade-offs require follow-up.</p></article>
+      </div>
+    </section>
+
+    <section class="section software">
+      <div class="section-heading">
+        <p class="eyebrow">03 / REPORT PROVENANCE</p>
+        <h2>Reproducible artifacts, with one remaining metadata improvement.</h2>
+      </div>
+      <div class="software-layout">
+        <ol class="steps">
+          <li><strong>Routed evidence</strong><span>Timing, utilization, clock-utilization, and DRC reports are generated under each product-local VCU108 build directory; build outputs are intentionally not versioned. The reviewed values are transcribed in the linked evidence record.</span></li>
+          <li><strong>Timing result</strong><span>M0 and M1 have positive WNS, zero TNS, and no setup endpoint failures. M2 is fully routed but has WNS -0.050 ns, TNS -0.838 ns, and 37 setup failing endpoints at the 100.010 MHz target.</span></li>
+          <li><strong>DRC boundary</strong><span>The reports contain warnings but no reported errors. CFGBVS and CONFIG_VOLTAGE must be set correctly before a board-oriented release claim.</span></li>
+          <li><strong>Source provenance</strong><span>The routed report headers record the tool and device but not a Git SHA. Future FPGA report scripts shall emit the exact source revision and constraint hash.</span></li>
+        </ol>
+        <aside class="callout"><p class="eyebrow">IMPORTANT</p><p>Positive internal setup slack does not validate external I/O timing, bitstream programming, reset sequencing, UART output, or JTAG debug on physical hardware.</p></aside>
+      </div>
+    </section>
+
+    <section id="bringup" class="section publication">
+      <div class="section-heading">
+        <p class="eyebrow">04 / NEXT EVIDENCE</p>
+        <h2>Close implementation timing before M2 physical validation.</h2>
+        <p>M0/M1 board programming, reset observation, I/O smoke, JTAG transport, and debugger evidence are maintained in the dedicated guide. M2 first requires 100 MHz setup-timing closure.</p>
+      </div>
+      <p class="related-guide"><a href="board-jtag-debug.html">Open the Board Bring-up and JTAG Debug Guide</a> · <a href="m0-uart-boot-hello-world.html">View the completed M0 UART boot smoke record</a></p>
+    </section>
+
+    <section class="section next"><p class="eyebrow">NEXT DOCUMENT</p><h2><a href="board-jtag-debug.html">Board bring-up and JTAG debug</a> defines the required physical-validation evidence bundle.</h2><p><a href="index.html">Return to the family product guide</a></p></section>
+  </main>
+  <footer class="site-footer"><span>eRISCV FPGA Evaluation</span><span>Engineering Documentation Review Set 1.0 · Routed implementation snapshot</span></footer>
+</body>
+</html>

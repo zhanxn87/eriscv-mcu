@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="eRISCV MCU BSP, toolchain, and RTOS integration guide.">
+  <title>eRISCV MCU Software and SDK Guide</title>
+  <link rel="stylesheet" href="assets/site.css">
+  <script defer src="assets/site.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#content">Skip to content</a>
+  <header class="site-header">
+    <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">eR</span><span>eRISCV <small>MCU FAMILY</small></span></a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="main-nav">Menu</button>
+    <nav id="main-nav" class="main-nav" aria-label="Primary navigation"><a href="index.html">Family Guide</a><a href="architecture.html">Architecture</a><a href="software.html" aria-current="page">Software</a><a href="performance.html">Performance</a><a href="verification.html">Verification</a><a href="fpga-evaluation.html">FPGA</a><a href="board-jtag-debug.html">Board/JTAG</a></nav>
+  </header>
+  <main id="content">
+    <section class="profile-hero m0-profile">
+      <div><p class="eyebrow">SOFTWARE AND SDK GUIDE</p><h1>Exact profile.<br><em>Reproducible image.</em></h1><p class="lede">Every product owns its ISA declaration, linker script, startup code, BSP, test images, and product-local software examples.</p></div>
+      <dl class="profile-hero-facts"><div><dt>Compiler prefix</dt><dd><code>riscv64-unknown-elf-</code></dd></div><div><dt>ABIs</dt><dd>M0/M1: <code>ilp32</code>; M2: <code>ilp32f</code></dd></div><div><dt>Runtime</dt><dd>Freestanding; no implicit C library or SDK</dd></div></dl>
+    </section>
+    <section id="build" class="section profile-section">
+      <div class="section-heading"><p class="eyebrow">01 / BUILD CONTRACT</p><h2>Do not substitute a generic <code>-march</code>.</h2><p>Product-local <code>isa.mk</code> files select the supported ISA/ABI pair. Build the product BSP from its own directory so the linker and image converter use the same memory contract.</p></div>
+      <div class="code-grid"><article><h3>M0</h3><pre><code>make -C eriscv-m0/sw images
+make eriscv-m0-bsp</code></pre></article><article><h3>M1</h3><pre><code>make -C eriscv-m1/sw images
+make eriscv-m1-bsp</code></pre></article><article><h3>M2</h3><pre><code>make -C eriscv-m2/sw images
+make eriscv-m2-bsp</code></pre></article></div>
+      <div class="profile-grid three doc-grid-gap"><article><h3>Startup</h3><p>Freestanding startup installs the product trap entry, copies initialized data, clears BSS, and transfers to the application. An RTOS port may retain the copy/clear flow while owning <code>mtvec</code> itself.</p></article><article><h3>Images</h3><p>The ELF-to-memory converter emits <code>.imem.mem</code> and <code>.dmem.mem</code>. A memory-region violation is an image-generation error, not a runtime warning.</p></article><article><h3>Completion</h3><p>Examples declare their expected UART, GPIO, tohost, or register oracle in their runner. A command is not considered validated only because it exits.</p></article></div>
+    </section>
+    <section id="bsp" class="section profile-section muted-section">
+      <div class="section-heading"><p class="eyebrow">02 / BSP PROGRAMMING MODEL</p><h2>Common drivers, product-owned boundaries.</h2></div>
+      <div class="table-wrap"><table><thead><tr><th>Service</th><th>Software responsibility</th><th>Important boundary</th></tr></thead><tbody><tr><th>Trap and interrupt</th><td>Install <code>mtvec</code>; configure <code>mie</code>/<code>mstatus</code>; service CLINT and PLIC sources.</td><td>Clear the device condition before PLIC completion where one service event is intended.</td></tr><tr><th>Timer and WFI</th><td>Program CLINT or timer state, then wait or poll under a documented interrupt policy.</td><td>WFI behavior is architectural; do not use it as a board power specification.</td></tr><tr><th>Debug and counters</th><td>Use debug transport externally and configure HPM selectors/inhibit state in M-mode.</td><td>Only HPM3–HPM6 are implemented programmable HPM counters.</td></tr><tr><th>Memory placement</th><td>Use product linker sections for code, data, stack, and optional M2 System SRAM buffers.</td><td>ITCM modifications require <code>fence.i</code>; DTCM is non-executable.</td></tr></tbody></table></div>
+    </section>
+    <section id="m2" class="section m2-section">
+      <div class="m2-copy"><p class="eyebrow">03 / M2 SOFTWARE RULES</p><h2>Enable FP state and own DMA buffers explicitly.</h2><p>M2 applications compile for <code>ilp32f</code>. Floating-point software enables <code>mstatus.FS</code>, treats FCSR as architectural state, and uses the product’s RV32F/Zcf/Zba declaration. Generic-DMA descriptors and payloads live in System SRAM.</p><a class="text-link" href="products/eriscv-m2.html">Read the M2 product boundary <span aria-hidden="true">→</span></a></div>
+      <dl class="m2-facts"><div><dt>System SRAM</dt><dd>Use <code>.system_sram</code> only for buffers whose CPU/DMA ownership is explicit.</dd></div><div><dt>DMA</dt><dd>Direct and descriptor copies are System-SRAM based; UART0 TX is the documented peripheral endpoint.</dd></div><div><dt>RTOS FP state</dt><dd>Current FreeRTOS profiles retain an integer ABI until FP register and FCSR task-context save/restore is defined.</dd></div></dl>
+    </section>
+    <section id="rtos" class="section profile-section">
+      <div class="section-heading"><p class="eyebrow">04 / RTOS AND BENCHMARK BOUNDARY</p><h2>Development collateral is not a board-support promise.</h2><p>FreeRTOS and Zephyr ports are product-local simulation and integration collateral. Their commands and expected completion signals are part of the repository evidence, not a general certification statement.</p></div>
+      <div class="profile-grid two"><article><h3>FreeRTOS M-mode</h3><p>The M0/M1/M2 M-mode profiles link through the product BSP linker script. M0 FreeRTOS reuses its product startup/UART sources but leaves <code>mtvec</code> to the kernel port; M0/M1 run readonly and initialized data from DTCM after startup copies the ITCM load image; M2 uses the 128 KiB ITCM and DTCM product map.</p></article><article><h3>FreeRTOS U-mode</h3><p>The M1/M2 U-mode profile deliberately retains a 64 KiB demonstration partition: four 4 KiB user regions plus a 48 KiB kernel region. It is not the full M2 capacity layout.</p></article><article><h3>Zephyr</h3><p>Each product has a local board/SoC description. M0/M1 Zephyr deliberately retain their standard <code>ROM=ITCM</code>, <code>RAM=DTCM</code> linker model; M2 declares 128 KiB ITCM and DTCM in its board memory regions.</p></article><article><h3>Performance workloads</h3><p>CoreMark, Embench-IoT, Dhrystone, microbenchmarks, and M2 FP FFT are functional/measurement collateral. M0/M1 readonly-data placement in DTCM is a system software configuration, not a general BSP-driver performance claim.</p></article></div>
+    </section>
+    <section class="section next"><p class="eyebrow">NEXT</p><h2>Use the verification guide to select a test scope and interpret results.</h2><p><a href="verification.html">Open Verification and Evidence Guide</a></p></section>
+  </main>
+  <footer class="site-footer"><span>eRISCV MCU Software and SDK Guide</span><span>Engineering Documentation Review Set 1.0 · repository-owned workflows</span></footer>
+</body>
+</html>

@@ -1,0 +1,2 @@
+../../../rtl/peripherals/clk_rst/clk_rst_ctrl.sv
+../tb/clk_rst_ctrl_tb.sv

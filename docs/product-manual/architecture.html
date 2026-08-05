@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="eRISCV MCU family architecture and programming model.">
+  <title>eRISCV MCU Architecture</title>
+  <link rel="stylesheet" href="assets/site.css">
+  <script defer src="assets/site.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#content">Skip to content</a>
+  <header class="site-header">
+    <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">eR</span><span>eRISCV <small>MCU FAMILY</small></span></a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="main-nav">Menu</button>
+    <nav id="main-nav" class="main-nav" aria-label="Primary navigation"><a href="index.html">Family Guide</a><a href="architecture.html" aria-current="page">Architecture</a><a href="software.html">Software</a><a href="performance.html">Performance</a><a href="verification.html">Verification</a><a href="fpga-evaluation.html">FPGA</a><a href="board-jtag-debug.html">Board/JTAG</a></nav>
+  </header>
+  <main id="content">
+    <section class="profile-hero m1-profile">
+      <div><p class="eyebrow">ARCHITECTURE / SOFTWARE-VISIBLE MODEL</p><h1>One hart,<br><em>clear boundaries.</em></h1><p class="lede">The family is a cacheless RV32 microcontroller platform with directly addressed local memory, one machine-mode interrupt context, and a single JTAG debug target.</p></div>
+      <dl class="profile-hero-facts"><div><dt>Execution</dt><dd>In-order RV32 little-endian hart</dd></div><div><dt>Common services</dt><dd>CLINT, PLIC, Debug 1.0 Minimal, Zicntr and Zihpm</dd></div><div><dt>Memory rule</dt><dd>No cache, cacheable alias, or cache-maintenance contract</dd></div></dl>
+    </section>
+    <section class="notice"><strong>Reading rule.</strong> This is the single family-level location for the ISA/ABI declaration, software-visible address map, and PLIC source allocation. For product-specific behavior, use the <a href="products/eriscv-m0.html">M0 Profile</a>, <a href="products/eriscv-m1.html">M1 Profile</a>, or <a href="products/eriscv-m2.html">M2 Profile</a>. Register-level behavior remains owned by the product architecture and peripheral specifications.</section>
+    <section id="core" class="section profile-section">
+      <div class="section-heading"><p class="eyebrow">01 / CORE AND PRIVILEGE</p><h2>Use the product ISA and ABI declaration exactly.</h2><p>All products share C, CSR, fence.i, counter, HPM, and pause contracts. M1 and M2 add RV32M, U-mode, and PMP; M2 additionally adds RV32F, Zba, and Zcf. U-mode counter access on M1 and M2 is controlled by <code>mcounteren</code>.</p></div>
+      <div class="table-wrap"><table><thead><tr><th>Product</th><th>ISA profile</th><th>ABI</th><th>Privilege / protection</th><th>Integer computation</th><th>Floating point</th></tr></thead><tbody><tr><th>eRISCV-M0</th><td>RV32IC + Zicsr, Zifencei, Zicntr, Zihpm, Zihintpause</td><td><code>ilp32</code></td><td>M-mode</td><td>Software routines</td><td>Not supported</td></tr><tr><th>eRISCV-M1</th><td>RV32IMC + Zicsr, Zifencei, Zicntr, Zihpm, Zihintpause</td><td><code>ilp32</code></td><td>M-mode and U-mode; 16-entry PMP</td><td>RV32M</td><td>Not supported</td></tr><tr><th>eRISCV-M2</th><td>RV32IMFC + Zicsr, Zifencei, Zicntr, Zihpm, Zihintpause, Zba, Zcf</td><td><code>ilp32f</code></td><td>M-mode and U-mode; 16-entry PMP</td><td>RV32M</td><td>RV32F binary32</td></tr></tbody></table></div>
+      <div class="profile-grid three doc-grid-gap"><article><h3>Traps</h3><p>Machine mode owns trap vector installation, exception handling, local and external interrupt enable, and return through <code>mret</code>.</p></article><article><h3>WFI</h3><p><code>WFI</code> is an architectural wait, not a clock-gating API. Wake and pending-interrupt behavior are part of the clock/reset and interrupt contracts.</p></article><article><h3>Debug</h3><p>Debug is a single-hart Debug 1.0 Minimal JTAG DTM/DMI target. RTL coverage does not by itself establish physical-board debugger interoperability.</p></article></div>
+    </section>
+    <section id="memory" class="section profile-section muted-section">
+      <div class="section-heading"><p class="eyebrow">02 / MEMORY AND ORDERING</p><h2>Local TCM is deterministic; product extensions use the same map.</h2><p>ITCM is executable local SRAM. DTCM is non-executable local data SRAM. A DBus patch to instruction memory requires <code>fence.i</code> before execution observes modified instructions.</p></div>
+      <p class="profile-note">The complete sparse map below is the product-manual view of the address-space contract. <strong>Reserved</strong> means CPU-unmapped and bus-faulting until a product explicitly implements the window.</p>
+      <div class="table-wrap"><table><thead><tr><th>Address range</th><th>Address-space size</th><th>Region</th><th>D-bus access / role</th><th>Product status and notes</th></tr></thead><tbody>
+        <tr><th><code>0x0000_0000–0x0000_FFFF</code></th><td>64 KiB</td><td>Guard page</td><td>Unmapped</td><td>Reserved on all products; null-pointer guard.</td></tr>
+        <tr><th><code>0x0001_0000–0x0001_FFFF</code></th><td>64 KiB</td><td>Boot ROM</td><td>Future RX boot vector</td><td>Reserved on all products.</td></tr>
+        <tr><th><code>0x0002_0000–0x00FF_FFFF</code></th><td>15.875 MiB</td><td>Boot/platform reserve</td><td>Future ROM, lifecycle, or OTP views</td><td>Reserved on all products.</td></tr>
+        <tr><th><code>0x0100_0000–0x01FF_FFFF</code></th><td>16 MiB</td><td>Platform reserve</td><td>Unallocated platform space</td><td>Reserved on all products.</td></tr>
+        <tr class="address-map-implemented"><th><code>0x0200_0000–0x0200_FFFF</code></th><td>64 KiB</td><td>CLINT</td><td>MSIP, MTIP, <code>mtime</code>, and <code>mtimecmp</code></td><td>Implemented on M0, M1, and M2.</td></tr>
+        <tr><th><code>0x0201_0000–0x02FF_FFFF</code></th><td>15.9375 MiB</td><td>Interrupt-control reserve</td><td>Future AIA or timer expansion</td><td>Reserved on all products.</td></tr>
+        <tr><th><code>0x0300_0000–0x0BFF_FFFF</code></th><td>144 MiB</td><td>Platform reserve</td><td>Unallocated platform space</td><td>Reserved on all products.</td></tr>
+        <tr class="address-map-implemented"><th><code>0x0C00_0000–0x0CFF_FFFF</code></th><td>16 MiB</td><td>PLIC</td><td>Machine external interrupts</td><td>Implemented on M0, M1, and M2.</td></tr>
+        <tr><th><code>0x0D00_0000–0x0DFF_FFFF</code></th><td>16 MiB</td><td>Platform trace/control reserve</td><td>Future trace or control</td><td>Reserved on all products.</td></tr>
+        <tr><th><code>0x0E00_0000–0x0FFF_FFFF</code></th><td>32 MiB</td><td>Platform reserve</td><td>Unallocated platform space</td><td>Reserved on all products.</td></tr>
+        <tr class="address-map-implemented"><th><code>0x1000_0000–0x10FF_FFFF</code></th><td>16 MiB</td><td>ITCM</td><td>Executable CPU-local SRAM; D-bus patch requires <code>fence.i</code></td><td>Architectural 16 MiB ITCM window. Populated: M0 64 KiB, M1 64 KiB, M2 128 KiB. All remaining addresses are unmapped and bus-fault.</td></tr>
+        <tr class="address-map-implemented"><th><code>0x1100_0000–0x11FF_FFFF</code></th><td>16 MiB</td><td>DTCM</td><td>Non-executable CPU-local data SRAM</td><td>Architectural 16 MiB DTCM window. Populated: M0 64 KiB, M1 64 KiB, M2 128 KiB. All remaining addresses are unmapped and bus-fault.</td></tr>
+        <tr><th><code>0x1200_0000–0x12FF_FFFF</code></th><td>16 MiB</td><td>XRAM</td><td>Future RWX dual-port SRAM window</td><td>Reserved on all products.</td></tr>
+        <tr><th><code>0x1300_0000–0x1FFF_FFFF</code></th><td>208 MiB</td><td>Local-memory reserve</td><td>Future trace RAM, banks, or scratchpads</td><td>Reserved on all products.</td></tr>
+        <tr><th><code>0x2000_0000–0x27FF_FFFF</code></th><td>128 MiB</td><td>Internal Flash XIP</td><td>Future non-volatile image window</td><td>Reserved on all products.</td></tr>
+        <tr><th><code>0x2800_0000–0x2FFF_FFFF</code></th><td>128 MiB</td><td>QSPI/external Flash XIP</td><td>Future non-volatile image window</td><td>Reserved on all products.</td></tr>
+        <tr><th><code>0x3000_0000–0x3FFF_FFFF</code></th><td>256 MiB</td><td>External boot/storage</td><td>Future boot-storage or memory-controller windows</td><td>Reserved on all products.</td></tr>
+        <tr class="address-map-implemented"><th><code>0x4000_0000–0x4FFF_FFFF</code></th><td>256 MiB</td><td>APB peripheral space</td><td>Low-speed MMIO bus window</td><td>Implemented APB slots and all reserved expansion are defined in the APB allocation table below.</td></tr>
+        <tr class="address-map-implemented"><th><code>0x5000_0000–0x5000_FFFF</code></th><td>64 KiB</td><td>DMA control</td><td>M2 generic DMA register block</td><td>Implemented only on M2; Reserved on M0/M1.</td></tr>
+        <tr><th><code>0x5001_0000–0x50FF_FFFF</code></th><td>15.9375 MiB</td><td>High-speed subgroup</td><td>Future high-bandwidth IP</td><td>Reserved on all products.</td></tr>
+        <tr><th><code>0x5100_0000–0x5FFF_FFFF</code></th><td>240 MiB</td><td>High-speed MMIO reserve</td><td>Unallocated high-speed MMIO space</td><td>Reserved on all products.</td></tr>
+        <tr><th><code>0x6000_0000–0x7FFF_FFFF</code></th><td>512 MiB</td><td>External devices</td><td>Future expansion windows</td><td>Reserved on all products.</td></tr>
+        <tr class="address-map-implemented"><th><code>0x8000_0000–0x8007_FFFF</code></th><td>512 KiB</td><td>System SRAM</td><td>M2 CPU/DMA shared buffer SRAM</td><td>Implemented only on M2; Reserved on M0/M1.</td></tr>
+        <tr><th><code>0x8008_0000–0xBFFF_FFFF</code></th><td>1023.5 MiB</td><td>Future system memory</td><td>PSRAM, DDR, or additional System SRAM</td><td>Reserved on all products.</td></tr>
+        <tr><th><code>0xC000_0000–0xFFFF_FFFF</code></th><td>1 GiB</td><td>Vendor extension</td><td>Future accelerators or product-specific expansion</td><td>Reserved on all products.</td></tr>
+      </tbody></table></div>
+      <div class="section-heading doc-grid-gap"><p class="eyebrow">02A / APB PERIPHERAL ALLOCATION</p><h3>Fixed slots preserve software-visible peripheral addresses.</h3></div>
+      <div class="table-wrap"><table><thead><tr><th>APB address range</th><th>Address-space size</th><th>Slot</th><th>Status</th></tr></thead><tbody>
+        <tr class="address-map-implemented"><th><code>0x4000_0000–0x4000_FFFF</code></th><td>64 KiB</td><td>UART0</td><td>Implemented on M0, M1, and M2.</td></tr>
+        <tr class="address-map-implemented"><th><code>0x4001_0000–0x4001_FFFF</code></th><td>64 KiB</td><td>GPIO0</td><td>Implemented on M0, M1, and M2.</td></tr>
+        <tr class="address-map-implemented"><th><code>0x4002_0000–0x4002_FFFF</code></th><td>64 KiB</td><td>Timer block</td><td>Implemented on M0, M1, and M2.</td></tr>
+        <tr class="address-map-implemented"><th><code>0x4003_0000–0x4003_FFFF</code></th><td>64 KiB</td><td>SPI0</td><td>Implemented on M0, M1, and M2.</td></tr>
+        <tr class="address-map-implemented"><th><code>0x4004_0000–0x4004_FFFF</code></th><td>64 KiB</td><td>Watchdog</td><td>Implemented on M0, M1, and M2.</td></tr>
+        <tr class="address-map-implemented"><th><code>0x4005_0000–0x4005_FFFF</code></th><td>64 KiB</td><td>Clock/reset/power control</td><td>Implemented on M0, M1, and M2.</td></tr>
+        <tr><th><code>0x4006_0000–0x40FF_FFFF</code></th><td>15.625 MiB</td><td>Future APB devices</td><td>Reserved as 64 KiB device slots on all products.</td></tr>
+        <tr><th><code>0x4100_0000–0x41FF_FFFF</code></th><td>16 MiB</td><td>System-control subgroup</td><td>Reserved for pinmux, pads, security, or OTP control.</td></tr>
+        <tr><th><code>0x4200_0000–0x4FFF_FFFF</code></th><td>224 MiB</td><td>APB reserve</td><td>Reserved on all products.</td></tr>
+      </tbody></table></div>
+      <div class="profile-grid two doc-grid-gap"><article><h3>Local-memory execution</h3><p>Direct CPU TCM accesses do not traverse a shared-memory arbitration fabric. Product-specific capacity and extension behavior is defined by the corresponding Preliminary Product Datasheet.</p></article><article><h3>Ordering rule</h3><p>No product supplies a data cache, DMA coherency fabric, or cache-maintenance operation. Software establishes ownership before a DMA transfer and consumes status/interrupt completion before reusing the buffer.</p></article></div>
+    </section>
+    <section id="interrupts" class="section architecture">
+      <div class="section-heading"><p class="eyebrow">03 / INTERRUPTS, COUNTERS, AND DEBUG</p><h2>One interrupt vocabulary across the family.</h2><p>CLINT supplies MSIP, MTIP, and platform time. The PLIC supplies MEIP from 32 global sources through one machine-mode context with 3-bit priorities. The source map below is the shared family ABI; a product wires only its implemented sources.</p></div>
+      <ol class="reference-rules"><li>Source ID 0 is reserved and never represents an interrupt.</li><li>A source is eligible only when pending, enabled, not in service, and strictly above threshold.</li><li>The highest priority source wins; equal priority resolves to the lowest source ID.</li><li>Firmware clears the device condition before completing the claimed source when a single service instance is intended.</li></ol>
+      <div class="architecture-grid"><article><span>PLIC</span><h3>Claim and complete</h3><p>Firmware enables the peripheral locally, configures source priority/enable/threshold, claims the selected ID, clears its device condition, then completes the same ID.</p></article><article><span>SOURCES</span><h3>Family source ABI</h3><p>Implemented sources are fixed. Reserved IDs remain tied low until their RTL, software ABI, and directed test are integrated.</p></article><article><span>HPM</span><h3>Four programmable counters</h3><p>HPM3–HPM6 are the implemented family subset, in addition to cycle, time, and instret. HPM7–HPM31 must not be advertised.</p></article><article><span>JTAG</span><h3>Minimal transport</h3><p>DTM/DMI, one Debug Module, GPR and debug-CSR access, halt/resume, and system-bus access form the documented RTL target boundary.</p></article></div>
+      <div class="table-wrap doc-grid-gap"><table><thead><tr><th>Source IDs</th><th>Family allocation</th><th>Product state</th></tr></thead><tbody><tr><th>0</th><td>Reserved; no interrupt</td><td>Reserved and tied low on all products.</td></tr><tr class="address-map-implemented"><th>1</th><td>UART0</td><td>Wired on M0, M1, and M2.</td></tr><tr class="address-map-implemented"><th>2</th><td>TIMER0</td><td>Wired on M0, M1, and M2.</td></tr><tr class="address-map-implemented"><th>3</th><td>SPI0</td><td>Wired on M0, M1, and M2.</td></tr><tr class="address-map-implemented"><th>4</th><td>WDT0</td><td>Wired on M0, M1, and M2.</td></tr><tr><th>5</th><td>Generic DMA completion/error</td><td>Wired on M2; reserved and tied low on M0/M1.</td></tr><tr><th>6–16</th><td>Named future device slots</td><td>Reserved and tied low on all products.</td></tr><tr><th>17–32</th><td>Board and external expansion</td><td>Synchronized expansion inputs; baseline FPGA wrappers tie them low.</td></tr></tbody></table></div>
+    </section>
+    <section id="boot" class="section profile-section">
+      <div class="section-heading"><p class="eyebrow">04 / RESET, BOOT, AND ERROR RESPONSE</p><h2>Boot evidence is distinct from a production boot-policy claim.</h2><p>The SoC testbench exercises bypass, JTAG/DMI, UART, and SPI-slave loading paths. Product firmware starts from its linker-defined boot address, installs its trap entry, initializes data, and establishes interrupt policy.</p></div>
+      <div class="profile-grid three"><article><h3>Firmware image</h3><p>The BSP emits separate instruction and data images. Image generation verifies that loadable bytes are inside the selected product memory regions.</p></article><article><h3>Bus errors</h3><p>Unmapped or denied accesses return a defined bus-error response to the core. M1 and M2 PMP policy applies to CPU fetch, loads, and stores.</p></article><article><h3>Board boundary</h3><p>Physical reset sequencing, pin assignment, loader transport qualification, and an externally programmable image format remain board bring-up work.</p></article></div>
+    </section>
+    <section class="section next"><p class="eyebrow">NEXT</p><h2>Use the SDK guide to build and exercise this architecture.</h2><p><a href="software.html">Open Software and SDK Guide</a></p></section>
+  </main>
+  <footer class="site-footer"><span>eRISCV MCU Architecture</span><span>Engineering Documentation Review Set 1.0 · software-visible contract</span></footer>
+</body>
+</html>

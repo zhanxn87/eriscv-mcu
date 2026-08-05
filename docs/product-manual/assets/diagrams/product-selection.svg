@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 380" role="img" aria-labelledby="title desc">
+  <title id="title">eRISCV MCU product selection flow</title>
+  <desc id="desc">A three-step decision flow that selects M2 for floating point or controlled data movement, M1 for protected M and U mode software, and M0 for compact M-mode control.</desc>
+  <defs>
+    <style>
+      .label { fill: #53677b; font: 600 16px Inter, Arial, sans-serif; }
+      .question { fill: #122033; font: 700 19px Inter, Arial, sans-serif; }
+      .answer { font: 800 22px Inter, Arial, sans-serif; }
+      .small { fill: #53677b; font: 500 14px Inter, Arial, sans-serif; }
+    </style>
+  </defs>
+  <rect width="920" height="380" rx="8" fill="#f0f5f8"/>
+
+  <rect x="40" y="28" width="560" height="72" rx="7" fill="#ffffff" stroke="#cbd8e1"/>
+  <circle cx="76" cy="64" r="17" fill="#0d6c95"/>
+  <text x="76" y="70" text-anchor="middle" fill="#fff" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="800">1</text>
+  <text x="110" y="61" class="question">Need RV32F, shared System SRAM, or generic DMA?</text>
+  <text x="110" y="83" class="small">Binary32 compute, shared buffers, linked descriptors, or fixed UART0 TX</text>
+  <path d="M600 64h80" fill="none" stroke="#0b6d91" stroke-width="3" stroke-linecap="round"/>
+  <path d="M668 53l12 11-12 11" fill="none" stroke="#0b6d91" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="625" y="55" class="label">Yes</text>
+  <rect x="680" y="28" width="200" height="72" rx="7" fill="#0b4965"/>
+  <text x="780" y="61" text-anchor="middle" fill="#35d3c7" class="answer">M2</text>
+  <text x="780" y="83" text-anchor="middle" fill="#d6edf1" font-family="Inter, Arial, sans-serif" font-size="14">Compute + movement</text>
+  <path d="M320 100v50" fill="none" stroke="#6098aa" stroke-width="3" stroke-linecap="round"/>
+  <path d="M309 138l11 12 11-12" fill="none" stroke="#6098aa" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="334" y="127" class="label">No</text>
+
+  <rect x="40" y="150" width="560" height="72" rx="7" fill="#ffffff" stroke="#cbd8e1"/>
+  <circle cx="76" cy="186" r="17" fill="#3c8ba8"/>
+  <text x="76" y="192" text-anchor="middle" fill="#fff" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="800">2</text>
+  <text x="110" y="183" class="question">Need hardware multiply/divide, M/U isolation, or PMP?</text>
+  <text x="110" y="205" class="small">RV32M, U-mode, MPRV, or protected firmware regions</text>
+  <path d="M600 186h80" fill="none" stroke="#3c8ba8" stroke-width="3" stroke-linecap="round"/>
+  <path d="M668 175l12 11-12 11" fill="none" stroke="#3c8ba8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="625" y="177" class="label">Yes</text>
+  <rect x="680" y="150" width="200" height="72" rx="7" fill="#e7f2f6" stroke="#3c8ba8"/>
+  <text x="780" y="183" text-anchor="middle" fill="#17627d" class="answer">M1</text>
+  <text x="780" y="205" text-anchor="middle" fill="#385a68" font-family="Inter, Arial, sans-serif" font-size="14">Protected control</text>
+  <path d="M320 222v50" fill="none" stroke="#8dbccb" stroke-width="3" stroke-linecap="round"/>
+  <path d="M309 260l11 12 11-12" fill="none" stroke="#8dbccb" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="334" y="249" class="label">No</text>
+
+  <rect x="40" y="272" width="560" height="72" rx="7" fill="#ffffff" stroke="#cbd8e1"/>
+  <circle cx="76" cy="308" r="17" fill="#8dbccb"/>
+  <text x="76" y="314" text-anchor="middle" fill="#122033" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="800">3</text>
+  <text x="110" y="305" class="question">Use the compact M-mode control profile.</text>
+  <text x="110" y="327" class="small">Common interrupts, debug, counters, and peripherals without M or PMP hardware</text>
+  <path d="M600 308h80" fill="none" stroke="#8dbccb" stroke-width="3" stroke-linecap="round"/>
+  <path d="M668 297l12 11-12 11" fill="none" stroke="#8dbccb" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="680" y="272" width="200" height="72" rx="7" fill="#e1f0f4" stroke="#8dbccb"/>
+  <text x="780" y="305" text-anchor="middle" fill="#24596b" class="answer">M0</text>
+  <text x="780" y="327" text-anchor="middle" fill="#385a68" font-family="Inter, Arial, sans-serif" font-size="14">Compact control</text>
+</svg>

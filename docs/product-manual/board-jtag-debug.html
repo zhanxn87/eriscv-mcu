@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="eRISCV VCU108 board bring-up and JTAG evidence guide.">
+  <title>eRISCV Board Bring-up and JTAG Debug</title>
+  <link rel="stylesheet" href="assets/site.css">
+  <script defer src="assets/site.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#content">Skip to content</a>
+  <header class="site-header">
+    <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">eR</span><span>eRISCV <small>MCU FAMILY</small></span></a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="main-nav">Menu</button>
+    <nav id="main-nav" class="main-nav" aria-label="Primary navigation"><a href="index.html">Family Guide</a><a href="architecture.html">Architecture</a><a href="software.html">Software</a><a href="performance.html">Performance</a><a href="verification.html">Verification</a><a href="fpga-evaluation.html">FPGA</a><a href="board-jtag-debug.html" aria-current="page">Board/JTAG</a></nav>
+  </header>
+  <main id="content">
+    <section class="profile-hero m2-profile">
+      <div><p class="eyebrow">BOARD BRING-UP AND JTAG DEBUG</p><h1>Make the board<br><em>evidence reproducible.</em></h1><p class="lede">This is the executable evidence plan for physical VCU108 validation. M0 UART boot has one retained end-to-end smoke record; it does not qualify the remaining board, adapter, or debugger paths.</p></div>
+      <dl class="profile-hero-facts"><div><dt>Target</dt><dd>VCU108 implementation configuration</dd></div><div><dt>Transport</dt><dd>JTAG DTM/DMI, single hart</dd></div><div><dt>Observed evidence</dt><dd>M0 UART boot and runtime TX smoke</dd></div></dl>
+    </section>
+    <section class="notice"><strong>Prerequisite.</strong> Routed timing evidence is necessary but not sufficient. The M0 UART smoke record is available below; do not label a product board-ready until every applicable item in this guide has a retained command transcript and observed result.</section>
+    <section class="section profile-section muted-section"><div class="section-heading"><p class="eyebrow">CURRENT BOARD EVIDENCE</p><h2>M0 has completed the first visible firmware smoke.</h2><p><a href="m0-uart-boot-hello-world.html">Open the M0 UART boot to Hello World record</a> for the complete build chain, serial protocol, physical routing, host transcript, and scope boundary.</p></div></section>
+    <section id="prepare" class="section profile-section">
+      <div class="section-heading"><p class="eyebrow">01 / PREPARE A RECORD</p><h2>Capture the immutable inputs before programming.</h2></div>
+      <div class="checklist"><label><input type="checkbox"> RTL commit and clean build-tree status</label><label><input type="checkbox"> Vivado version, host OS, device and board revision</label><label><input type="checkbox"> Constraint revision and generated bitstream hash</label><label><input type="checkbox"> JTAG cable/adapter model, voltage assumptions, and chain position</label><label><input type="checkbox"> Exact BSP ELF/image and toolchain version</label><label><input type="checkbox"> Expected UART/GPIO/JTAG completion oracle</label></div>
+    </section>
+    <section id="bringup" class="section profile-section muted-section">
+      <div class="section-heading"><p class="eyebrow">02 / BASIC BOARD BRING-UP</p><h2>Establish clock, reset, and visible firmware execution first.</h2></div>
+      <ol class="steps"><li><strong>Program and identify</strong><span>Program the bitstream, record the programming output, and confirm the expected FPGA device and board revision.</span></li><li><strong>Reset and clock</strong><span>Observe clock lock and reset release with the product’s intended constraints and image. Record reset cause or failure symptoms.</span></li><li><strong>UART and GPIO</strong><span>Run a reproducible BSP image, capture the complete UART stream, and record GPIO pass signaling against documented physical pin mapping.</span></li><li><strong>Interrupt smoke</strong><span>Exercise a timer/PLIC path and watchdog pre-timeout path with an observable completion result.</span></li></ol>
+    </section>
+    <section id="jtag" class="section architecture">
+      <div class="section-heading"><p class="eyebrow">03 / JTAG AND DEBUG</p><h2>Prove the transport before claiming source-level debug.</h2><p>Adapter and target configuration files must be versioned with the evidence record. A successful scan alone does not establish DMI access, halt control, or recovery behavior.</p></div>
+      <div class="architecture-grid"><article><span>SCAN</span><h3>Chain discovery</h3><p>Record the expected chain and IDCODE/DTM discovery result, cable configuration, and recovery after a transport reset.</p></article><article><span>DMI</span><h3>Debug Module access</h3><p>Exercise <code>dmactive</code>, halt/resume, GPR access, debug CSRs, and a bounded system-bus memory access.</p></article><article><span>GDB</span><h3>Source-level session</h3><p>Archive a scripted halt, register read, breakpoint or single-step, memory read, resume, and reset-recovery transcript.</p></article><article><span>INTERACTION</span><h3>Architectural edges</h3><p>Record behavior across WFI, traps, reset, and—on M1/M2—PMP/U-mode boundaries before asserting debugger support.</p></article></div>
+    </section>
+    <section class="section profile-section">
+      <div class="section-heading"><p class="eyebrow">04 / PRODUCT-SPECIFIC SMOKE</p><h2>Use an observable path for each product addition.</h2></div>
+      <div class="profile-grid three"><article><h3>M0</h3><p>Boot, UART, GPIO, timer, PLIC, watchdog, and recovery after debug reset.</p></article><article><h3>M1</h3><p>U-mode/PMP boundary, expected fault behavior, and debug interaction without weakening the protected execution test.</p></article><article><h3>M2</h3><p>FP arithmetic, System SRAM banking, DMA descriptor copy, UART0 TX DMA, and an intentional firewall/error path.</p></article></div>
+    </section>
+    <section id="archive" class="section publication">
+      <div class="section-heading"><p class="eyebrow">05 / ARCHIVE AND DISPOSITION</p><h2>One run is useful only if another engineer can reproduce it.</h2></div>
+      <div class="document-grid"><article><h3>Required artifacts</h3><p>Bitstream hash, constraints, board revision, host and tool versions, adapter configuration, complete command transcript, UART log, and debugger log.</p></article><article><h3>Observed result</h3><p>Store expected and observed outputs together, including screenshot/waveform evidence only as supporting artifacts rather than the sole result.</p></article><article><h3>Known deviations</h3><p>Record failures and limitations with a stable ID, product/revision scope, workaround, and planned disposition.</p></article></div>
+    </section>
+  </main>
+  <footer class="site-footer"><span>eRISCV Board Bring-up and JTAG Debug Guide</span><span>Engineering Documentation Review Set 1.0 · physical validation not yet claimed</span></footer>
+</body>
+</html>

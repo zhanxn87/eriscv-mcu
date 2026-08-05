@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" role="img" aria-labelledby="title desc">
+  <title id="title">eRISCV-M1 protection boundary</title>
+  <desc id="desc">M1 RV32IMC hart showing machine and user mode, an internal sixteen-entry PMP unit, local memories, and common platform services.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#0a2f43"/><stop offset="1" stop-color="#315e72"/></linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8ad8df"/></marker>
+    <style>
+      .box { fill:#f7fcfd; stroke:#91c7d1; stroke-width:1.5; rx:10; }
+      .mode { fill:#d7edf1; stroke:#35d3c7; stroke-width:1.5; rx:8; }
+      .pmp { fill:#ffe9c8; stroke:#ffb45d; stroke-width:2; rx:12; }
+      .dark { fill:#0b2a3b; stroke:#70adba; stroke-width:1.5; rx:10; }
+      .line { stroke:#8ad8df; stroke-width:2; fill:none; marker-end:url(#arrow); }
+      .label { fill:#17384a; font:700 16px Inter,Arial,sans-serif; }
+      .small { fill:#456477; font:14px Inter,Arial,sans-serif; }
+      .darklabel { fill:#eaf9fb; font:700 16px Inter,Arial,sans-serif; }
+      .darksmall { fill:#b9d8df; font:14px Inter,Arial,sans-serif; }
+      .caption { fill:#78e5db; font:800 13px Inter,Arial,sans-serif; letter-spacing:2px; }
+    </style>
+  </defs>
+  <rect width="960" height="500" rx="16" fill="url(#bg)"/>
+  <text x="42" y="52" class="caption">ERISCV-M1 / PROTECTION BOUNDARY</text>
+  <text x="42" y="82" fill="#eaf9fb" font-family="Inter,Arial,sans-serif" font-size="23" font-weight="700">Machine-mode policy controls U-mode CPU accesses</text>
+
+  <rect x="52" y="122" width="542" height="244" class="box"/>
+  <text x="76" y="154" class="label">RV32IMC HART</text>
+  <text x="76" y="178" class="small">hardware multiply/divide · cacheless</text>
+  <rect x="76" y="204" width="236" height="58" class="mode"/>
+  <text x="94" y="238" class="label">M-mode</text><text x="184" y="238" class="small">traps · PMP policy · interrupts</text>
+  <rect x="76" y="282" width="236" height="58" class="mode"/>
+  <text x="94" y="316" class="label">U-mode</text><text x="184" y="316" class="small">controlled task execution</text>
+
+  <rect x="410" y="168" width="184" height="124" class="pmp"/>
+  <text x="502" y="210" text-anchor="middle" class="label">PMP · 16 entries</text>
+  <text x="502" y="235" text-anchor="middle" class="small">TOR · NA4 · NAPOT</text>
+  <text x="502" y="258" text-anchor="middle" class="small">R / W / X · lock · MPRV</text>
+  <path d="M336 244 H410" class="line"/>
+
+  <rect x="668" y="120" width="236" height="70" class="dark"/>
+  <text x="692" y="151" class="darklabel">ITCM · 64 KiB</text>
+  <text x="692" y="174" class="darksmall">executable local SRAM</text>
+  <path d="M594 204 L668 155" class="line"/>
+  <rect x="668" y="220" width="236" height="70" class="dark"/>
+  <text x="692" y="251" class="darklabel">DTCM · 64 KiB</text>
+  <text x="692" y="274" class="darksmall">non-executable local data SRAM</text>
+  <path d="M594 254 L668 255" class="line"/>
+  <rect x="668" y="320" width="236" height="58" class="dark"/>
+  <text x="786" y="355" text-anchor="middle" class="darklabel">CLINT · PLIC · JTAG</text>
+
+  <path d="M52 408 H904" stroke="#70a8b4" stroke-width="1"/>
+  <text x="52" y="438" fill="#d4edf1" font-family="Inter,Arial,sans-serif" font-size="15">PMP checks CPU instruction fetches, loads, and stores. M1 has no S-mode, MMU, or cache hierarchy.</text>
+  <text x="52" y="464" fill="#d4edf1" font-family="Inter,Arial,sans-serif" font-size="15">It is not a general I/O firewall.</text>
+</svg>

@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="eRISCV M0, M1, and M2 controlled performance evidence.">
+  <title>eRISCV Performance Evidence</title>
+  <link rel="stylesheet" href="assets/site.css">
+  <script defer src="assets/site.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">eR</span><span>eRISCV <small>MCU FAMILY</small></span></a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="main-nav">Menu</button>
+    <nav id="main-nav" class="main-nav" aria-label="Primary navigation"><a href="index.html">Family Guide</a><a href="architecture.html">Architecture</a><a href="software.html">Software</a><a href="performance.html" aria-current="page">Performance</a><a href="verification.html">Verification</a><a href="fpga-evaluation.html">FPGA</a><a href="board-jtag-debug.html">Board/JTAG</a></nav>
+  </header>
+  <main>
+    <section class="hero performance-hero">
+      <div class="hero-copy">
+        <p class="eyebrow">PERFORMANCE EVIDENCE / CONTROLLED SIMULATION</p>
+        <h1>Recovering<br><em>lost cycles.</em></h1>
+        <p class="lede">A controlled Dhrystone record for M0, M1, and M2: local-memory latency, immediate load-consumer handling, and control-flow recovery are measured separately before a feature is retained.</p>
+      </div>
+      <dl class="profile-hero-facts" aria-label="Latest clean Dhrystone results">
+        <div><dt>M0 / ALL ON</dt><dd>0.906268 DMIPS/MHz · 628,017 raw cycles</dd></div>
+        <div><dt>M1 / ALL ON</dt><dd>0.967904 DMIPS/MHz · 588,025 raw cycles</dd></div>
+        <div><dt>M2 / ALL ON</dt><dd>0.979565 DMIPS/MHz · 581,025 raw cycles</dd></div>
+        <div><dt>COMMON WINDOW</dt><dd>Dhrystone 2.1 · 1,000 iterations · <code>-O2</code> · layout4 · HPM disabled</dd></div>
+        <div><dt>SCOPE</dt><dd>Verilator engineering evidence; not a guaranteed product-performance specification.</dd></div>
+      </dl>
+    </section>
+
+    <section class="notice">
+      <strong>Evidence boundary.</strong> Results compare controlled RTL feature gates within each product. They do not establish ASIC PPA, clock-frequency guarantees, board performance, power, or a cross-product benchmark ranking.
+    </section>
+
+    <section class="section matrix-section">
+      <div class="section-heading">
+        <p class="eyebrow">01 / CONTROLLED FEATURE SWEEP</p>
+        <h2>One clean revision. Five cumulative gates.</h2>
+        <p>Every point was rebuilt at clean revision <code>dce4cd6</code> with the same product-local image, <code>-O2 -falign-functions=4 -falign-loops=4 -falign-jumps=4</code>, linker layout, and Verilator run. Gates are added in order: early local-load, load-response bypass, BHT, RAS, then upper-32 prefetch.</p>
+      </div>
+      <figure class="performance-plot">
+        <svg viewBox="0 0 1100 650" role="img" aria-labelledby="performance-chart-title performance-chart-desc">
+          <title id="performance-chart-title">M0 M1 and M2 clean Dhrystone feature sweep</title>
+          <desc id="performance-chart-desc">Cumulative five-gate Dhrystone measurements at clean revision dce4cd6 for M0, M1, and M2. The readout below the plot gives each score and uplift relative to the all-gates-off baseline.</desc>
+          <rect width="1100" height="650" fill="#ffffff"/>
+          <g fill="none" stroke="#dce3eb" stroke-width="1"><path d="M70 60V420H1040"/><path d="M70 420H1040"/><path d="M70 330H1040"/><path d="M70 240H1040"/><path d="M70 150H1040"/><path d="M70 60H1040"/></g>
+          <g fill="#58677a" font-family="ui-monospace,monospace" font-size="14"><text x="20" y="425">0.60</text><text x="20" y="335">0.70</text><text x="20" y="245">0.80</text><text x="20" y="155">0.90</text><text x="20" y="65">1.00</text><text x="70" y="34" fill="#122033" font-weight="800">DMIPS / MHz</text></g>
+          <g fill="none" stroke-linecap="round" stroke-width="5"><path d="M100 343.6L280 215.5L460 159.7L640 163.4L820 150.8L1000 144.4" stroke="#0d8b83"/><path d="M100 316.5L280 179.2L460 114.8L640 104.9L820 91.8L1000 88.9" stroke="#2681a6"/><path d="M100 311.6L280 172.0L460 104.9L640 94.8L820 81.4L1000 78.4" stroke="#8a4fff"/></g>
+          <g stroke="#ffffff" stroke-width="4"><g fill="#0d8b83"><circle cx="100" cy="343.6" r="7"/><circle cx="280" cy="215.5" r="7"/><circle cx="460" cy="159.7" r="7"/><circle cx="640" cy="163.4" r="7"/><circle cx="820" cy="150.8" r="7"/><circle cx="1000" cy="144.4" r="8"/></g><g fill="#2681a6"><circle cx="100" cy="316.5" r="7"/><circle cx="280" cy="179.2" r="7"/><circle cx="460" cy="114.8" r="7"/><circle cx="640" cy="104.9" r="7"/><circle cx="820" cy="91.8" r="7"/><circle cx="1000" cy="88.9" r="8"/></g><g fill="#8a4fff"><circle cx="100" cy="311.6" r="7"/><circle cx="280" cy="172.0" r="7"/><circle cx="460" cy="104.9" r="7"/><circle cx="640" cy="94.8" r="7"/><circle cx="820" cy="81.4" r="7"/><circle cx="1000" cy="78.4" r="8"/></g></g>
+          <g fill="#122033" font-family="ui-monospace,monospace" font-size="12" font-weight="800" text-anchor="middle"><text x="100" y="460">00000</text><text x="280" y="460">EARLY LMEM</text><text x="460" y="460">+ RESPONSE</text><text x="460" y="477">BYPASS</text><text x="640" y="460">+ BHT</text><text x="820" y="460">+ RAS</text><text x="1000" y="460">+ U32 PREFETCH</text></g>
+          <g font-family="ui-monospace,monospace" font-size="13" font-weight="800"><text x="908" y="137" fill="#0d8b83">M0 .906268</text><text x="908" y="111" fill="#2681a6">M1 .967904</text><text x="908" y="68" fill="#8a4fff">M2 .979565</text></g>
+          <path d="M70 495H1040" stroke="#dce3eb" stroke-width="1"/>
+          <g fill="#58677a" font-family="ui-monospace,monospace" font-size="12" font-weight="800"><text x="12" y="515">SCORE / UPLIFT VS 00000</text><text x="12" y="540" fill="#0d8b83">M0</text><text x="12" y="568" fill="#2681a6">M1</text><text x="12" y="596" fill="#8a4fff">M2</text></g>
+          <g font-family="ui-monospace,monospace" font-size="12" font-weight="800" text-anchor="middle"><g fill="#0d8b83"><text x="100" y="540">0.6849 / +0.00%</text><text x="280" y="540">0.8272 / +20.78%</text><text x="460" y="540">0.8893 / +29.84%</text><text x="640" y="540">0.8851 / +29.24%</text><text x="820" y="540">0.8991 / +31.28%</text><text x="1000" y="540">0.9063 / +32.32%</text></g><g fill="#2681a6"><text x="100" y="568">0.7150 / +0.00%</text><text x="280" y="568">0.8676 / +21.34%</text><text x="460" y="568">0.9392 / +31.35%</text><text x="640" y="568">0.9501 / +32.89%</text><text x="820" y="568">0.9646 / +34.91%</text><text x="1000" y="568">0.9679 / +35.37%</text></g><g fill="#8a4fff"><text x="100" y="596">0.7204 / +0.00%</text><text x="280" y="596">0.8756 / +21.54%</text><text x="460" y="596">0.9501 / +31.89%</text><text x="640" y="596">0.9614 / +33.44%</text><text x="820" y="596">0.9762 / +35.50%</text><text x="1000" y="596">0.9796 / +35.97%</text></g></g>
+        </svg>
+        <figcaption><ul class="performance-legend"><li><span class="performance-key"></span><span>M0</span></li><li><span class="performance-key m1"></span><span>M1</span></li><li><span class="performance-key m2"></span><span>M2</span></li></ul>Readout: score / relative uplift from <code>00000</code>. HPM disabled; Dhrystone 2.1; 1,000 iterations; <code>-O2</code>; four-byte compiler layout; runtime <code>.rodata</code> in DTCM.</figcaption>
+      </figure>
+    </section>
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">02 / MEASUREMENT CONTRACT</p>
+        <h2>One image per product. One uninstrumented benchmark window.</h2>
+        <p>Within each product, source, linker layout, compiler flags, iteration count, simulator, and profiling window remain fixed. HPM reporting is deliberately disabled because it changes the program image.</p>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>Item</th><th>M0</th><th>M1</th><th>M2</th></tr></thead><tbody>
+        <tr><th>Compiler / ISA</th><td><code>riscv64-unknown-elf-gcc -O2</code><br><code>rv32ic_zicsr_zifencei_zicntr_zihpm_zihintpause</code></td><td><code>riscv64-unknown-elf-gcc -O2</code><br><code>rv32imc_zicsr_zifencei_zicntr_zihpm_zihintpause</code></td><td><code>riscv64-unknown-elf-gcc -O2</code><br><code>rv32imfc_zicsr_zifencei_zicntr_zihpm_zihintpause_zba_zcf</code></td></tr>
+        <tr><th>Run</th><td colspan="3"><code>run_dhrystone_sim.py --backend verilator --iterations 1000</code>; <code>DHRY_HPM=0</code>; testbench <code>+perf_profile=1</code> enabled.</td></tr>
+        <tr><th>Memory / linker</th><td colspan="2">64 KiB IMEM + 64 KiB DMEM. Runtime <code>.rodata/.srodata</code> is in DMEM.</td><td>128 KiB ITCM + 128 KiB DTCM. Runtime <code>.rodata/.srodata</code> is in DTCM; the 512 KiB System SRAM is not used by this benchmark image.</td></tr>
+        <tr><th>This image</th><td colspan="3"><code>rodata_bytes = 0</code>; the active linker policy does not add runtime copy cycles to this sweep.</td></tr>
+      </tbody></table></div>
+      <p class="performance-table-note"><strong>CPI definition:</strong> <code>raw_mcycle / tb_retired</code> in the same Dhrystone window. At the all-on endpoint, M0 is <code>628,017 / 494,014 = 1.271253</code>, M1 is <code>588,025 / 464,015 = 1.267254</code>, and M2 is <code>581,025 / 462,015 = 1.257589</code>.</p>
+    </section>
+
+    <section class="section architecture">
+      <div class="section-heading"><p class="eyebrow">03 / PROFILE RESPONSE BY FEATURE GATE</p><h2>The largest gains remove deterministic memory waiting.</h2><p>D-bus wait, load-use stalls, and redirect observations can overlap; only raw-cycle deltas are additive performance evidence.</p></div>
+      <figure class="performance-chart-card">
+        <svg viewBox="0 0 1120 500" role="img" aria-labelledby="profile-chart-title profile-chart-desc">
+          <title id="profile-chart-title">Dhrystone cycles recovered by each feature gate</title>
+          <desc id="profile-chart-desc">Grouped bars compare cycles recovered on M0, M1, and M2 at each cumulative feature stage. M0 BHT is a small cost on this image.</desc>
+          <rect width="1120" height="500" fill="#ffffff"/>
+          <g stroke="#dce3eb" stroke-width="1"><path d="M90 80H1060M90 150H1060M90 220H1060M90 290H1060M90 360H1060"/></g>
+          <path d="M90 360H1060" stroke="#405064" stroke-width="1.5"/>
+          <g fill="#58677a" font-family="ui-monospace,monospace" font-size="13"><text x="25" y="85">140k</text><text x="32" y="155">105k</text><text x="40" y="225">70k</text><text x="40" y="295">35k</text><text x="55" y="365">0</text><text x="90" y="43" fill="#122033" font-size="15" font-weight="800">Cycles recovered per added gate</text></g>
+          <g font-family="ui-monospace,monospace" font-size="13" font-weight="800"><rect x="840" y="26" width="18" height="8" fill="#0d8b83"/><text x="866" y="35" fill="#405064">M0</text><rect x="915" y="26" width="18" height="8" fill="#2681a6"/><text x="941" y="35" fill="#405064">M1</text><rect x="990" y="26" width="18" height="8" fill="#8a4fff"/><text x="1016" y="35" fill="#405064">M2</text></g>
+          <g><rect x="165" y="67" width="27" height="293" fill="#0d8b83"/><rect x="199" y="73" width="27" height="287" fill="#2681a6"/><rect x="233" y="73" width="27" height="287" fill="#8a4fff"/>
+             <rect x="345" y="262" width="27" height="98" fill="#0d8b83"/><rect x="379" y="258" width="27" height="102" fill="#2681a6"/><rect x="413" y="255" width="27" height="105" fill="#8a4fff"/>
+             <rect x="525" y="360" width="27" height="6" fill="#0d8b83"/><rect x="559" y="346" width="27" height="14" fill="#2681a6"/><rect x="593" y="346" width="27" height="14" fill="#8a4fff"/>
+             <rect x="705" y="339" width="27" height="21" fill="#0d8b83"/><rect x="739" y="342" width="27" height="18" fill="#2681a6"/><rect x="773" y="342" width="27" height="18" fill="#8a4fff"/>
+             <rect x="885" y="350" width="27" height="10" fill="#0d8b83"/><rect x="919" y="356" width="27" height="4" fill="#2681a6"/><rect x="953" y="356" width="27" height="4" fill="#8a4fff"/></g>
+          <g fill="#122033" font-family="ui-monospace,monospace" font-size="12" font-weight="800" text-anchor="middle"><text x="212" y="398">EARLY LOCAL-LOAD</text><text x="392" y="398">RESPONSE BYPASS</text><text x="572" y="398">BHT</text><text x="752" y="398">RAS</text><text x="932" y="398">U32 PREFETCH</text></g>
+          <g font-family="ui-monospace,monospace" font-size="12" font-weight="800" text-anchor="middle"><text x="212" y="58" fill="#0d8b83">143k</text><text x="392" y="247" fill="#0d8b83">48k</text><text x="572" y="382" fill="#0d8b83">−3k</text><text x="752" y="329" fill="#0d8b83">10k</text><text x="932" y="340" fill="#0d8b83">5k</text></g>
+          <text x="90" y="457" fill="#58677a" font-size="13">Positive values reduce raw Dhrystone cycles. Values are successive-stage deltas at clean revision dce4cd6.</text>
+        </svg>
+        <figcaption>All gates off: M0 831,019 cycles, M1 796,020, M2 790,022. The dominant early-local-load response cuts D-bus wait from 112,000 to 8,000 cycles on every product.</figcaption>
+      </figure>
+      <div class="profile-grid three performance-insights">
+        <article><h3>Memory launch</h3><p>Early local-load removes 140–143k cycles. D-bus wait falls from 112k to 8k; load-use declines from 96–98k to 49–51k.</p></article>
+        <article><h3>Dependency response</h3><p>Load-response bypass removes a further 48–51k cycles and leaves only 1k load-use stalls in each profile window.</p></article>
+        <article><h3>Control response</h3><p>BHT is image-sensitive: M0 pays 3k cycles, while M1/M2 recover about 7k. RAS then removes 9–10k; U32 prefetch contributes 2–5k.</p></article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-heading"><p class="eyebrow">04 / ENGINEERING INTERPRETATION</p><h2>The largest wins removed deterministic waiting.</h2></div>
+      <div class="profile-grid three">
+        <article><h3>Local-memory path</h3><p>Early local-load moves accepted local SRAM reads ahead of the normal MEM-stage launch without making the core decode the SoC address map.</p></article>
+        <article><h3>Control flow</h3><p>The small BHT has modest workload value. A four-entry RAS is more effective for ABI returns because their targets are highly predictable.</p></article>
+        <article><h3>Dependency path</h3><p>Completed-load response bypass removes the immediate load-consumer interlock; it delivers the largest late-stage incremental cycle recovery.</p></article>
+      </div>
+      <p class="performance-sources">The tables on this page are the reader-facing performance record; command-pinned CSV data and the optimization ledger retain the detailed engineering provenance.</p>
+    </section>
+
+    <section class="section matrix-section">
+      <div class="section-heading"><p class="eyebrow">05 / COREMARK WORKLOAD SNAPSHOT</p><h2>Hardware multiply changes the integer-workload result.</h2><p>Pinned upstream CoreMark v1.01, one context, fixed validation seeds, <code>TOTAL_DATA_SIZE=2000</code>, static DTCM data, <code>-O2 -falign-functions=4 -falign-loops=4 -falign-jumps=4</code>, ten iterations, Verilator, and all available performance gates enabled. The CRC status word passed for every product.</p></div>
+      <figure class="performance-chart-card">
+        <svg viewBox="0 0 1100 480" role="img" aria-labelledby="coremark-chart-title coremark-chart-desc">
+          <title id="coremark-chart-title">CoreMark per MHz at all performance gates enabled</title>
+          <desc id="coremark-chart-desc">M0 scores 0.931944 CoreMark per MHz, M1 2.331845, and M2 2.332937.</desc>
+          <rect width="1100" height="480" fill="#ffffff"/>
+          <g stroke="#dce3eb" stroke-width="1"><path d="M100 70H1030M100 130H1030M100 190H1030M100 250H1030M100 310H1030M100 370H1030"/></g>
+          <path d="M100 370H1030" stroke="#405064" stroke-width="1.5"/>
+          <g fill="#58677a" font-family="ui-monospace,monospace" font-size="13"><text x="50" y="375">0</text><text x="42" y="315">0.5</text><text x="42" y="255">1.0</text><text x="42" y="195">1.5</text><text x="42" y="135">2.0</text><text x="42" y="75">2.5</text><text x="100" y="43" fill="#122033" font-size="15" font-weight="800">CoreMark / MHz</text></g>
+          <rect x="220" y="258" width="170" height="112" fill="#0d8b83"/><rect x="465" y="90" width="170" height="280" fill="#2681a6"/><rect x="710" y="90" width="170" height="280" fill="#8a4fff"/>
+          <g font-family="ui-monospace,monospace" text-anchor="middle"><text x="305" y="248" fill="#0d8b83" font-size="18" font-weight="800">0.931944</text><text x="550" y="80" fill="#2681a6" font-size="18" font-weight="800">2.331845</text><text x="795" y="80" fill="#8a4fff" font-size="18" font-weight="800">2.332937</text><text x="305" y="407" fill="#122033" font-size="15" font-weight="800">M0</text><text x="550" y="407" fill="#122033" font-size="15" font-weight="800">M1</text><text x="795" y="407" fill="#122033" font-size="15" font-weight="800">M2</text></g>
+          <text x="100" y="454" fill="#58677a" font-size="13">All performance gates enabled. M0 uses libgcc multiply helpers; M1/M2 use hardware mul.</text>
+        </svg>
+      </figure>
+      <div class="benchmark-cards">
+        <article class="benchmark-card m0"><h3>M0 / CRC PASS</h3><p class="benchmark-score">0.931944</p><p>10,730,259 <code>mcycle</code> · 1,073,025.9 cycles / iteration · 93.1944 @ 100 MHz.</p></article>
+        <article class="benchmark-card m1"><h3>M1 / CRC PASS</h3><p class="benchmark-score">2.331845</p><p>4,288,449 <code>mcycle</code> · 428,844.9 cycles / iteration · 233.1845 @ 100 MHz.</p></article>
+        <article class="benchmark-card m2"><h3>M2 / CRC PASS</h3><p class="benchmark-score">2.332937</p><p>4,286,442 <code>mcycle</code> · 428,644.2 cycles / iteration · 233.2937 @ 100 MHz.</p></article>
+      </div>
+      <div class="layout-compare" aria-label="CoreMark layout4 comparison">
+        <article><h3>M0 layout4 A/B</h3><div class="layout-row"><span>plain</span><i class="layout-track"><b class="layout-fill" style="width:98.3%"></b></i><span>0.915955</span></div><div class="layout-row"><span>layout4</span><i class="layout-track"><b class="layout-fill align4" style="width:100%"></b></i><span>0.931944</span></div><p class="layout-delta">+1.75% CoreMark/MHz</p></article>
+        <article><h3>M1 layout4 A/B</h3><div class="layout-row"><span>plain</span><i class="layout-track"><b class="layout-fill" style="width:98.0%"></b></i><span>2.285038</span></div><div class="layout-row"><span>layout4</span><i class="layout-track"><b class="layout-fill align4" style="width:100%"></b></i><span>2.331845</span></div><p class="layout-delta">+2.05% CoreMark/MHz</p></article>
+        <article><h3>M2 layout4 A/B</h3><div class="layout-row"><span>plain</span><i class="layout-track"><b class="layout-fill" style="width:96.1%"></b></i><span>2.241473</span></div><div class="layout-row"><span>layout4</span><i class="layout-track"><b class="layout-fill align4" style="width:100%"></b></i><span>2.332937</span></div><p class="layout-delta">+4.08% CoreMark/MHz</p></article>
+      </div>
+      <p class="performance-table-note"><strong>Layout A/B:</strong> at the same clean revision, four-byte layout improves CoreMark/MHz by 1.75% on M0, 2.05% on M1, and 4.08% on M2. <strong>Boundary:</strong> this is an engineering comparison, not an EEMBC-certified CoreMark score. The upstream ten-second rule was not applied. M0 uses libgcc multiply helpers; M1 and M2 use hardware <code>mul</code>.</p>
+    </section>
+
+    <section class="section">
+      <div class="section-heading"><p class="eyebrow">06 / EMBENCH-IOT WORKLOAD SWEEP</p><h2>M2's RV32F path is visible in <code>minver</code>; integer gains remain workload-specific.</h2><p>Upstream Embench-IoT 1.0, twelve selected workloads rebuilt per product with <code>-O2</code>, <code>CPU_MHZ=1</code>, <code>WARMUP_HEAT=0</code>, and Scale-1. Each value is raw <code>mcycle</code> measured with ModelSim; lower is better. All 36 product/workload runs passed at clean revision <code>144b03f</code>.</p></div>
+      <figure class="embench-chart" role="img" aria-label="Logarithmic horizontal bar chart of Embench-IoT raw cycles for M0, M1, and M2">
+        <ul class="performance-legend"><li><span class="performance-key" style="border-color:#0d8b83"></span><span>M0 / RV32IC</span></li><li><span class="performance-key m1"></span><span>M1 / RV32IMC + PMP</span></li><li><span class="performance-key" style="border-color:#8a4fff"></span><span>M2 / RV32IMFC + DMA/System SRAM</span></li></ul>
+        <div class="embench-axis"><span></span><div class="embench-axis-labels"><span>5k</span><span>50k</span><span>500k</span><span>5M cycles</span></div></div>
+        <div class="embench-row"><span class="embench-workload">matmult-int</span><div class="embench-series"><div class="embench-line"><span>M0</span><i class="embench-track"><b class="embench-bar" style="width:75.0%"></b></i><span>890,624</span></div><div class="embench-line"><span>M1</span><i class="embench-track"><b class="embench-bar m1" style="width:50.4%"></b></i><span>162,327</span></div><div class="embench-line"><span>M2</span><i class="embench-track"><b class="embench-bar m2" style="width:49.7%"></b></i><span>154,736</span></div></div></div>
+        <div class="embench-row"><span class="embench-workload">crc32</span><div class="embench-series"><div class="embench-line"><span>M0</span><i class="embench-track"><b class="embench-bar" style="width:29.7%"></b></i><span>38,965</span></div><div class="embench-line"><span>M1</span><i class="embench-track"><b class="embench-bar m1" style="width:28.1%"></b></i><span>34,869</span></div><div class="embench-line"><span>M2</span><i class="embench-track"><b class="embench-bar m2" style="width:27.7%"></b></i><span>33,845</span></div></div></div>
+        <div class="embench-row"><span class="embench-workload">huffbench</span><div class="embench-series"><div class="embench-line"><span>M0</span><i class="embench-track"><b class="embench-bar" style="width:60.0%"></b></i><span>315,275</span></div><div class="embench-line"><span>M1</span><i class="embench-track"><b class="embench-bar m1" style="width:60.0%"></b></i><span>315,275</span></div><div class="embench-line"><span>M2</span><i class="embench-track"><b class="embench-bar m2" style="width:59.5%"></b></i><span>305,586</span></div></div></div>
+        <div class="embench-row"><span class="embench-workload">sglib-combined</span><div class="embench-series"><div class="embench-line"><span>M0</span><i class="embench-track"><b class="embench-bar" style="width:47.5%"></b></i><span>132,123</span></div><div class="embench-line"><span>M1</span><i class="embench-track"><b class="embench-bar m1" style="width:46.5%"></b></i><span>124,579</span></div><div class="embench-line"><span>M2</span><i class="embench-track"><b class="embench-bar m2" style="width:45.9%"></b></i><span>119,521</span></div></div></div>
+        <div class="embench-row"><span class="embench-workload">slre</span><div class="embench-series"><div class="embench-line"><span>M0</span><i class="embench-track"><b class="embench-bar" style="width:25.8%"></b></i><span>29,947</span></div><div class="embench-line"><span>M1</span><i class="embench-track"><b class="embench-bar m1" style="width:25.8%"></b></i><span>29,947</span></div><div class="embench-line"><span>M2</span><i class="embench-track"><b class="embench-bar m2" style="width:25.8%"></b></i><span>29,873</span></div></div></div>
+        <div class="embench-row"><span class="embench-workload">qrduino</span><div class="embench-series"><div class="embench-line"><span>M0</span><i class="embench-track"><b class="embench-bar" style="width:80.5%"></b></i><span>1,356,998</span></div><div class="embench-line"><span>M1</span><i class="embench-track"><b class="embench-bar m1" style="width:74.1%"></b></i><span>836,004</span></div><div class="embench-line"><span>M2</span><i class="embench-track"><b class="embench-bar m2" style="width:74.1%"></b></i><span>834,735</span></div></div></div>
+        <div class="embench-row"><span class="embench-workload">aha-mont64</span><div class="embench-series"><div class="embench-line"><span>M0</span><i class="embench-track"><b class="embench-bar" style="width:26.7%"></b></i><span>31,681</span></div><div class="embench-line"><span>M1</span><i class="embench-track"><b class="embench-bar m1" style="width:14.5%"></b></i><span>13,581</span></div><div class="embench-line"><span>M2</span><i class="embench-track"><b class="embench-bar m2" style="width:14.5%"></b></i><span>13,580</span></div></div></div>
+        <div class="embench-row"><span class="embench-workload">minver</span><div class="embench-series"><div class="embench-line"><span>M0</span><i class="embench-track"><b class="embench-bar" style="width:26.9%"></b></i><span>31,933</span></div><div class="embench-line"><span>M1</span><i class="embench-track"><b class="embench-bar m1" style="width:14.9%"></b></i><span>13,917</span></div><div class="embench-line"><span>M2</span><i class="embench-track"><b class="embench-bar m2" style="width:0%"></b></i><span>2,419†</span></div></div></div>
+        <div class="embench-row"><span class="embench-workload">nettle-aes</span><div class="embench-series"><div class="embench-line"><span>M0</span><i class="embench-track"><b class="embench-bar" style="width:37.0%"></b></i><span>64,748</span></div><div class="embench-line"><span>M1</span><i class="embench-track"><b class="embench-bar m1" style="width:35.9%"></b></i><span>59,607</span></div><div class="embench-line"><span>M2</span><i class="embench-track"><b class="embench-bar m2" style="width:33.2%"></b></i><span>49,435</span></div></div></div>
+        <div class="embench-row"><span class="embench-workload">nettle-sha256</span><div class="embench-series"><div class="embench-line"><span>M0</span><i class="embench-track"><b class="embench-bar" style="width:9.7%"></b></i><span>9,773</span></div><div class="embench-line"><span>M1</span><i class="embench-track"><b class="embench-bar m1" style="width:9.7%"></b></i><span>9,773</span></div><div class="embench-line"><span>M2</span><i class="embench-track"><b class="embench-bar m2" style="width:9.7%"></b></i><span>9,760</span></div></div></div>
+        <div class="embench-row"><span class="embench-workload">picojpeg</span><div class="embench-series"><div class="embench-line"><span>M0</span><i class="embench-track"><b class="embench-bar" style="width:74.6%"></b></i><span>867,490</span></div><div class="embench-line"><span>M1</span><i class="embench-track"><b class="embench-bar m1" style="width:74.6%"></b></i><span>868,133</span></div><div class="embench-line"><span>M2</span><i class="embench-track"><b class="embench-bar m2" style="width:73.8%"></b></i><span>819,690</span></div></div></div>
+        <div class="embench-row"><span class="embench-workload">wikisort</span><div class="embench-series"><div class="embench-line"><span>M0</span><i class="embench-track"><b class="embench-bar" style="width:99.1%"></b></i><span>4,685,916</span></div><div class="embench-line"><span>M1</span><i class="embench-track"><b class="embench-bar m1" style="width:89.4%"></b></i><span>2,389,123</span></div><div class="embench-line"><span>M2</span><i class="embench-track"><b class="embench-bar m2" style="width:89.5%"></b></i><span>2,428,256</span></div></div></div>
+        <figcaption>Logarithmic raw-cycle scale from 5,000 to 5,000,000; shorter is better. † M2 <code>minver</code> is below the visual floor and is rendered with the minimum visible bar.</figcaption>
+      </figure>
+      <div class="profile-grid three performance-insights">
+        <article><h3>Hardware multiply</h3><p><code>matmult-int</code> and <code>aha-mont64</code> show the primary M1/M2 integer-multiply benefit.</p></article>
+        <article><h3>RV32F path</h3><p>M2 <code>minver</code> completes in 2,419 cycles, below the chart floor and far ahead of the integer-emulated products.</p></article>
+        <article><h3>Workload boundary</h3><p>Comparable arithmetic capability does not guarantee a universal ranking: large data-structure workloads remain sensitive to code and memory behavior.</p></article>
+      </div>
+      <p class="performance-table-note"><code>wikisort</code> uses an explicit longer host-side simulation cap: 8,000,000 cycles for M0 and 4,000,000 for M1/M2. The limit prevents a host-side timeout and does not alter the benchmark image. This table is descriptive raw-cycle evidence, not an upstream-normalized Embench score.</p>
+    </section>
+
+    <section class="section">
+      <div class="section-heading"><p class="eyebrow">07 / M2 FLOATING-POINT CHECKS</p><h2>Numerical checks complement integer scores.</h2><p>These engineering measurements validate M2's RV32F execution; they are not standardized floating-point ratings.</p></div>
+      <div class="benchmark-cards">
+        <article class="benchmark-card m2"><h3>Linpack N=32 / Verilator</h3><p class="benchmark-score">277,045</p><p><code>mcycle</code> · 0.086244 MFLOPS/MHz · 8.624 MFLOPS @ 100 MHz · residual 3.8146973e-06 · <code>fflags=0x01</code>.</p></article>
+        <article class="benchmark-card m2"><h3>FFT 128-point / ModelSim</h3><p class="benchmark-score">44,431</p><p><code>mcycle</code> · bit-exact PASS · <code>fflags=0x01</code>.</p></article>
+        <article class="benchmark-card m2"><h3>FFT 1024-point / ModelSim</h3><p class="benchmark-score">492,135</p><p><code>mcycle</code> · bit-exact PASS · <code>fflags=0x01</code>.</p></article>
+      </div>
+    </section>
+
+    <section class="section next"><p class="eyebrow">RELATED EVIDENCE</p><h2><a href="verification.html">Verification</a> defines functional-release boundaries; <a href="fpga-evaluation.html">FPGA evaluation</a> records routed timing and resource evidence.</h2><p><a href="index.html">Return to the family product guide</a></p></section>
+  </main>
+  <footer class="site-footer"><span>eRISCV Performance Evidence</span><span>Engineering Documentation Review Set 1.0 · Controlled simulation snapshot</span></footer>
+</body>
+</html>

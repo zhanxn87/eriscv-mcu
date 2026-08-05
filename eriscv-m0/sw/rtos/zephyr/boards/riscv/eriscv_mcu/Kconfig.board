@@ -1,0 +1,12 @@
+# eRISCV-M0 board configuration
+# Copyright (c) 2024 eRISCV-MCU Contributors
+# SPDX-License-Identifier: Apache-2.0
+
+config BOARD_ERISCV_MCU
+	bool "eRISCV-MCU Board"
+	depends on SOC_ERISCV_MCU
+	help
+	  eRISCV-M0 is the baseline product variant of the eRISCV-MCU
+	  educational RISC-V MCU.  Features RV32IC_Zicsr_Zifencei,
+	  64 KB ITCM, 64 KB DTCM, UART, GPIO, APB Timer, SPI, WDT, and PLIC.
+	  No M-extension or PMP.

@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Local eRISCV-M0 VCU108 Web Serial UART boot and terminal console.">
+  <title>eRISCV-M0 UART Console</title>
+  <style>
+    :root { color-scheme: dark; --navy:#061721; --panel:#102d3b; --panel2:#0b2330; --line:#386070; --cyan:#79d6e9; --ink:#e9f6f9; --muted:#a9cbd4; --good:#7ee0a5; --warn:#f3b56a; --bad:#ff8e8e; }
+    * { box-sizing:border-box; } body { margin:0; color:var(--ink); background:var(--navy); font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
+    header { padding:2rem max(5vw,1.25rem); border-bottom:1px solid var(--line); background:linear-gradient(120deg,#08283a,#0d6c95); } h1 { margin:.15rem 0 .5rem; font-size:clamp(2rem,4vw,3.8rem); letter-spacing:-.04em; } h1 em { color:var(--cyan); font-style:normal; } .eyebrow { margin:0; color:var(--cyan); font:700 .76rem ui-monospace,monospace; letter-spacing:.13em; } .lede { max-width:820px; margin:0; color:#d7eff4; font-size:1.02rem; }
+    main { max-width:1600px; margin:auto; padding:1.5rem max(4vw,1rem) 3rem; } .notice { margin:0 0 1.25rem; padding:1rem 1.15rem; border-left:4px solid var(--warn); background:#26313a; color:#f5e0c6; } .grid { display:grid; grid-template-columns:320px minmax(0,1fr); gap:1.25rem; } .stack { display:grid; gap:1.25rem; } section { padding:1.2rem; border:1px solid var(--line); border-radius:8px; background:var(--panel); } h2 { margin:0 0 .9rem; font-size:1.12rem; } h3 { margin:1rem 0 .5rem; font-size:.92rem; color:var(--cyan); } label { display:block; margin:.8rem 0 .3rem; color:var(--muted); font-size:.86rem; font-weight:650; } input,button,textarea { font:inherit; } input[type="number"],input[type="text"] { width:100%; padding:.65rem .7rem; color:var(--ink); border:1px solid var(--line); border-radius:4px; background:var(--panel2); } .file-input { position:absolute; width:1px; height:1px; margin:-1px; clip:rect(0 0 0 0); clip-path:inset(50%); overflow:hidden; white-space:nowrap; } button { padding:.62rem .82rem; color:var(--ink); border:1px solid #4c899d; border-radius:4px; background:#11536d; cursor:pointer; font-weight:700; } button:hover:not(:disabled) { background:#176f90; } button:disabled { opacity:.42; cursor:not-allowed; } button.warn { border-color:#a5743f; background:#70451f; } button.danger { border-color:#a35454; background:#6a3030; } .buttons { display:flex; flex-wrap:wrap; gap:.55rem; margin-top:.8rem; } .workspace-tabs { display:flex; flex-wrap:wrap; gap:.55rem; margin:0 0 1rem; } .workspace-tab[aria-selected="true"] { border-color:var(--cyan); background:#176f90; } .demo-view { display:none; } .demo-view.active { display:block; } .status { min-height:3rem; padding:.75rem; border:1px solid var(--line); border-radius:4px; background:var(--panel2); color:var(--muted); } .status.good { color:var(--good); } .status.bad { color:var(--bad); } .telemetry { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.6rem; margin-bottom:1rem; } .telemetry div { min-height:4.5rem; padding:.7rem; border:1px solid var(--line); border-radius:4px; background:var(--panel2); } .telemetry dt { color:var(--cyan); font:700 .67rem ui-monospace,monospace; letter-spacing:.08em; } .telemetry dd { margin:.32rem 0 0; overflow:hidden; text-overflow:ellipsis; color:var(--ink); font:700 .94rem ui-monospace,monospace; } .trace { margin:0 0 1rem; padding:.75rem; border:1px solid var(--line); border-radius:4px; background:var(--panel2); } .trace header { display:flex; justify-content:space-between; gap:1rem; padding:0 0 .45rem; border:0; background:none; color:var(--cyan); font:700 .7rem ui-monospace,monospace; letter-spacing:.08em; } .trace canvas { display:block; width:100%; height:150px; border:1px solid #28515f; background:#061721; } .terminal { width:100%; min-height:360px; resize:vertical; padding:1rem; color:#dff3f4; border:1px solid var(--line); border-radius:4px; background:#020d13; font:15px/1.45 ui-monospace,"Cascadia Code",Consolas,monospace; white-space:pre; } .terminal-input { display:grid; grid-template-columns:1fr auto auto; gap:.55rem; margin-top:.7rem; } .facts { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; margin:0; } .facts div { padding:.75rem; border:1px solid var(--line); background:var(--panel2); } .facts dt { color:var(--cyan); font:700 .7rem ui-monospace,monospace; letter-spacing:.08em; } .facts dd { margin:.25rem 0 0; color:var(--muted); font-size:.87rem; } code { color:#dff3f4; } .help { color:var(--muted); font-size:.86rem; } @media (max-width:1150px) { .grid { grid-template-columns:1fr; } .terminal { min-height:300px; } } @media (max-width:720px) { .telemetry { grid-template-columns:1fr 1fr; } } @media (max-width:520px) { .terminal-input { grid-template-columns:1fr; } .facts,.telemetry { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <p class="eyebrow">ERISCV-M0 / VCU108 / LOCAL WEB SERIAL</p>
+    <h1>UART boot and<br><em>serial console.</em></h1>
+    <p class="lede">A local-only Chromium console for the CP2105 Standard UART. Select the port explicitly, upload a word-addressed IMEM image, then interact with the running M0 firmware.</p>
+  </header>
+  <main>
+    <div class="notice"><strong>Before booting:</strong> program the FPGA, select UART boot (<code>3'b010</code>), press <code>CPU_RESET</code>, then use <strong>Connect</strong> and <strong>Boot image</strong>. The boot protocol is fixed at 115200 baud, 8-N-1, no flow control. <code>RELEASE</code> permanently hands the RX pin to runtime firmware until the next reset; reconnect after a re-arm reset to load another image.</div>
+    <div class="grid">
+      <div class="stack">
+        <section>
+          <h2>1. Serial connection</h2>
+          <label for="baud">Baud rate</label><input id="baud" type="number" min="1200" max="1000000" value="115200">
+          <p class="help">Use 115200 for boot. Runtime firmware may use another rate only after reconnecting at that rate.</p>
+          <div class="buttons"><button id="connect">Connect port</button><button id="disconnect" class="danger" disabled>Disconnect</button></div>
+          <label>Connection status</label><div id="status" class="status">Checking browser support…</div>
+        </section>
+        <section>
+          <h2>2. UART boot</h2>
+          <label for="image-select">Word-addressed <code>.mem</code> image</label>
+          <button id="image-select" type="button">Choose .mem image</button>
+          <input id="image" class="file-input" type="file" accept=".mem,text/plain" aria-label="Choose .mem image">
+          <p id="image-info" class="help">Choose <code>freertos_monitor.imem.mem</code> from the board-image build for the FreeRTOS monitor demo.</p>
+          <div class="buttons"><button id="boot" disabled>Boot image</button><button id="hold" class="warn" disabled>HOLD</button><button id="release" class="warn" disabled>RELEASE</button></div>
+          <p class="help">Boot image sends <code>HOLD → RESET_ADDR → AUTO_INC → WRITE32×N → RELEASE</code>. After RELEASE, boot controls are disabled until a board reset and reconnect.</p>
+        </section>
+        <section>
+          <h2>Session</h2>
+          <dl class="facts"><div><dt>BOARD PORT</dt><dd>Choose CP2105 Standard (COM4 in the recorded session)</dd></div><div><dt>SECURITY</dt><dd>Browser chooser and explicit user grant required</dd></div><div><dt>BOOT IMAGE</dt><dd>Select a 100 MHz-compatible M0 IMEM image</dd></div><div><dt>TERMINAL</dt><dd>Raw bytes; runtime behavior is defined by the selected image</dd></div></dl>
+        </section>
+      </div>
+      <section>
+        <h2>3. M0 demo workspace</h2>
+        <div class="workspace-tabs" role="tablist" aria-label="Demo workspaces">
+          <button class="workspace-tab" data-demo-view="overview" role="tab" aria-selected="true">Runtime overview</button>
+          <button class="workspace-tab" data-demo-view="pipeline" role="tab" aria-selected="false">Signal pipeline</button>
+          <button class="workspace-tab" data-demo-view="benchmark" role="tab" aria-selected="false">Benchmark lab</button>
+          <button class="workspace-tab" data-demo-view="rtos" role="tab" aria-selected="false">RTOS exercises</button>
+        </div>
+        <div class="demo-view active" data-demo-panel="overview">
+          <p class="help">Inspect the loaded image and enable/disable one-second status polling.</p>
+          <dl class="telemetry" aria-label="M0 runtime telemetry">
+            <div><dt>CPU ESTIMATE</dt><dd id="stat-cpu">—</dd></div>
+            <div><dt>WORKLOAD MODE</dt><dd id="stat-workload">idle</dd></div>
+            <div><dt>TASKS</dt><dd id="stat-tasks">—</dd></div>
+            <div><dt>HEAP FREE / MIN</dt><dd id="stat-heap">—</dd></div>
+            <div><dt>TCM STATIC</dt><dd id="stat-tcm">—</dd></div>
+            <div><dt>MCYCLE</dt><dd id="stat-mcycle">—</dd></div>
+            <div><dt>MINSTRET</dt><dd id="stat-minstret">—</dd></div>
+            <div><dt>UART IRQ / DROP</dt><dd id="stat-uart">—</dd></div>
+          </dl>
+          <div class="buttons"><button data-monitor-command="s" disabled>Manual status</button><button id="poll-toggle" disabled>Start 1 s polling</button></div>
+        </div>
+        <div class="demo-view" data-demo-panel="pipeline">
+          <p class="help">Timer0 → PLIC → FreeRTOS queue → 32-tap FIR. This workload is exclusive with the benchmark lab.</p>
+          <dl class="telemetry" aria-label="Signal-pipeline telemetry">
+            <div><dt>PIPELINE</dt><dd id="stat-pipeline">STOPPED</dd></div>
+            <div><dt>SAMPLE IRQ / FRAMES</dt><dd id="stat-frames">—</dd></div>
+            <div><dt>QUEUE DROPS</dt><dd id="stat-drops">—</dd></div>
+            <div><dt>LATENCY LAST / PEAK</dt><dd id="stat-latency">—</dd></div>
+            <div><dt>FIR CHECKSUM</dt><dd id="stat-checksum">—</dd></div>
+            <div><dt>FIR LAST</dt><dd id="stat-fir-last">—</dd></div>
+          </dl>
+          <div class="buttons"><button id="stream-command" data-monitor-command="w" disabled>Start pipeline</button></div>
+          <div class="trace"><header><span>RAW + FIR TRACE / LAST 128 FRAMES</span><span>cyan: input · green: filtered</span></header><canvas id="fir-trace" aria-label="Latest 128 raw and filtered samples"></canvas></div>
+        </div>
+        <div class="demo-view" data-demo-panel="benchmark">
+          <p class="help">Runs one benchmark at a time with the pipeline stopped. HPM reports control-flow counts; flush slots are structural two-slot EX redirects, not independently measured cycles.</p>
+          <dl class="telemetry" aria-label="Benchmark telemetry">
+            <div><dt>DHRYSTONE DMIPS/MHz</dt><dd id="stat-dhrystone">—</dd></div>
+            <div><dt>COREMARK/MHz</dt><dd id="stat-coremark">—</dd></div>
+            <div><dt>DHRYSTONE CONTROL FLOW</dt><dd id="stat-dhrystone-hpm">—</dd></div>
+            <div><dt>COREMARK CONTROL FLOW</dt><dd id="stat-coremark-hpm">—</dd></div>
+            <div><dt>WORKLOAD MODE</dt><dd id="stat-benchmark-workload">idle</dd></div>
+          </dl>
+          <div class="buttons"><button data-monitor-command="d" disabled>Run Dhrystone</button><button data-monitor-command="c" disabled>Run CoreMark</button></div>
+        </div>
+        <div class="demo-view" data-demo-panel="rtos">
+          <p class="help">Small independent scheduler/queue/timer exercises; these are not performance benchmarks.</p>
+          <dl class="telemetry" aria-label="RTOS exercise telemetry">
+            <div><dt>BURSTS / CYCLES</dt><dd id="stat-burst">—</dd></div>
+            <div><dt>TIMER / WORKER</dt><dd id="stat-events">—</dd></div>
+          </dl>
+          <div class="buttons"><button data-monitor-command="i" disabled>Image information</button><button data-monitor-command="t" disabled>Task inventory</button><button data-monitor-command="q" disabled>Queue exercise</button><button data-monitor-command="r" disabled>Timer exercise</button><button data-monitor-command="b" disabled>Compute burst</button><button data-monitor-command="h" disabled>Command help</button></div>
+        </div>
+        <h3>Shared UART terminal</h3>
+        <p class="help">Raw UART view for boot and runtime messages. It stays visible below every demo workspace.</p>
+        <textarea id="terminal" class="terminal" readonly spellcheck="false" aria-label="UART receive terminal"></textarea>
+        <div class="terminal-input"><input id="terminal-input" type="text" placeholder="Text to send to the firmware" disabled><button id="send" disabled>Send</button><button id="send-cr" disabled>Send + CR</button></div>
+        <div class="buttons"><button id="download-log">Download log</button><button id="clear-log">Clear terminal</button></div>
+      </section>
+    </div>
+  </main>
+  <script>
+    "use strict";
+    const OPC = { SET_ADDR:0x01, WRITE32:0x02, HOLD:0x03, RELEASE:0x04, AUTO_INC:0x05, RESET_ADDR:0x06 };
+    const DHRYSTONE_ITERATIONS = 1000000;
+    const COREMARK_ITERATIONS = 1000;
+    const connectButton = document.querySelector("#connect");
+    const disconnectButton = document.querySelector("#disconnect");
+    const bootButton = document.querySelector("#boot");
+    const holdButton = document.querySelector("#hold");
+    const releaseButton = document.querySelector("#release");
+    const baudInput = document.querySelector("#baud");
+    const imageInput = document.querySelector("#image");
+    const imageSelectButton = document.querySelector("#image-select");
+    const imageInfo = document.querySelector("#image-info");
+    const status = document.querySelector("#status");
+    const terminal = document.querySelector("#terminal");
+    const terminalInput = document.querySelector("#terminal-input");
+    const sendButton = document.querySelector("#send");
+    const sendCrButton = document.querySelector("#send-cr");
+    const monitorButtons = [...document.querySelectorAll("[data-monitor-command]")];
+    const benchmarkButtons = monitorButtons.filter(button => ["d", "c"].includes(button.dataset.monitorCommand));
+    const pollToggle = document.querySelector("#poll-toggle");
+    const workspaceTabs = [...document.querySelectorAll("[data-demo-view]")];
+    const demoPanels = [...document.querySelectorAll("[data-demo-panel]")];
+    const stat = {
+      cpu:document.querySelector("#stat-cpu"), tasks:document.querySelector("#stat-tasks"),
+      heap:document.querySelector("#stat-heap"), tcm:document.querySelector("#stat-tcm"),
+      mcycle:document.querySelector("#stat-mcycle"), minstret:document.querySelector("#stat-minstret"),
+      uart:document.querySelector("#stat-uart"), events:document.querySelector("#stat-events"),
+      pipeline:document.querySelector("#stat-pipeline"), frames:document.querySelector("#stat-frames"),
+      drops:document.querySelector("#stat-drops"), latency:document.querySelector("#stat-latency"),
+      checksum:document.querySelector("#stat-checksum"), burst:document.querySelector("#stat-burst"),
+      workload:document.querySelector("#stat-workload"), benchmarkWorkload:document.querySelector("#stat-benchmark-workload"), dhrystone:document.querySelector("#stat-dhrystone"),
+      coremark:document.querySelector("#stat-coremark"), dhrystoneHpm:document.querySelector("#stat-dhrystone-hpm"),
+      coremarkHpm:document.querySelector("#stat-coremark-hpm"),
+      firLast:document.querySelector("#stat-fir-last")
+    };
+    const streamCommandButton = document.querySelector("#stream-command");
+    const firTrace = document.querySelector("#fir-trace");
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
+    let port = null;
+    let reader = null;
+    let reading = false;
+    let readTask = null;
+    let imageText = null;
+    let terminalLog = "";
+    let terminalPending = "";
+    let serialPending = "";
+    let terminalRenderScheduled = false;
+    let bootReleased = false;
+    let benchmarkRunning = false;
+    let statusPollInFlight = false;
+    let pollingEnabled = false;
+
+    function setStatus(message, kind = "") {
+      status.textContent = message;
+      status.className = `status ${kind}`;
+    }
+
+    function updatePollingButton() {
+      pollToggle.textContent = !bootReleased ? "Attach runtime + start polling" :
+        (!pollingEnabled ? "Start 1 s polling" :
+        (benchmarkRunning ? "Polling paused (benchmark)" : "Stop polling"));
+      pollToggle.disabled = !port;
+      benchmarkButtons.forEach(button => { button.disabled = !port || !bootReleased || benchmarkRunning; });
+    }
+
+    function selectDemoView(view) {
+      workspaceTabs.forEach(tab => {
+        tab.setAttribute("aria-selected", String(tab.dataset.demoView === view));
+      });
+      demoPanels.forEach(panel => {
+        panel.classList.toggle("active", panel.dataset.demoPanel === view);
+      });
+    }
+
+    function appendTerminalText(text) {
+      terminalLog += text;
+      if (terminalLog.length > 1_000_000) terminalLog = terminalLog.slice(-1_000_000);
+      scheduleTerminalRender();
+    }
+
+    function renderTerminal() {
+      terminal.value = terminalLog + terminalPending;
+      terminal.scrollTop = terminal.scrollHeight;
+    }
+
+    function scheduleTerminalRender() {
+      if (terminalRenderScheduled) return;
+      terminalRenderScheduled = true;
+      requestAnimationFrame(() => {
+        terminalRenderScheduled = false;
+        renderTerminal();
+      });
+    }
+
+    function updateTelemetry(line) {
+      const values = Object.fromEntries(line.slice(6).trim().split(/\s+/).map(field => field.split("=")));
+      const cpuBasisPoints = Number(values.cpu_basis_points);
+      const cpuPermille = Number(values.cpu_permille);
+      stat.cpu.textContent = Number.isFinite(cpuBasisPoints) ? `${(cpuBasisPoints / 100).toFixed(2)}%` :
+        (Number.isFinite(cpuPermille) ? `${(cpuPermille / 10).toFixed(1)}%` : "—");
+      stat.tasks.textContent = values.tasks ?? "—";
+      stat.heap.textContent = values.heap_free && values.heap_min ? `${values.heap_free} / ${values.heap_min} B` : "—";
+      stat.tcm.textContent = values.dmem_static ? `${values.dmem_static} B` : "—";
+      stat.mcycle.textContent = values.mcycle ?? "—";
+      stat.minstret.textContent = values.minstret ?? "—";
+      stat.uart.textContent = values.uart_irq && values.uart_drop ? `${values.uart_irq} / ${values.uart_drop}` : "—";
+      stat.events.textContent = values.timer_irq && values.worker_events ? `${values.timer_irq} / ${values.worker_events}` : "—";
+      const active = values.pipeline_active === "1";
+      stat.pipeline.textContent = active ? "RUNNING" : "STOPPED";
+      stat.frames.textContent = values.sample_irq && values.frames ? `${values.sample_irq} / ${values.frames}` : "—";
+      stat.drops.textContent = values.drops ?? "—";
+      stat.latency.textContent = values.latency_last && values.latency_peak ? `${values.latency_last} / ${values.latency_peak} cyc` : "—";
+      stat.checksum.textContent = values.checksum ? `0x${Number(values.checksum).toString(16)}` : "—";
+      stat.burst.textContent = values.burst_count && values.burst_cycles ? `${values.burst_count} / ${values.burst_cycles} cyc` : "—";
+      stat.workload.textContent = values.workload ?? "idle";
+      stat.benchmarkWorkload.textContent = values.workload ?? "idle";
+      benchmarkRunning = values.workload !== undefined && values.workload !== "idle";
+      statusPollInFlight = false;
+      updatePollingButton();
+      const dhrystoneCycles = Number(values.dhrystone_cycles);
+      const coremarkCycles = Number(values.coremark_cycles);
+      stat.dhrystone.textContent = Number.isFinite(dhrystoneCycles) && dhrystoneCycles > 0 ?
+        `${values.dhrystone_pass === "1" ? "PASS" : "FAIL"} / ${(DHRYSTONE_ITERATIONS * 1_000_000 / dhrystoneCycles / 1757).toFixed(4)} DMIPS/MHz` : "—";
+      stat.coremark.textContent = Number.isFinite(coremarkCycles) && coremarkCycles > 0 ?
+        `${values.coremark_pass === "1" ? "CHECK PASS" : "FAIL"} / ${(COREMARK_ITERATIONS * 1_000_000 / coremarkCycles).toFixed(2)} CoreMark/MHz` : "—";
+      const formatControlFlow = prefix => {
+        const cycles = Number(values[`${prefix}_hpm_cycles`]);
+        const instret = Number(values[`${prefix}_hpm_instret`]);
+        const branches = Number(values[`${prefix}_branches`]);
+        const taken = Number(values[`${prefix}_taken`]);
+        const control = Number(values[`${prefix}_control`]);
+        const redirects = Number(values[`${prefix}_redirects`]);
+        const flushSlots = Number(values[`${prefix}_flush_slots`]);
+        const ifetchWait = Number(values[`${prefix}_ifetch_wait`]);
+        if (![cycles, instret, branches, taken, control, redirects, flushSlots, ifetchWait].every(Number.isFinite) || cycles === 0) return "—";
+        return `CPI ${(cycles / Math.max(1, instret)).toFixed(2)} · B ${branches}/${taken} · CT ${control} · R ${redirects} · ${flushSlots} slots · IF ${ifetchWait}`;
+      };
+      stat.dhrystoneHpm.textContent = formatControlFlow("dhrystone");
+      stat.coremarkHpm.textContent = formatControlFlow("coremark");
+      stat.firLast.textContent = values.fir_last ?? "—";
+      if (values.input_trace !== undefined && values.fir_trace !== undefined) {
+        renderFirTrace(values.input_trace, values.fir_trace);
+      }
+      streamCommandButton.textContent = active ? "Stop pipeline" : "Start pipeline";
+    }
+
+    function renderFirTrace(encodedInput, encodedFir) {
+      const input = (encodedInput ?? "").split(",").map(Number).filter(Number.isFinite);
+      const fir = (encodedFir ?? "").split(",").map(Number).filter(Number.isFinite);
+      const width = Math.max(1, Math.floor(firTrace.clientWidth * devicePixelRatio));
+      const height = Math.max(1, Math.floor(firTrace.clientHeight * devicePixelRatio));
+      const context = firTrace.getContext("2d");
+
+      if (firTrace.width !== width || firTrace.height !== height) {
+        firTrace.width = width;
+        firTrace.height = height;
+      }
+      context.clearRect(0, 0, width, height);
+      context.strokeStyle = "#28515f";
+      context.lineWidth = devicePixelRatio;
+      context.beginPath();
+      context.moveTo(0, height / 2);
+      context.lineTo(width, height / 2);
+      context.stroke();
+      const samples = [...input, ...fir];
+      if (input.length < 2 || fir.length < 2) return;
+      const low = Math.min(...samples);
+      const high = Math.max(...samples);
+      const span = Math.max(1, high - low);
+
+      function drawTrace(trace, color) {
+        context.strokeStyle = color;
+        context.lineWidth = 2 * devicePixelRatio;
+        context.beginPath();
+        trace.forEach((sample, index) => {
+          const x = (index * width) / (trace.length - 1);
+          const y = height - ((sample - low) * (height - 12 * devicePixelRatio)) / span - 6 * devicePixelRatio;
+          if (index === 0) context.moveTo(x, y);
+          else context.lineTo(x, y);
+        });
+        context.stroke();
+      }
+      drawTrace(input, "#79d6e9");
+      drawTrace(fir, "#7ee0a5");
+    }
+
+    function isTelemetryPrefix(line) {
+      return "@STAT ".startsWith(line) || line.startsWith("@STAT ");
+    }
+
+    async function requestRuntimeStatus(force = false) {
+      if (!port || !bootReleased || (!force && !pollingEnabled) || benchmarkRunning || statusPollInFlight) return;
+      statusPollInFlight = true;
+      try {
+        await sendBytes(encoder.encode("S"));
+      } catch (error) {
+        statusPollInFlight = false;
+        setStatus(`Status poll failed: ${error.message}`, "bad");
+        return;
+      }
+      setTimeout(() => { statusPollInFlight = false; }, 1500);
+    }
+
+    function appendTerminal(text) {
+      const lines = (serialPending + text).split(/\r?\n/);
+      const previousPending = terminalPending;
+      let terminalChanged = false;
+
+      serialPending = lines.pop();
+      for (const line of lines) {
+        if (line.startsWith("@STAT ")) updateTelemetry(line);
+        else if (line.includes("@BENCH_DONE ")) {
+          const marker = line.indexOf("@BENCH_DONE ");
+          benchmarkRunning = false;
+          updatePollingButton();
+          terminalLog += `[${line.slice(marker + 12)} complete; refreshing status]\n`;
+          terminalChanged = true;
+          setTimeout(() => { void requestRuntimeStatus(true); }, 50);
+        }
+        else {
+          terminalLog += `${line}\n`;
+          if (terminalLog.length > 1_000_000) terminalLog = terminalLog.slice(-1_000_000);
+          terminalChanged = true;
+        }
+      }
+      terminalPending = isTelemetryPrefix(serialPending) ? "" : serialPending;
+      if (terminalPending !== previousPending) terminalChanged = true;
+      if (terminalChanged) scheduleTerminalRender();
+    }
+
+    function setConnectedUi(connected) {
+      connectButton.disabled = connected;
+      disconnectButton.disabled = !connected;
+      bootButton.disabled = !connected || imageText === null || bootReleased;
+      holdButton.disabled = !connected || bootReleased;
+      releaseButton.disabled = !connected || bootReleased;
+      terminalInput.disabled = !connected;
+      sendButton.disabled = !connected;
+      sendCrButton.disabled = !connected;
+      monitorButtons.forEach(button => { button.disabled = !connected || !bootReleased; });
+      updatePollingButton();
+    }
+
+    function currentBaud() {
+      const baud = Number.parseInt(baudInput.value, 10);
+      if (!Number.isInteger(baud) || baud < 1200 || baud > 1_000_000) throw new Error("Choose a baud rate from 1200 to 1000000.");
+      return baud;
+    }
+
+    function addUInt32Le(bytes, value) {
+      const word = value >>> 0;
+      bytes.push(word & 0xff, (word >>> 8) & 0xff, (word >>> 16) & 0xff, (word >>> 24) & 0xff);
+    }
+
+    function buildBootPacket(text) {
+      let index = 0;
+      let nextIndex = 0;
+      let words = 0;
+      const bytes = [OPC.HOLD, OPC.RESET_ADDR, OPC.AUTO_INC, 0x01];
+      for (const rawLine of text.split(/\r?\n/)) {
+        const line = rawLine.trim();
+        if (!line || line.startsWith("#")) continue;
+        if (line.startsWith("@")) {
+          const addressText = line.slice(1);
+          if (!/^[0-9a-fA-F]+$/.test(addressText)) throw new Error(`Invalid .mem address: ${line}`);
+          index = Number.parseInt(addressText, 16);
+          continue;
+        }
+        if (!/^[0-9a-fA-F]{1,8}$/.test(line)) throw new Error(`Invalid .mem word: ${line}`);
+        const word = Number.parseInt(line, 16) >>> 0;
+        if (index !== nextIndex) {
+          bytes.push(OPC.SET_ADDR);
+          addUInt32Le(bytes, index);
+        }
+        bytes.push(OPC.WRITE32);
+        addUInt32Le(bytes, word);
+        nextIndex = index + 1;
+        index = nextIndex;
+        words += 1;
+      }
+      if (words === 0) throw new Error("The selected .mem image contains no words.");
+      bytes.push(OPC.RELEASE);
+      return { bytes:new Uint8Array(bytes), words };
+    }
+
+    async function sendBytes(bytes) {
+      if (!port?.writable) throw new Error("No open serial port.");
+      const writer = port.writable.getWriter();
+      try { await writer.write(bytes); } finally { writer.releaseLock(); }
+    }
+
+    async function readLoop() {
+      while (port?.readable && reading) {
+        reader = port.readable.getReader();
+        try {
+          while (reading) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            if (value) appendTerminal(decoder.decode(value, { stream:true }));
+          }
+        } catch (error) {
+          if (reading) appendTerminal(`\n[serial read error: ${error.message}]\n`);
+        } finally {
+          reader.releaseLock();
+          reader = null;
+        }
+      }
+    }
+
+    async function connect() {
+      try {
+        const baud = currentBaud();
+        const selected = await navigator.serial.requestPort({ filters:[{ usbVendorId:0x10c4 }] });
+        await selected.open({ baudRate:baud, dataBits:8, stopBits:1, parity:"none", flowControl:"none" });
+        port = selected;
+        bootReleased = false;
+        benchmarkRunning = false;
+        statusPollInFlight = false;
+        pollingEnabled = false;
+        reading = true;
+        readTask = readLoop();
+        const info = port.getInfo();
+        setStatus(`Connected at ${baud} baud (USB VID 0x${(info.usbVendorId ?? 0).toString(16)}).`, "good");
+        appendTerminal(`\n[connected at ${baud} baud]\n`);
+        setConnectedUi(true);
+      } catch (error) {
+        setStatus(`Connect failed: ${error.message}`, "bad");
+      }
+    }
+
+    async function disconnect() {
+      if (!port) return;
+      try {
+        reading = false;
+        if (reader) await reader.cancel();
+        if (readTask) await readTask;
+        await port.close();
+        appendTerminal("\n[disconnected]\n");
+        setStatus("Disconnected.");
+      } catch (error) {
+        setStatus(`Disconnect warning: ${error.message}`, "bad");
+      } finally {
+        port = null;
+        bootReleased = false;
+        benchmarkRunning = false;
+        statusPollInFlight = false;
+        pollingEnabled = false;
+        reader = null;
+        readTask = null;
+        setConnectedUi(false);
+      }
+    }
+
+    imageInput.addEventListener("change", async () => {
+      try {
+        const file = imageInput.files[0];
+        if (!file) { imageText = null; imageInfo.textContent = "Choose a .mem image."; setConnectedUi(Boolean(port)); return; }
+        imageText = await file.text();
+        const packet = buildBootPacket(imageText);
+        imageInfo.textContent = `${file.name}: ${packet.words} words, ${packet.bytes.length} boot-protocol bytes.`;
+        setConnectedUi(Boolean(port));
+      } catch (error) {
+        imageText = null;
+        imageInfo.textContent = `Image error: ${error.message}`;
+        setConnectedUi(Boolean(port));
+      }
+    });
+    imageSelectButton.addEventListener("click", () => imageInput.click());
+
+    connectButton.addEventListener("click", connect);
+    disconnectButton.addEventListener("click", disconnect);
+    holdButton.addEventListener("click", async () => {
+      try { await sendBytes(new Uint8Array([OPC.HOLD])); setStatus("HOLD sent: CPU fetch disabled.", "good"); }
+      catch (error) { setStatus(`HOLD failed: ${error.message}`, "bad"); }
+    });
+    releaseButton.addEventListener("click", async () => {
+      try { await sendBytes(new Uint8Array([OPC.RELEASE])); bootReleased = true; setConnectedUi(true); setStatus("RELEASE sent: CPU fetch enabled; reset before another boot transaction.", "good"); }
+      catch (error) { setStatus(`RELEASE failed: ${error.message}`, "bad"); }
+    });
+    bootButton.addEventListener("click", async () => {
+      try {
+        if (currentBaud() !== 115200) throw new Error("UART boot is fixed at 115200 baud. Reconnect at 115200 before booting.");
+        const packet = buildBootPacket(imageText);
+        await sendBytes(packet.bytes);
+        bootReleased = true;
+        setConnectedUi(true);
+        setStatus(`Boot image sent: ${packet.words} words, ${packet.bytes.length} bytes. Fetch released; reset before another boot transaction.`, "good");
+        appendTerminal(`\n[boot sent: ${packet.words} words; waiting for runtime UART]\n`);
+      } catch (error) {
+        setStatus(`Boot failed: ${error.message}`, "bad");
+      }
+    });
+    async function sendTerminal(addCr) {
+      try {
+        const text = terminalInput.value + (addCr ? "\r" : "");
+        if (text.length === 0) return;
+        await sendBytes(encoder.encode(text));
+        terminalInput.value = "";
+      } catch (error) { setStatus(`Terminal transmit failed: ${error.message}`, "bad"); }
+    }
+    sendButton.addEventListener("click", () => sendTerminal(false));
+    sendCrButton.addEventListener("click", () => sendTerminal(true));
+    workspaceTabs.forEach(tab => tab.addEventListener("click", () => selectDemoView(tab.dataset.demoView)));
+    pollToggle.addEventListener("click", () => {
+      if (!bootReleased) {
+        bootReleased = true;
+        setConnectedUi(true);
+        setStatus("Runtime attached after page refresh; requesting status.", "good");
+      }
+      pollingEnabled = !pollingEnabled;
+      updatePollingButton();
+      if (pollingEnabled) void requestRuntimeStatus();
+    });
+    monitorButtons.forEach(button => button.addEventListener("click", async () => {
+      const command = button.dataset.monitorCommand;
+      try {
+        await sendBytes(encoder.encode(command));
+        if (command === "d" || command === "c") {
+          benchmarkRunning = true;
+          stat.workload.textContent = command === "d" ? "dhrystone" : "coremark";
+          stat.benchmarkWorkload.textContent = stat.workload.textContent;
+          statusPollInFlight = false;
+          updatePollingButton();
+        } else if (command === "w" || command === "b" || command === "q" || command === "r") {
+          const delay = command === "w" ? 800 : (command === "r" ? 150 : 100);
+          setTimeout(() => { void requestRuntimeStatus(true); }, delay);
+        }
+      }
+      catch (error) { setStatus(`Monitor command failed: ${error.message}`, "bad"); }
+    }));
+    terminalInput.addEventListener("keydown", event => { if (event.key === "Enter") { event.preventDefault(); sendTerminal(true); } });
+    document.querySelector("#clear-log").addEventListener("click", () => { terminalLog = ""; terminalPending = ""; serialPending = ""; renderTerminal(); });
+    document.querySelector("#download-log").addEventListener("click", () => {
+      const blob = new Blob([terminalLog], { type:"text/plain;charset=utf-8" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob); link.download = "eriscv-m0-uart.log"; link.click(); URL.revokeObjectURL(link.href);
+    });
+    if (!("serial" in navigator)) {
+      setStatus("Web Serial is unavailable. Use a current Chrome or Edge window opened from localhost.", "bad");
+      connectButton.disabled = true;
+    } else {
+      setStatus("Ready. Click Connect port, then choose the CP2105 Standard UART.");
+    }
+    setInterval(() => { void requestRuntimeStatus(); }, 1000);
+    window.addEventListener("beforeunload", () => { if (port) disconnect(); });
+  </script>
+</body>
+</html>

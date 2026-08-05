@@ -1,0 +1,7 @@
+# Teaching test: C16 followed by raw 32-bit instruction stream.
+# Repaired IF (one-cycle IMEM): aligned delta x30=8, crossword delta x31=8,
+# penalty x29=0, x28=1. Before the repair, x31=35, x29=27, x28=0.
+# The same image then takes an ECALL from an upper-halfword RV32 instruction;
+# x26/x27=1 require the wrong path to remain flushed and MEPC to be precise.
+# Waveform focus: if_stage_i.upper_valid_q, imem_req_o, imem_rvalid_i,
+# if_id_q.{valid,pc,instr}, and pc_q.

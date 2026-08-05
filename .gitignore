@@ -1,0 +1,65 @@
+# Python and local environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Simulator and waveform output
+**/obj_dir/
+**/work/
+**/regression_logs/
+**/regression_data/
+**/lint_logs/
+**/visual_waves/
+**/waves/
+**/modelsim.ini
+**/transcript
+**/*.vcd
+**/*.fst
+**/*.vpd
+**/*.fsdb
+**/*.wlf
+**/*.vstf
+**/*.ucdb
+
+# Product-generated software, compliance, and FPGA output
+**/build/
+**/work-*/
+**/generated/
+.cache/
+**/*.elf
+**/*.bin
+**/*.hex
+**/*.map
+**/*.objdump
+**/*.mem
+!**/testcases/**/*.mem
+!**/tests/**/*.mem
+# Keep the prebuilt images needed by the directed JTAG-boot scenarios.
+!eriscv-m0/dv/soc/tests/MCU-BOOT-DATA-INIT-01.elf
+!eriscv-m1/dv/soc/tests/MCU-BOOT-DATA-INIT-01.elf
+!eriscv-m2/dv/soc/tests/MCU-BOOT-DATA-INIT-01.elf
+# ACT4 artifacts are reproducible local caches. Generate them with
+# `make act-generate-m0`, `make act-generate-m1`, or `make act-generate-m2`.
+eriscv-m0/compliance/riscv-arch-test/generated/
+eriscv-m1/compliance/riscv-arch-test/generated/
+eriscv-m2/compliance/riscv-arch-test/generated/
+**/*.bit
+**/*.ltx
+**/*.jou
+**/*.log
+**/.Xil/
+**/dfx_runtime.txt
+
+# Local editor and operating-system state
+.idea/
+.vscode/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+
+# Credential-bearing local configuration
+.env
+.env.*

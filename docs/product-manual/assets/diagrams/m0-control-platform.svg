@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" role="img" aria-labelledby="title desc">
+  <title id="title">eRISCV-M0 control platform</title>
+  <desc id="desc">M0 RV32IC machine-mode hart with local ITCM and DTCM, CLINT, PLIC, APB peripherals, and JTAG debug.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#0b3347"/><stop offset="1" stop-color="#17627d"/></linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#86dbe0"/></marker>
+    <style>
+      .box { fill:#f7fcfd; stroke:#8ac7d0; stroke-width:1.5; rx:10; }
+      .core { fill:#d7f0f2; stroke:#35d3c7; stroke-width:2; rx:12; }
+      .dark { fill:#0a2a3b; stroke:#5da9b9; stroke-width:1.5; rx:10; }
+      .line { stroke:#86dbe0; stroke-width:2; fill:none; marker-end:url(#arrow); }
+      .label { fill:#17384a; font:700 16px Inter,Arial,sans-serif; }
+      .small { fill:#456477; font:14px Inter,Arial,sans-serif; }
+      .darklabel { fill:#eaf9fb; font:700 16px Inter,Arial,sans-serif; }
+      .darksmall { fill:#b9d8df; font:14px Inter,Arial,sans-serif; }
+      .caption { fill:#78e5db; font:800 13px Inter,Arial,sans-serif; letter-spacing:2px; }
+    </style>
+  </defs>
+  <rect width="960" height="500" rx="16" fill="url(#bg)"/>
+  <text x="42" y="52" class="caption">ERISCV-M0 / CONTROL PLATFORM</text>
+  <text x="42" y="82" fill="#eaf9fb" font-family="Inter,Arial,sans-serif" font-size="23" font-weight="700">Simple local execution and fixed platform services</text>
+
+  <rect x="350" y="124" width="260" height="102" class="core"/>
+  <text x="480" y="164" text-anchor="middle" class="label">RV32IC HART</text>
+  <text x="480" y="188" text-anchor="middle" class="small">M-mode · cacheless · deterministic control</text>
+  <text x="480" y="210" text-anchor="middle" class="small">traps · counters · HPM</text>
+
+  <rect x="58" y="134" width="218" height="78" class="box"/>
+  <text x="82" y="166" class="label">ITCM · 64 KiB</text>
+  <text x="82" y="190" class="small">executable local SRAM</text>
+  <path d="M350 164 H276" class="line"/>
+
+  <rect x="58" y="258" width="218" height="78" class="box"/>
+  <text x="82" y="290" class="label">DTCM · 64 KiB</text>
+  <text x="82" y="314" class="small">non-executable local data SRAM</text>
+  <path d="M350 194 L276 290" class="line"/>
+
+  <rect x="684" y="120" width="218" height="82" class="dark"/>
+  <text x="708" y="153" class="darklabel">CLINT + PLIC</text>
+  <text x="708" y="178" class="darksmall">MSIP · MTIP · MEIP</text>
+  <path d="M610 166 H684" class="line"/>
+
+  <rect x="684" y="246" width="218" height="116" class="dark"/>
+  <text x="708" y="279" class="darklabel">APB peripheral bus</text>
+  <text x="708" y="304" class="darksmall">UART0 · GPIO0 · Timer · SPI0</text>
+  <text x="708" y="327" class="darksmall">Watchdog · clock/reset control</text>
+  <path d="M610 195 L684 288" class="line"/>
+
+  <rect x="350" y="306" width="260" height="58" class="dark"/>
+  <text x="480" y="341" text-anchor="middle" class="darklabel">JTAG Debug 1.0 Minimal</text>
+  <path d="M480 226 V306" class="line"/>
+
+  <path d="M58 408 H902" stroke="#6fa9b5" stroke-width="1"/>
+  <text x="58" y="438" fill="#d4edf1" font-family="Inter,Arial,sans-serif" font-size="15">No RV32M, U-mode, PMP, shared System SRAM, or generic DMA.</text>
+  <text x="58" y="464" fill="#d4edf1" font-family="Inter,Arial,sans-serif" font-size="15">Board wiring and external-device integration are outside this profile boundary.</text>
+</svg>

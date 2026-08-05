@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="eRISCV MCU verification evidence and release boundary guide.">
+  <title>eRISCV MCU Verification and Evidence</title>
+  <link rel="stylesheet" href="assets/site.css">
+  <script defer src="assets/site.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#content">Skip to content</a>
+  <header class="site-header">
+    <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">eR</span><span>eRISCV <small>MCU FAMILY</small></span></a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="main-nav">Menu</button>
+    <nav id="main-nav" class="main-nav" aria-label="Primary navigation"><a href="index.html">Family Guide</a><a href="architecture.html">Architecture</a><a href="software.html">Software</a><a href="performance.html">Performance</a><a href="verification.html" aria-current="page">Verification</a><a href="fpga-evaluation.html">FPGA</a><a href="board-jtag-debug.html">Board/JTAG</a></nav>
+  </header>
+  <main id="content">
+    <section class="profile-hero m1-profile">
+      <div><p class="eyebrow">VERIFICATION AND EVIDENCE</p><h1>Evidence is<br><em>scope-bound.</em></h1><p class="lede">The eRISCV documentation distinguishes architecture conformance, directed SoC behavior, software execution, routed FPGA implementation, and physical-board validation.</p></div>
+      <dl class="profile-hero-facts"><div><dt>Default regression simulator</dt><dd>Verilator</dd></div><div><dt>Focused debug and waveforms</dt><dd>ModelSim through the WSL wrapper</dd></div><div><dt>Source of dated totals</dt><dd>MCU Evidence Snapshot</dd></div></dl>
+    </section>
+    <section class="notice"><strong>Publication boundary.</strong> A passing simulation or positive routed timing result is engineering evidence. It is not a certification, availability, safety, power, frequency, package, or board-validation statement.</section>
+    <section id="evidence" class="section profile-section">
+      <div class="section-heading"><p class="eyebrow">01 / EVIDENCE STACK</p><h2>Use the right test for the claim.</h2></div>
+      <div class="status-grid"><article><span>01</span><h3>Architecture and ACT</h3><p>Core tests exercise the declared instruction and privilege contract. ACT4 is core-TB evidence, not boot-transport or full-system evidence.</p></article><article><span>02</span><h3>Directed SoC</h3><p>Directed tests cover memory mapping, boot paths, peripherals, CLINT/PLIC, debug, PMP, and M2 TCM/DMA integration boundaries.</p></article><article><span>03</span><h3>Software workloads</h3><p>BSP, RTOS, benchmark, and M2 FP/DMA workloads demonstrate a bounded build and execution path with a declared oracle.</p></article><article><span>04</span><h3>Implementation and board</h3><p>Routed FPGA reports establish a device/tool/configuration timing snapshot. Board programming, I/O, JTAG, and debugger evidence are separate.</p></article></div>
+    </section>
+    <section id="scope" class="section profile-section muted-section">
+      <div class="section-heading"><p class="eyebrow">02 / CURRENT PRODUCT EVIDENCE</p><h2>Read the dated snapshot; do not infer beyond it.</h2><p>The source-controlled MCU Evidence Snapshot records dates, pass totals, waivers, and retained runner summaries. It is updated only after the associated command has run. Latest retained Verilator evidence: M0 146/146 (core 105/105, SoC 41/41), M1 181/181 (139/139, 42/42), and M2 264/264 (221/221, 43/43).</p></div>
+      <div class="table-wrap"><table><thead><tr><th>Product</th><th>Current documented scope</th><th>Interpretation</th></tr></thead><tbody><tr><th>M0</th><td>146/146 Verilator full regression; BSP/RTOS/benchmark collateral; routed VCU108 timing passes.</td><td>Compact control profile evidence; physical-board evidence remains open.</td></tr><tr><th>M1</th><td>181/181 Verilator full regression including M/U, PMP, HPM, debug, and RTOS U-mode collateral; routed VCU108 timing passes.</td><td>Protection boundary evidence; not a security certification or MMU claim.</td></tr><tr><th>M2</th><td>264/264 Verilator full regression including RV32F/Zcf/Zba, PMP/HPM, and M2 DMA/System SRAM paths; latest routed VCU108 report misses 100 MHz by 0.050 ns.</td><td>Compute/data-movement architecture evidence; timing closure, physical board, and release evidence remain open.</td></tr></tbody></table></div>
+    </section>
+    <section id="static-checks" class="section profile-section">
+      <div class="section-heading"><p class="eyebrow">03 / STATIC RTL CHECKS</p><h2>Screen structure before simulation.</h2><p>These commands run the repository Verilator lint flow over the selected product RTL. They are a structural screen for latches, multiple drivers, unused logic, and compatibility diagnostics; they do not establish functional or timing closure.</p></div>
+      <div class="code-grid"><article><h3>One product</h3><pre><code>make lint LINT_PRODUCT=m0
+make lint LINT_PRODUCT=m1
+make lint LINT_PRODUCT=m2</code></pre></article><article><h3>One RTL boundary</h3><pre><code>make lint LINT_PRODUCT=m2 \
+  LINT_TARGET=core
+make lint LINT_PRODUCT=m2 \
+  LINT_TARGET=soc</code></pre></article><article><h3>All products</h3><pre><code>make lint-all
+
+# convenience aliases
+make lint-m0
+make lint-m1
+make lint-m2</code></pre></article></div>
+    </section>
+    <section id="regression" class="section profile-section muted-section">
+      <div class="section-heading"><p class="eyebrow">04 / REGRESSION</p><h2>Start broad, then narrow.</h2><p>Verilator is the default regression simulator. A product <code>full</code> target is the normal closure entry point; it runs core-directed tests, the product ACT4 selection, and SoC-directed tests. Use the narrower targets when one layer is under change. Use ModelSim only when a focused testcase needs interactive diagnosis or waves.</p></div>
+      <div class="table-wrap"><table><thead><tr><th>Need</th><th>Command</th><th>Scope</th></tr></thead><tbody>
+        <tr><th>One product</th><td><code>make eriscv-m0-full</code><br><code>make eriscv-m1-full</code><br><code>make eriscv-m2-full</code></td><td>That product's directed core, ACT4, and directed SoC regression.</td></tr>
+        <tr><th>All implemented products</th><td><code>make eriscv-mcu-full</code></td><td>M0, M1, and M2 product-full gates.</td></tr>
+        <tr><th>One layer</th><td><code>make eriscv-m2-core</code><br><code>make eriscv-m2-soc</code><br><code>make eriscv-m2-act</code></td><td>Core-directed, SoC-directed, or ACT4 only. Replace <code>m2</code> with <code>m0</code> or <code>m1</code> as applicable.</td></tr>
+        <tr><th>Quick feedback</th><td><code>make eriscv-m0-core-smoke</code><br><code>make eriscv-m0-soc-smoke</code><br><code>make eriscv-m2-core-smoke</code><br><code>make eriscv-m2-soc-smoke</code></td><td>Reduced directed plus ACT smoke selection where provided.</td></tr>
+      </tbody></table></div>
+      <div class="table-wrap doc-grid-gap"><table><thead><tr><th>Regression layer</th><th>Representative content</th><th>Purpose</th></tr></thead><tbody>
+        <tr><th>Core directed</th><td><code>P1-ALU-01</code>, <code>P2-CFLOW-01</code>, <code>P4-FWD-01</code>, <code>P4-LDST-01</code>, <code>P5-CSR-TRAP-01</code>, P7 stress/kill/dependency cases, counters/HPM, IRQ, memory wait, halt, EBREAK/DRET, and single-step.</td><td>Pipeline execution, hazards, traps, CSRs, counters, interrupt entry, and Debug 1.0 behavior.</td></tr>
+        <tr><th>ACT4 architecture</th><td>Generated ISA cases: M0 RV32I/C plus Zicsr/Zifencei/Zicntr/Zihpm/Zihintpause; M1 adds M, U, and PMP; M2 adds F/Zcf. M2 Zba also has directed coverage.</td><td>Declared ISA and privilege behavior at the core-TB boundary, not board or APB integration.</td></tr>
+        <tr><th>SoC directed</th><td>Compressed execution, <code>FENCE.I</code>, unmapped bus, reset/WFI/timer wake, UART/GPIO/SPI/timer, boot initialization, CLINT/PLIC, and JTAG/debug/SBA.</td><td>Address map and integration across core, memories, APB, interrupts, boot, and debug transport.</td></tr>
+        <tr><th>Product additions</th><td>M1: RV32M, U-mode, PMP matching and fault priority. M2: <code>MCU-F-01</code>, <code>MCU-ZCF-01</code>, <code>MCU-ZBA-01</code>, upper TCM, DMA, and System SRAM.</td><td>Protection features on M1; floating-point, address generation, and data movement on M2.</td></tr>
+      </tbody></table></div>
+      <div class="table-wrap doc-grid-gap"><table><thead><tr><th>Focused ModelSim fixture</th><th>Command</th><th>Use it for</th></tr></thead><tbody>
+        <tr><th>M0 clock/reset</th><td><code>make eriscv-m0-clk-rst</code></td><td>Reset and clock sequencing.</td></tr>
+        <tr><th>M0 / M1 / M2 TCM arbitration</th><td><code>make eriscv-m0-tcm-arbitration</code><br><code>make eriscv-m1-tcm-arbitration</code><br><code>make eriscv-m2-tcm-arbitration</code></td><td>CPU-versus-boot access to local memory.</td></tr>
+        <tr><th>M2 DMA and System SRAM</th><td><code>make eriscv-m2-dma-system-sram</code></td><td>Isolated DMA and System-SRAM integration behavior.</td></tr>
+      </tbody></table></div>
+      <div class="code-grid doc-grid-gap"><article><h3>One testcase with Verilator</h3><pre><code>make -C eriscv-m2/dv/soc/sim \
+  verilator TESTS=MCU-TCM-UPPER-HALF-01
+
+make -C eriscv-m2/dv/core/sim list</code></pre></article><article><h3>ModelSim waves or diagnosis</h3><pre><code>make -C eriscv-m2/dv/core/sim \
+  modelsim-gui MODELSIM_GUI_TEST=MCU-F-01
+
+SIM_BACKEND=modelsim \
+  make eriscv-m2-core</code></pre></article><article><h3>Legacy compliance suite</h3><pre><code>make -C eriscv-m2/dv/core/sim \
+  verilator TESTS=--compliance-full
+
+make wizard</code></pre></article></div>
+      <p class="profile-note"><strong>Scope and logs.</strong> Legacy reference-output compliance is deliberately separate from <code>full</code>. The checked-in runners own the complete testcase list; use their <code>list</code> target before selecting a name. Per-run logs reside principally under <code>regression_logs/</code>; focused ModelSim sessions also write <code>transcript</code>.</p>
+    </section>
+    <section id="software-workloads" class="section profile-section">
+      <div class="section-heading"><p class="eyebrow">05 / SOFTWARE AND BENCHMARKS</p><h2>Workloads are separate from RTL regression.</h2><p>Each target builds its matching image before simulation. The command validates that workload's build, linker, startup, interrupt, runtime, and oracle path; it does not turn a benchmark result into a frequency or throughput promise.</p></div>
+      <div class="code-grid"><article><h3>M0 software</h3><pre><code>make eriscv-m0-bsp
+make eriscv-m0-bsp-async
+make eriscv-m0-coremark
+make eriscv-m0-dhrystone
+make eriscv-m0-embench
+make eriscv-m0-microbench
+make eriscv-m0-freertos
+make eriscv-m0-freertos-qualification
+make eriscv-m0-zephyr</code></pre></article><article><h3>M1 software</h3><pre><code>make eriscv-m1-bsp
+make eriscv-m1-bsp-async
+make eriscv-m1-mcycle-counter
+make eriscv-m1-coremark
+make eriscv-m1-dhrystone
+make eriscv-m1-embench
+make eriscv-m1-microbench
+make eriscv-m1-freertos
+make eriscv-m1-freertos-qualification
+make eriscv-m1-freertos-umode
+make eriscv-m1-zephyr</code></pre></article><article><h3>M2 software</h3><pre><code>make eriscv-m2-bsp
+make eriscv-m2-bsp-async
+make eriscv-m2-bsp-fpu-dma-sram
+make eriscv-m2-mcycle-counter
+make eriscv-m2-coremark
+make eriscv-m2-dhrystone
+make eriscv-m2-embench
+make eriscv-m2-microbench
+make eriscv-m2-freertos
+make eriscv-m2-freertos-qualification
+make eriscv-m2-freertos-umode
+make eriscv-m2-zephyr</code></pre></article></div>
+    </section>
+    <section id="board-maintenance" class="section profile-section muted-section">
+      <div class="section-heading"><p class="eyebrow">06 / BOARD DEBUG AND MAINTENANCE</p><h2>Hardware actions have separate prerequisites.</h2><p>OpenOCD/GDB smoke targets require a programmed, connected board and an adapter configuration; they are not simulation regressions. Use ModelSim explicitly when a focused testcase needs interactive waveform diagnosis. Use the board/JTAG guide for physical setup and evidence procedure.</p></div>
+      <div class="code-grid"><article><h3>Board debug smoke</h3><pre><code>make eriscv-m0-openocd-gdb
+make eriscv-m1-openocd-gdb
+make eriscv-m2-openocd-gdb</code></pre></article><article><h3>Generated-artifact maintenance</h3><pre><code># inspect first
+make clean-dry-run
+
+# remove generated simulation
+# and script artifacts
+make clean</code></pre></article><article><h3>Backend selection</h3><pre><code># default: Verilator
+make eriscv-m2-full
+
+# focused ModelSim debug
+SIM_BACKEND=modelsim \
+  make eriscv-m2-core</code></pre></article></div>
+    </section>
+    <section id="release" class="section publication">
+      <div class="section-heading"><p class="eyebrow">07 / RELEASE AND BOARD GATES</p><h2>What remains outside current engineering closure.</h2></div>
+      <div class="document-grid"><article><h3>Physical hardware</h3><p>Bitstream programming, reset release, UART/GPIO observation, JTAG scan, OpenOCD/GDB sessions, and board-specific I/O timing require archived board evidence.</p></article><article><h3>Product release</h3><p>A dated release package requires versioned RTL, build inputs, known deviations, and the intended support/compatibility statement.</p></article><article><h3>Commercial data</h3><p>Package, electrical limits, power, reliability, lifecycle, orderable part numbers, and guaranteed frequency are unpublished.</p></article><article><h3>Security and safety</h3><p>PMP and U-mode tests do not constitute a security certification. No safety-integrity claim is made.</p></article><article><h3>Performance</h3><p>Use the published methodology and exact conditions for any benchmark result. Do not convert a functional workload into a general throughput promise.</p></article><article><h3>Errata</h3><p>Record a stable ID, affected revision, observable symptom, workaround, and disposition before publishing a correction.</p></article></div>
+    </section>
+    <section class="section next"><p class="eyebrow">NEXT</p><h2>Read FPGA implementation results and the board/JTAG evidence plan together.</h2><p><a href="fpga-evaluation.html">Open FPGA Evaluation</a> · <a href="board-jtag-debug.html">Open Board and JTAG Guide</a></p></section>
+  </main>
+  <footer class="site-footer"><span>eRISCV MCU Verification and Evidence Guide</span><span>Engineering Documentation Review Set 1.0 · no commercial release claim</span></footer>
+</body>
+</html>

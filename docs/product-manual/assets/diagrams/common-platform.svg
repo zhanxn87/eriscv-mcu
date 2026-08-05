@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 390" role="img" aria-labelledby="title desc">
+  <title id="title">eRISCV common platform services</title>
+  <desc id="desc">A single eRISCV hart connects to CLINT local interrupts, a 32-source PLIC, JTAG debug, and hardware performance counters. The diagram is a family programming model, not a board connection diagram.</desc>
+  <defs><style>
+    .title { fill:#122033; font:700 18px Inter,Arial,sans-serif; }
+    .body { fill:#53677b; font:500 14px Inter,Arial,sans-serif; }
+    .caption { fill:#0d6c95; font:800 12px Inter,Arial,sans-serif; letter-spacing:1.4px; }
+  </style></defs>
+  <rect width="920" height="390" rx="8" fill="#eaf2f5"/>
+  <rect x="346" y="136" width="228" height="116" rx="8" fill="#102d3b"/>
+  <text x="460" y="177" text-anchor="middle" fill="#35d3c7" font-family="Inter,Arial,sans-serif" font-size="25" font-weight="800">eRISCV HART</text>
+  <text x="460" y="203" text-anchor="middle" fill="#d6edf1" font-family="Inter,Arial,sans-serif" font-size="14">single hart · cacheless · RV32</text>
+  <text x="460" y="225" text-anchor="middle" fill="#d6edf1" font-family="Inter,Arial,sans-serif" font-size="14">product-defined M or M/U mode</text>
+
+  <rect x="50" y="45" width="218" height="86" rx="7" fill="#fff" stroke="#cbd8e1"/>
+  <text x="74" y="74" class="caption">LOCAL INTERRUPTS</text><text x="74" y="100" class="title">CLINT</text><text x="74" y="120" class="body">MSIP · MTIP · platform time</text>
+  <path d="M268 89h78" fill="none" stroke="#3c8ba8" stroke-width="3" stroke-linecap="round"/><path d="M334 78l12 11-12 11" fill="none" stroke="#3c8ba8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <rect x="50" y="258" width="218" height="86" rx="7" fill="#fff" stroke="#cbd8e1"/>
+  <text x="74" y="287" class="caption">EXTERNAL INTERRUPTS</text><text x="74" y="313" class="title">PLIC</text><text x="74" y="333" class="body">32 sources · one M-mode context</text>
+  <path d="M268 301h78" fill="none" stroke="#3c8ba8" stroke-width="3" stroke-linecap="round"/><path d="M334 290l12 11-12 11" fill="none" stroke="#3c8ba8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <rect x="652" y="45" width="218" height="86" rx="7" fill="#fff" stroke="#cbd8e1"/>
+  <text x="676" y="74" class="caption">EXTERNAL DEBUG</text><text x="676" y="100" class="title">JTAG DTM / DMI</text><text x="676" y="120" class="body">Debug 1.0 Minimal · one hart</text>
+  <path d="M652 89h-78" fill="none" stroke="#0d6c95" stroke-width="3" stroke-linecap="round"/><path d="M586 78l-12 11 12 11" fill="none" stroke="#0d6c95" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <rect x="652" y="258" width="218" height="86" rx="7" fill="#fff" stroke="#cbd8e1"/>
+  <text x="676" y="287" class="caption">OBSERVABILITY</text><text x="676" y="313" class="title">Zicntr + Zihpm</text><text x="676" y="333" class="body">cycle · time · instret · HPM3–HPM6</text>
+  <path d="M652 301h-78" fill="none" stroke="#0d6c95" stroke-width="3" stroke-linecap="round"/><path d="M586 290l-12 11 12 11" fill="none" stroke="#0d6c95" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <text x="460" y="372" text-anchor="middle" class="body">Family programming model only; board wiring, clocking, and external device integration are product-specific.</text>
+</svg>

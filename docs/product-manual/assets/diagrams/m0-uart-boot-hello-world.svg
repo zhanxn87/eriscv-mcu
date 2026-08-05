@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 600" role="img" aria-labelledby="title desc">
+  <title id="title">eRISCV-M0 UART boot and Hello World signal path</title>
+  <desc id="desc">The Windows host sends a UART boot protocol to the M0 boot parser over COM4. The parser loads IMEM and releases the CPU. The program then configures the APB UART and sends Hello World back through the same CP2105 Standard UART path.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#79d6e9"/></marker>
+    <style>
+      .bg { fill:#08283a; } .box { fill:#103b50; stroke:#79d6e9; stroke-width:2; rx:12; }
+      .box2 { fill:#17566e; stroke:#b8ebf4; stroke-width:2; rx:12; } .cpu { fill:#0b6d91; stroke:#dff8fb; stroke-width:2; rx:12; }
+      .line { fill:none; stroke:#79d6e9; stroke-width:4; marker-end:url(#arrow); } .dash { fill:none; stroke:#f3b56a; stroke-width:3; stroke-dasharray:9 7; marker-end:url(#arrow); }
+      .head { fill:#e9f8fb; font:700 25px Arial,sans-serif; } .label { fill:#d0edf2; font:600 17px Arial,sans-serif; } .sub { fill:#a9cbd4; font:15px Arial,sans-serif; } .tag { fill:#f3b56a; font:700 14px Arial,sans-serif; letter-spacing:1px; }
+    </style>
+  </defs>
+  <rect class="bg" width="1280" height="600"/>
+  <text x="55" y="52" class="tag">PHASE A — BOOT DOWNLOAD</text>
+  <text x="55" y="330" class="tag">PHASE B — PROGRAM RUNTIME UART</text>
+
+  <rect class="box" x="55" y="90" width="220" height="150"/>
+  <text x="80" y="130" class="head">Windows host</text><text x="80" y="162" class="label">PowerShell loader</text><text x="80" y="190" class="sub">COM4 · 115200 · 8-N-1</text><text x="80" y="214" class="sub">HOLD / WRITE32 / RELEASE</text>
+  <rect class="box2" x="400" y="90" width="210" height="150"/>
+  <text x="425" y="130" class="head">CP2105</text><text x="425" y="162" class="label">Standard UART</text><text x="425" y="190" class="sub">USB ↔ FPGA pins</text><text x="425" y="214" class="sub">BC24 / BE24</text>
+  <rect class="box" x="735" y="90" width="220" height="150"/>
+  <text x="760" y="130" class="head">M0 boot parser</text><text x="760" y="162" class="label">UART boot mode 010</text><text x="760" y="190" class="sub">fixed 115200 baud</text><text x="760" y="214" class="sub">holds CPU while loading</text>
+  <rect class="box2" x="1055" y="90" width="170" height="150"/>
+  <text x="1080" y="130" class="head">IMEM SRAM</text><text x="1080" y="162" class="label">word address 0</text><text x="1080" y="190" class="sub">CPU reset vector</text><text x="1080" y="214" class="sub">0x1000_0000</text>
+  <path class="line" d="M275 165 H400"/><path class="line" d="M610 165 H735"/><path class="line" d="M955 165 H1055"/>
+
+  <rect class="cpu" x="735" y="385" width="220" height="150"/>
+  <text x="760" y="425" class="head">M0 CPU</text><text x="760" y="457" class="label">fetch after RELEASE</text><text x="760" y="485" class="sub">writes UART0 BAUDDIV=868</text><text x="760" y="509" class="sub">writes Hello World</text>
+  <rect class="box2" x="400" y="385" width="210" height="150"/>
+  <text x="425" y="425" class="head">APB UART0</text><text x="425" y="457" class="label">0x4000_0000</text><text x="425" y="485" class="sub">100 MHz / 868</text><text x="425" y="509" class="sub">≈ 115200 baud TX</text>
+  <path class="line" d="M735 460 H610"/><path class="line" d="M400 460 H275"/>
+  <path class="dash" d="M1140 240 V350 H955"/>
+  <text x="980" y="322" class="sub">RELEASE enables fetch</text>
+  <text x="75" y="568" class="sub">The same physical CP2105 path is used twice, but the boot parser and APB UART are separate RTL functions.</text>
+</svg>
