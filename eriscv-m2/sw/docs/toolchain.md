@@ -61,6 +61,7 @@ The CI suite is `hello_uart`, `timer_apb_poll`, `timer_clint`, `wfi_tickless`,
   debugging and waveform inspection; neither simulator replaces FPGA or board evidence.
 
 The CoreMark smoke is a separate M2 benchmark target. It uses pinned CoreMark
-v1.01, one validation iteration, and `mcycle`; its ModelSim cycle result is
-not an official CoreMark score because it does not satisfy the upstream
-10-second reporting rule.
+v1.01, one validation iteration, and `mcycle`; its automatic backend prefers
+Verilator and falls back to ModelSim. Its cycle result is not an official
+CoreMark score because it does not satisfy the upstream 10-second reporting
+rule.

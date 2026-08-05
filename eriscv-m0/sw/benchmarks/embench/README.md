@@ -1,19 +1,19 @@
-# M1 Embench-IoT Adapter
+# M0 Embench-IoT Adapter
 
 This adapter leaves the pinned upstream `embench-iot` submodule unchanged. It
-links one selected workload with the M1 BSP, records its verified `mcycle`
+links one selected workload with the M0 BSP, records its verified `mcycle`
 delta in `eriscv_embench_result`, and emits standard IMEM/DTCM images.
 
 Build a speed image:
 
 ```sh
-make -C eriscv-m1/sw embench EMBENCH_BENCH=matmult-int EMBENCH_PROFILE=speed EMBENCH_SCALE=1
+make -C eriscv-m0/sw embench EMBENCH_BENCH=matmult-int EMBENCH_PROFILE=speed EMBENCH_SCALE=1
 ```
 
 Build the corresponding size image:
 
 ```sh
-make -C eriscv-m1/sw embench EMBENCH_BENCH=matmult-int EMBENCH_PROFILE=size EMBENCH_SCALE=1
+make -C eriscv-m0/sw embench EMBENCH_BENCH=matmult-int EMBENCH_PROFILE=size EMBENCH_SCALE=1
 ```
 
 `CPU_MHZ=1`, `WARMUP_HEAT=0`, and `EMBENCH_SCALE=1` are fixed simulation-profile

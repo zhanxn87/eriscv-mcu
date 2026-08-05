@@ -99,27 +99,6 @@ Use `make -C eriscv-m1/dv/core/sim list` or
 the current checkout. When an imported testcase becomes product evidence,
 update this inventory and the product verification contract in the same change.
 
-## M1 vs M0 Delta
-
-eRISCV-M1 inherits all eRISCV-M0 tests and adds M-extension and PMP coverage:
-
-| Area | M0 | M1 | Delta |
-| --- | --- | --- | --- |
-| ISA Contract | `RV32IC_Zicsr_Zifencei` | `RV32IMC_Zicsr_Zifencei` | **+M extension** |
-| Core M tests | — | `MCU-M-01`, `MCU-M-CTRL-01`, `MCU-M-DIV-IRQ-01`, `MCU-M-RESET-01` | **+4 NEW** |
-| Core PMP tests | — | `MCU-PMP-01`, `MCU-PMP-RESET-01`, `MCU-PMP-SWEEP-01` | **+3 NEW** |
-| SoC PMP tests | — | `MCU-PMP-SOC-01` | **+1 NEW** |
-| ACT corpus | 72 (I+Zca+Zicsr+Zifencei) | 80 (I+M+Zca+Zicsr+Zifencei) | **+8 M-extension ACT** |
-| ACT PMPSm | — | 35-source separate profile | **not in default** |
-| Privileged ACT | — | 12 U/PMPU/ZicntrU artifacts | **+U-mode selection** |
-| Directed SoC | 20 tests | 21 tests | +1 |
-
-M extension is a 32-cycle iterative M/D unit. PMP is 16-entry: locked entries
-protect M-mode boot/firmware, while U-mode accesses require a matching permitted
-entry for task isolation.
-PMPSm ACT tests are a separate profile (`build_pmp.sh`); payloads requiring
-execution outside the executable IMEM window need a compatible harness.
-
 ## Contributing a Test
 
 1. **Source**: Write an assembly source (`.S`) following the product test

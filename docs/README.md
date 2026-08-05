@@ -23,17 +23,22 @@ the recommended first checks.
 | Local-memory semantics | [Local Memory Architecture Specification](Spec/eriscv-mcu-memory-architecture-spec-v1.0.md) | IMEM/DMEM behavior, boot, arbitration, and fetch permissions. |
 | Peripheral integration | [Peripheral Integration Contract](Spec/eriscv-mcu-peripheral-integration.md) | APB-to-PLIC boundary and common peripheral rules. |
 | Testbench performance profiling | [TB Performance-Profile Specification](Spec/eriscv-mcu-tb-performance-profile-spec-v1.0.md) | Diagnostic metric definitions, causal boundaries, and required profile verification. |
-| Subsystem specifications | [Specification map](Spec/RISC-V%20Official%20Specification%20Map.html), [PLIC](Spec/eriscv-mcu-plic-spec-v1.0.md), [clock/reset](Spec/eriscv-mcu-clkrst-spec-v1.0.md), [HPM](Spec/eriscv-mcu-hpm-spec-v1.0.md), [Debug](Spec/eriscv-mcu-debug-1.0-minimal.md), and [M1 U-mode](Spec/eriscv-mcu-u-mode-spec.md) | Normative subsystem behavior and architecture coverage. |
+| Subsystem specifications | [PLIC](Spec/eriscv-mcu-plic-spec-v1.0.md), [clock/reset](Spec/eriscv-mcu-clkrst-spec-v1.0.md), [HPM](Spec/eriscv-mcu-hpm-spec-v1.0.md), [Debug](Spec/eriscv-mcu-debug-1.0-minimal.md), and [M1/M2 U-mode](Spec/eriscv-mcu-u-mode-spec.md) | Normative subsystem behavior and architecture coverage. |
 
 ## Current evidence and engineering records
 
 | Topic | Owner | Scope |
 | --- | --- | --- |
-| Dated verification evidence | [MCU Evidence Snapshot](Verification/eriscv-mcu-simulation-evidence-snapshot.md) | Regression results, commands, tool versions, and waivers. |
+| Dated verification evidence | [MCU Evidence Snapshot](Verification/eriscv-mcu-simulation-evidence-snapshot.md) | Regression totals, backend, date, and result boundaries. |
 | FPGA timing and area | [FPGA Timing and Area Evidence](Performance/eriscv-mcu-fpga-timing-area-evidence.md) | Routed report provenance and current M0/M1/M2 figures. |
 | Performance dashboard and method | [Product Manual: Performance](product-manual/performance.html) | Current measurement boundaries plus reader-facing M0/M1/M2 trends and workload snapshots. |
-| Implemented performance work | [MCU Performance Optimization Ledger](Performance/eriscv-mcu-performance-optimization-ledger.md) | Product-by-product optimization ledger, evidence status, and PPA caveats. |
 | External debug smoke contract | [OpenOCD/GDB Board-Smoke Contract](Verification/eriscv-mcu-openocd-gdb-smoke.md) | Required hardware-debug interoperability evidence. |
+
+## Historical engineering records
+
+| Topic | Owner | Scope |
+| --- | --- | --- |
+| Historical performance work | [Historical Performance Optimization Ledger](History/performance/eriscv-mcu-performance-optimization-ledger.md) | Pre-public product-by-product optimization history; not the current benchmark result owner. |
 
 ## Reader-facing documentation
 

@@ -1,19 +1,19 @@
-# eRISCV MCU Performance Optimization Ledger
+# Historical eRISCV MCU Performance Optimization Ledger
 
-Cross-product index of implemented performance work. The product manual owns
+Cross-product history of implemented performance work. The product manual owns
 current benchmark snapshots. A measured effect is a controlled same-image A/B
 only. Other figures are diagnostic or product snapshots and are labelled
 accordingly.
 
 ## Public-repository provenance
 
-This ledger retains measurements collected during development before eRISCV-MCU
-was split from its engineering monorepo. The predecessor commit identifiers are
-intentionally omitted: they are not reachable from this public repository and
-therefore cannot reproduce a result here. The first public release tag, and
-later eRISCV-MCU commit/tag pairs, are the reproducibility anchors for new
-measurements. Each new entry must record its public revision, clean worktree,
-command, toolchain, image identity, and report path.
+This ledger retains measurements collected during pre-public development. The
+predecessor commit identifiers are intentionally omitted: they are not
+reachable from this public repository and therefore cannot reproduce a result
+here. The first public release tag, and later eRISCV-MCU commit/tag pairs, are
+the reproducibility anchors for new measurements. Each new entry must record
+its public revision, clean worktree, command, toolchain, image identity, and
+report path.
 
 | ID | Product | Change | Measured effect | Proof / remaining evidence |
 | --- | --- | --- | --- | --- |

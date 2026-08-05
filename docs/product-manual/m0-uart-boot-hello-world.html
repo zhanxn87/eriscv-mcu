@@ -50,20 +50,19 @@
       <div class="section-heading"><p class="eyebrow">03 / CREATE THE BOARD IMAGE</p><h2>Build a word-addressed instruction-SRAM image.</h2><p>The board-specific program is deliberately separate from the fast simulation test. It programs the runtime UART divisor for the actual 100 MHz FPGA clock.</p></div>
       <div class="code-grid">
         <article><h3>1. Assemble and link</h3><pre><code>riscv64-unknown-elf-gcc \
-  -march=rv32imc -mabi=ilp32 \
+  -march=rv32ic -mabi=ilp32 \
   -nostdlib -nostartfiles \
-  -Wl,-Ttext=0 -Wl,--no-relax \
+  -Wl,-Ttext=0 -Wl,-e,0 -Wl,--no-relax \
   -Wl,--build-id=none \
   -o UART-HELLO-115200.elf \
   UART-HELLO-115200.S</code></pre></article>
-        <article><h3>2. Emit an ELF byte dump</h3><pre><code>riscv64-unknown-elf-objcopy \
-  -O verilog \
+        <article><h3>2. Emit 32-bit IMEM words</h3><pre><code>riscv64-unknown-elf-objcopy \
+  -O verilog --verilog-data-width=4 \
   UART-HELLO-115200.elf \
-  UART-HELLO-115200.bytes</code></pre></article>
-        <article><h3>3. Pack 32-bit IMEM words</h3><pre><code>python3 tools/compliance/common/
-bin_dump_to_mem.py \
-  UART-HELLO-115200.bytes \
-  UART-HELLO-115200.mem</code></pre></article>
+  UART-HELLO-115200.words</code></pre></article>
+        <article><h3>3. Normalize one word per line</h3><pre><code>tr -s '[:space:]' '\n' \
+  &lt; UART-HELLO-115200.words \
+  &gt; UART-HELLO-115200.mem</code></pre><p>The boot tool accepts standard <code>$readmemh</code> address directives and one hexadecimal word per line.</p></article>
       </div>
       <p class="profile-note">Source: <a href="../../eriscv-m0/fpga/vcu108/tests/UART-HELLO-115200.S">UART-HELLO-115200.S</a>. Generated image: <a href="../../eriscv-m0/fpga/vcu108/tests/UART-HELLO-115200.mem">UART-HELLO-115200.mem</a>. The image begins at word address zero, which maps to the CPU boot address <code>0x1000_0000</code>.</p>
     </section>
@@ -106,7 +105,7 @@ Hello World</code></pre></article><article><h3>What this proves</h3><p>Host USB 
 
     <section class="section profile-section muted-section">
       <div class="section-heading"><p class="eyebrow">07 / REUSE THE LINK FOR DEMOS</p><h2>A local browser console provides boot loading and runtime serial interaction.</h2><p>Double-click <a href="../../eriscv-m0/fpga/vcu108/tools/open_uart_console.cmd">open_uart_console.cmd</a> in Windows Explorer. It starts the local-only <a href="../../eriscv-m0/fpga/vcu108/tools/uart_console.html">Web Serial console</a> and opens it in the default Chromium browser.</p></div>
-      <div class="code-grid"><article><h3>Browser flow</h3><p>Select the CP2105 Standard UART in the browser chooser, keep 115200 baud for boot, choose a compatible runtime <code>.mem</code> image, then click <strong>Boot image</strong>. The bundled Hello World image proves boot and runtime TX; interactive terminal behavior depends on a separately supplied monitor image.</p></article><article><h3>Security boundary</h3><p>The page runs only through a loopback local server and requires explicit browser permission for the serial device. It cannot select COM4 silently or control the physical boot DIP/reset.</p></article><article><h3>Script fallback</h3><p><a href="../../eriscv-m0/fpga/vcu108/tools/m0_uart.ps1">m0_uart.ps1</a> remains available for automation and non-browser environments, but the browser page is the intended interactive demo interface.</p></article></div>
+      <div class="code-grid"><article><h3>Browser flow</h3><p>Select the CP2105 Standard UART in the browser chooser, keep 115200 baud for boot, choose a compatible runtime <code>.mem</code> image, then click <strong>Boot image</strong>. The bundled Hello World image proves boot and runtime TX; interactive terminal behavior depends on a separately supplied monitor image.</p></article><article><h3>Security boundary</h3><p>The page runs only through a loopback local server and requires explicit browser permission for the serial device. It cannot select COM4 silently or control the physical boot DIP/reset.</p></article><article><h3>Script fallback</h3><p><a href="../../eriscv-m0/fpga/vcu108/tools/m0_uart.ps1">m0_uart.ps1</a> remains available for automation and non-browser environments. The browser page is a local serial front end for compatible images.</p></article></div>
       <p class="profile-note">This is a raw board transport console, not a full VT100 terminal. It intentionally omits local echo, escape-sequence parsing, and line editing; those can be added when a demo firmware requires them.</p>
     </section>
 

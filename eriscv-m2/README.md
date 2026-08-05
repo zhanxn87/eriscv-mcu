@@ -10,7 +10,10 @@ and a single generic DMA channel. The channel supports direct System
 SRAM-to-System SRAM copies, 32-byte linked descriptors, and a fixed UART0 TX
 byte-stream endpoint; UART RX, SPI, and Timer endpoints remain deferred. It
 deliberately uses directly addressed memories rather than any cache mechanism.
-B, D, and Zfa are deferred.
+B, D, and Zfa are deferred. The FPU uses a pinned, product-local CVFPU
+snapshot with one documented M2-local FMA underflow correctness patch; it is
+therefore not an unmodified top-level third-party dependency. See the
+[CVFPU vendor lock](rtl/vendor/cvfpu/LOCK.md) for provenance and scope.
 
 ## Start Here
 

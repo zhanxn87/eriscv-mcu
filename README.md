@@ -15,6 +15,9 @@ claim.
   guide and preliminary datasheets.
 - [Verification evidence snapshot](docs/Verification/eriscv-mcu-simulation-evidence-snapshot.md)
   — sole owner of current regression totals and status.
+- [Changelog](CHANGELOG.md) — public release history and known limitations.
+- [Contributing](CONTRIBUTING.md) and [security reporting](SECURITY.md) —
+  contribution and private-disclosure expectations.
 
 ## Product line
 

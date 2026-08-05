@@ -17,8 +17,10 @@ the supported simulation suite; dated results are in the
 | BSP header | `include/eriscv_mcu.h` | MMIO helpers, register maps for CLINT/PLIC/UART/GPIO/Timer/SPI |
 | Config | `include/eriscv_mcu_config.h` | M0 address map, `ERISCV_MCU_BOOT_ADDR`, PLIC source count, feature flags |
 | RTOS M-mode | `rtos/freertos/` | Four static M-mode tasks, dynamic allocation, CLINT tick, PLIC ISR handoff |
-| Benchmarks | `benchmarks/microbench/` | ALU/branch/MUL/DIV/LS/ECALL/CLINT/PLIC microbenchmark || Dhrystone | `benchmarks/dhrystone/` | Self-contained Dhrystone 2.1, mcycle timing, DMIPS/MHz reporting |
-| Zephyr | `rtos/zephyr/` | Zephyr RTOS M0 board port, multi-thread semaphore handoff demo || Tools | `tools/elf_to_mem.py`, `tools/run_hello_uart_sim.py`, `tools/run_mcu_ci.py` | ELF → IMEM/DMEM images; ModelSim example and frozen-suite checks |
+| Microbench | `benchmarks/microbench/` | ALU/branch/MUL/DIV/LS/ECALL/CLINT/PLIC microbenchmark |
+| Dhrystone | `benchmarks/dhrystone/` | Self-contained Dhrystone 2.1, `mcycle` timing, DMIPS/MHz reporting |
+| Zephyr | `rtos/zephyr/` | Zephyr RTOS M0 board port and multi-thread semaphore handoff demo |
+| Tools | `tools/elf_to_mem.py`, `tools/run_hello_uart_sim.py`, `tools/run_mcu_ci.py` | ELF-to-IMEM/DMEM image conversion, simulation helpers, and ModelSim CI wrapper |
 
 ## Driver API Summary
 

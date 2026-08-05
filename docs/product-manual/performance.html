@@ -38,12 +38,12 @@
       <div class="section-heading">
         <p class="eyebrow">01 / CONTROLLED FEATURE SWEEP</p>
         <h2>One clean revision. Five cumulative gates.</h2>
-        <p>Every point was rebuilt at clean revision <code>dce4cd6</code> with the same product-local image, <code>-O2 -falign-functions=4 -falign-loops=4 -falign-jumps=4</code>, linker layout, and Verilator run. Gates are added in order: early local-load, load-response bypass, BHT, RAS, then upper-32 prefetch.</p>
+        <p>Every point was rebuilt from the same pre-public clean engineering baseline with the same product-local image, <code>-O2 -falign-functions=4 -falign-loops=4 -falign-jumps=4</code>, linker layout, and Verilator run. Gates are added in order: early local-load, load-response bypass, BHT, RAS, then upper-32 prefetch. The predecessor revision is intentionally not cited because it is not reachable from this public repository.</p>
       </div>
       <figure class="performance-plot">
         <svg viewBox="0 0 1100 650" role="img" aria-labelledby="performance-chart-title performance-chart-desc">
           <title id="performance-chart-title">M0 M1 and M2 clean Dhrystone feature sweep</title>
-          <desc id="performance-chart-desc">Cumulative five-gate Dhrystone measurements at clean revision dce4cd6 for M0, M1, and M2. The readout below the plot gives each score and uplift relative to the all-gates-off baseline.</desc>
+          <desc id="performance-chart-desc">Cumulative five-gate historical Dhrystone measurements for M0, M1, and M2. The readout below the plot gives each score and uplift relative to the all-gates-off baseline.</desc>
           <rect width="1100" height="650" fill="#ffffff"/>
           <g fill="none" stroke="#dce3eb" stroke-width="1"><path d="M70 60V420H1040"/><path d="M70 420H1040"/><path d="M70 330H1040"/><path d="M70 240H1040"/><path d="M70 150H1040"/><path d="M70 60H1040"/></g>
           <g fill="#58677a" font-family="ui-monospace,monospace" font-size="14"><text x="20" y="425">0.60</text><text x="20" y="335">0.70</text><text x="20" y="245">0.80</text><text x="20" y="155">0.90</text><text x="20" y="65">1.00</text><text x="70" y="34" fill="#122033" font-weight="800">DMIPS / MHz</text></g>
@@ -92,7 +92,7 @@
              <rect x="885" y="350" width="27" height="10" fill="#0d8b83"/><rect x="919" y="356" width="27" height="4" fill="#2681a6"/><rect x="953" y="356" width="27" height="4" fill="#8a4fff"/></g>
           <g fill="#122033" font-family="ui-monospace,monospace" font-size="12" font-weight="800" text-anchor="middle"><text x="212" y="398">EARLY LOCAL-LOAD</text><text x="392" y="398">RESPONSE BYPASS</text><text x="572" y="398">BHT</text><text x="752" y="398">RAS</text><text x="932" y="398">U32 PREFETCH</text></g>
           <g font-family="ui-monospace,monospace" font-size="12" font-weight="800" text-anchor="middle"><text x="212" y="58" fill="#0d8b83">143k</text><text x="392" y="247" fill="#0d8b83">48k</text><text x="572" y="382" fill="#0d8b83">−3k</text><text x="752" y="329" fill="#0d8b83">10k</text><text x="932" y="340" fill="#0d8b83">5k</text></g>
-          <text x="90" y="457" fill="#58677a" font-size="13">Positive values reduce raw Dhrystone cycles. Values are successive-stage deltas at clean revision dce4cd6.</text>
+          <text x="90" y="457" fill="#58677a" font-size="13">Positive values reduce raw Dhrystone cycles. Values are successive-stage deltas from one clean pre-public baseline.</text>
         </svg>
         <figcaption>All gates off: M0 831,019 cycles, M1 796,020, M2 790,022. The dominant early-local-load response cuts D-bus wait from 112,000 to 8,000 cycles on every product.</figcaption>
       </figure>
@@ -142,7 +142,7 @@
     </section>
 
     <section class="section">
-      <div class="section-heading"><p class="eyebrow">06 / EMBENCH-IOT WORKLOAD SWEEP</p><h2>M2's RV32F path is visible in <code>minver</code>; integer gains remain workload-specific.</h2><p>Upstream Embench-IoT 1.0, twelve selected workloads rebuilt per product with <code>-O2</code>, <code>CPU_MHZ=1</code>, <code>WARMUP_HEAT=0</code>, and Scale-1. Each value is raw <code>mcycle</code> measured with ModelSim; lower is better. All 36 product/workload runs passed at clean revision <code>144b03f</code>.</p></div>
+      <div class="section-heading"><p class="eyebrow">06 / EMBENCH-IOT WORKLOAD SWEEP</p><h2>M2's RV32F path is visible in <code>minver</code>; integer gains remain workload-specific.</h2><p>Upstream Embench-IoT 1.0, twelve selected workloads rebuilt per product with <code>-O2</code>, <code>CPU_MHZ=1</code>, <code>WARMUP_HEAT=0</code>, and Scale-1. Each value is raw <code>mcycle</code> measured with ModelSim; lower is better. All 36 product/workload runs passed on a clean pre-public engineering baseline; that predecessor revision is intentionally not cited because it is not reachable from this public repository.</p></div>
       <figure class="embench-chart" role="img" aria-label="Logarithmic horizontal bar chart of Embench-IoT raw cycles for M0, M1, and M2">
         <ul class="performance-legend"><li><span class="performance-key" style="border-color:#0d8b83"></span><span>M0 / RV32IC</span></li><li><span class="performance-key m1"></span><span>M1 / RV32IMC + PMP</span></li><li><span class="performance-key" style="border-color:#8a4fff"></span><span>M2 / RV32IMFC + DMA/System SRAM</span></li></ul>
         <div class="embench-axis"><span></span><div class="embench-axis-labels"><span>5k</span><span>50k</span><span>500k</span><span>5M cycles</span></div></div>

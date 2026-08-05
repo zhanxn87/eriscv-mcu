@@ -6,8 +6,9 @@ fixed validation seed (`0x3415`, `0x3415`, `0x66`). `mcycle` is the timing
 source.
 
 `make -C eriscv-m1/sw coremark` builds the default one-iteration
-simulation smoke. `tools/run_coremark_sim.py` runs it through ModelSim and
-reports the measured `mcycle` delta encoded in `eriscv_coremark_result`.
+simulation smoke. `tools/run_coremark_sim.py` uses its automatic backend
+(Verilator when available, otherwise ModelSim) and reports the measured
+`mcycle` delta encoded in `eriscv_coremark_result`.
 
 The smoke verifies CoreMark CRCs but is deliberately shorter than CoreMark's
 10-second reporting requirement. It is evidence of functional porting and

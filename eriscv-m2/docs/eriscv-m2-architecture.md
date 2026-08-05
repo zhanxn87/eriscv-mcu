@@ -18,7 +18,10 @@ contract is `RV32IMFC_Zicsr_Zifencei_Zicntr_Zihpm_Zihintpause_Zba_Zcf`,
   at architectural commit. D, Zfa, vectors, and non-standard FP extensions are
   excluded. CVFPU and its required `common_cells` and `fpu_div_sqrt_mvp`
   snapshots are vendored below M2's own `rtl/vendor/`; their lock, provenance,
-  hashes, and license records are part of the product source.
+  hashes, and license records are part of the product source. The CVFPU
+  snapshot includes one documented M2-local FMA underflow correctness patch;
+  the [vendor lock](../rtl/vendor/cvfpu/LOCK.md) distinguishes that delta from
+  the pinned upstream baseline.
 - Provide directly addressed instruction TCM and data TCM. Their capacity,
   base address, arbitration, reset/initialization behavior, and access latency
   are fixed by the product integration contract below.

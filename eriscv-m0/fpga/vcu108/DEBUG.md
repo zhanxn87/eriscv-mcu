@@ -121,10 +121,12 @@ bypasses.
 | Resources | 9,372 CLB LUTs (1.74%), 5,357 registers (0.50%), 32 BRAM tiles (1.85%), 0 DSPs |
 | Deliverables | Routed DCP and `build/eriscv_m0_vcu108_wrapper.bit` generated |
 
-**Disposition:** M0 retains 100 MHz FPGA timing closure for the present RTL.
-The positive slack is smaller than the previous BTFNT-only report and must not
-be attributed to any individual feature without a paired build.  This result
-does not add physical-board functional evidence.
+**Disposition:** This archived 2026-07-30 build met the 100 MHz FPGA timing
+target. The family [FPGA Timing and Area Evidence](../../../docs/Performance/eriscv-mcu-fpga-timing-area-evidence.md)
+owns the newer 2026-07-31 M0 routed result and current timing status. The
+positive slack in this historical build must not be attributed to any
+individual feature without a paired build. This result does not add
+physical-board functional evidence.
 
 ## Future entries
 

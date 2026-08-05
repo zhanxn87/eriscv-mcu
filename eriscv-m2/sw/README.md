@@ -78,9 +78,9 @@ make -C eriscv-m2/sw sim-fpu-dma-sram
 make -C eriscv-m2/sw images-all          # CI example-set build
 make -C eriscv-m2/sw ci                  # M2 BSP ModelSim CI
 make -C eriscv-m2/sw sim                # run hello_uart sim
-make -C eriscv-m2/sw sim-coremark       # CoreMark v1.01 ModelSim smoke
+make -C eriscv-m2/sw sim-coremark       # CoreMark v1.01 smoke (Verilator preferred)
 make -C eriscv-m2/sw sim-embench        # Embench-IoT matmult-int ModelSim smoke
-make -C eriscv-m2/sw sim-dhrystone      # Dhrystone 2.1 ModelSim smoke
+make -C eriscv-m2/sw sim-dhrystone      # Dhrystone 2.1 smoke (Verilator preferred)
 make -C eriscv-m2/sw sim-zephyr         # Zephyr RTOS multi-thread demo
 make -C eriscv-m2/sw sim-freertos       # FreeRTOS M-mode timing profile
 make -C eriscv-m2/sw sim-freertos-umode # FreeRTOS U-mode/PMP smoke
@@ -97,7 +97,8 @@ their task-context save/restore includes F registers.
 
 The M2 CoreMark adapter uses the pinned upstream v1.01 submodule, one context,
 2,000-byte static DTCM data, fixed validation seeds, and `mcycle` timing. The
-default smoke runs one iteration through ModelSim and reports its cycle count.
+default smoke runs one iteration through its automatic backend (Verilator when
+available, otherwise ModelSim) and reports its cycle count.
 It validates the CoreMark CRC path but is intentionally shorter than the
 upstream 10-second reporting rule; it is not an official CoreMark or
 CoreMark/MHz result.
@@ -105,8 +106,9 @@ CoreMark/MHz result.
 ## Dhrystone Simulation Smoke
 
 The M2 Dhrystone adapter is a self-contained Dhrystone 2.1 implementation with
-`mcycle` timing and UART output. The default smoke runs 100,000 iterations
-through ModelSim and reports cycle count and DMIPS/MHz. It validates the
+`mcycle` timing and UART output. The default smoke runs 1,000 iterations through
+its automatic backend (Verilator when available, otherwise ModelSim) and reports
+cycle count and DMIPS/MHz. It validates the
 Dhrystone result word but is not an official Dhrystone or DMIPS rating.
 
 Every successful runner invocation appends one row to

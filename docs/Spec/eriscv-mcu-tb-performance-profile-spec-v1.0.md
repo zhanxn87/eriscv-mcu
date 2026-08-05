@@ -182,7 +182,7 @@ traffic. The standard summary groups `event × PC` and reports the top PCs.
 Use the repository tool, for example:
 
 ```sh
-python3 tools/sim/summarize_perf_profile_trace.py /tmp/m1-profile.csv \
+python3 tools/sim/summarize_perf_profile_trace.py build/m1-profile.csv \
   --event-prefix if_delivery_to_bubble --top 12
 ```
 

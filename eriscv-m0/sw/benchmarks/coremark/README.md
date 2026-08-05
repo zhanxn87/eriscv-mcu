@@ -1,13 +1,14 @@
-# M1 CoreMark Adapter
+# M0 CoreMark Adapter
 
-This adapter builds unmodified upstream CoreMark v1.01 sources against the M1
+This adapter builds unmodified upstream CoreMark v1.01 sources against the M0
 bare-metal BSP. It uses a single context, 2,000-byte static DTCM data, and a
 fixed validation seed (`0x3415`, `0x3415`, `0x66`). `mcycle` is the timing
 source.
 
-`make -C eriscv-m1/sw coremark` builds the default one-iteration
-simulation smoke. `tools/run_coremark_sim.py` runs it through ModelSim and
-reports the measured `mcycle` delta encoded in `eriscv_coremark_result`.
+`make -C eriscv-m0/sw coremark` builds the default one-iteration
+simulation smoke. `tools/run_coremark_sim.py` uses its automatic backend
+(Verilator when available, otherwise ModelSim) and reports the measured
+`mcycle` delta encoded in `eriscv_coremark_result`.
 
 The smoke verifies CoreMark CRCs but is deliberately shorter than CoreMark's
 10-second reporting requirement. It is evidence of functional porting and

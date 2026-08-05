@@ -83,8 +83,10 @@ already-built Verilator SoC binary, for example:
 
 ```bash
 cd eriscv-m0/dv/soc/sim
-./obj_dir/Vsoc_tb +tc=MY-TEST +instr_mem_file=/absolute/path/test.mem \
-  +expected_regs_file=/absolute/path/test.expected_regs +perf_profile=1
+./obj_dir/Vsoc_tb +tc=MCU-BUS-UNMAPPED-01 \
+  +instr_mem_file=../tests/MCU-BUS-UNMAPPED-01.mem \
+  +expected_regs_file=../tests/MCU-BUS-UNMAPPED-01.expected_regs \
+  +perf_profile=1
 ```
 
 The `TB PERF` summary reports architectural `mcycle`/`minstret`, core-enabled

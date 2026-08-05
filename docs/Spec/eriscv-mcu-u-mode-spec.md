@@ -1,19 +1,21 @@
-# eRISCV-M1 U-mode Specification v1.0
+# eRISCV-M1/M2 U-mode Specification v1.0
 
 ## 1. Scope
 
-This is the implemented M/U-only RV32IMC contract for `eriscv-m1`, inherited
-by M2; M0 remains M-mode-only. It provides PMP-based isolation for a small
-M-mode kernel and U-mode tasks, not S-mode, virtual memory, or Linux support.
-Directed and ACT evidence covers transitions, PMP, MPRV, and `mcounteren`; dated
-results are in the
+This is the implemented M/U-only privilege contract for `eriscv-m1` and
+`eriscv-m2`; M0 remains M-mode-only. M1 implements
+`RV32IMC_Zicsr_Zifencei_Zicntr_Zihpm_Zihintpause`; M2 preserves the same
+privilege and PMP contract on its own RV32IMFC profile. It provides PMP-based
+isolation for a small M-mode kernel and U-mode tasks, not S-mode, virtual
+memory, or Linux support. Directed and ACT evidence covers transitions, PMP,
+MPRV, and `mcounteren`; dated results are in the
 [MCU Evidence Snapshot](../Verification/eriscv-mcu-simulation-evidence-snapshot.md).
 
 ## 2. Architectural profile
 
 | Item | Contract |
 | --- | --- |
-| ISA | `RV32IMC_Zicsr_Zifencei_Zicntr_Zihpm` plus U-mode privilege support |
+| ISA | M1: `RV32IMC_Zicsr_Zifencei_Zicntr_Zihpm_Zihintpause`; M2: product-local RV32IMFC profile. This document specifies the shared M/U privilege layer. |
 | Implemented modes | M and U only; reset enters M-mode |
 | Trap target | M-mode only, through `mtvec` |
 | Address translation | None; physical addresses only |
@@ -65,7 +67,7 @@ U-mode retain the current privilege. MRET to U-mode clears MPRV.
 
 ## 5. PMP enforcement
 
-The current M1 PMP CSR format, priority ordering, TOR/NA4/NAPOT matching, and
+The M1/M2 PMP CSR format, priority ordering, TOR/NA4/NAPOT matching, and
 multi-byte boundary checks are retained. U-mode changes the enforcement rule:
 
 1. Every U-mode instruction fetch, load, and store must match a PMP entry.
@@ -124,7 +126,7 @@ The M-mode kernel is responsible for:
 3. saving task context in M-mode on a trap and selecting the next task;
 4. validating ECALL arguments before touching user pointers.
 
-The M1 FreeRTOS U-mode smoke applies this contract to two static tasks.
+The M1/M2 FreeRTOS U-mode smoke applies this contract to static tasks.
 `MCU-UMODE-01` and `MCU-UMODE-EXT-01` provide the directed architectural
 coverage for ECALL/trap, PMP faulting, MPRV, and counter delegation.
 

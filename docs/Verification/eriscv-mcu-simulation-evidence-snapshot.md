@@ -11,9 +11,9 @@ benchmark measurements, routed PPA figures, or board-debug transcripts.
 - A product `full` target runs its selected core-directed tests, ACT4 profile,
   and SoC-directed regression. ACT4 executes in the core TB; boot transport
   and `crt0` initialization execute in the SoC TB.
-- Retained source evidence is each product's
-  `dv/{core,soc}/sim/regression_logs/summary.json`. Tool versions and exact
-  commands remain in the product runners and test inventories.
+- This versioned snapshot is the retained result record. The checked-in product
+  runners and test inventories own commands and testcase selection; per-run
+  `regression_logs/summary.json` files are ignored generated output.
 
 ## Current product-local regression baseline
 
@@ -41,5 +41,6 @@ and pre-M2-closure snapshots.
 ## Update rule
 
 Update this snapshot only after a complete product `full` run. Record its date,
-core and SoC totals, backend, and failures from the retained summaries; do not
-copy those totals into product architecture contracts or historical plans.
+core and SoC totals, backend, and failures from that run's console or generated
+summary; do not copy those totals into product architecture contracts or
+historical plans.
