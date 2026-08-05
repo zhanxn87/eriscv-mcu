@@ -11,8 +11,9 @@ claim.
 - [Family documentation map](docs/README.md) — contracts, evidence, and history.
 - [Architecture claim](docs/eriscv-mcu-architecture-claim.md) — frozen product
   profiles and deliberate exclusions.
-- [HTML product manual](docs/product-manual/index.html) — reader-facing family
-  guide and preliminary datasheets.
+- [Product manual](https://eriscv-mcu-product-manual.zhanxnse.chatgpt.site) —
+  reader-facing family guide and preliminary datasheets; its versioned HTML
+  source remains in [`docs/product-manual/`](docs/product-manual/).
 - [Verification evidence snapshot](docs/Verification/eriscv-mcu-simulation-evidence-snapshot.md)
   — sole owner of current regression totals and status.
 - [Changelog](CHANGELOG.md) — public release history and known limitations.
