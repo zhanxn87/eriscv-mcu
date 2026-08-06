@@ -1,10 +1,11 @@
-# eRISCV MCU FPGA Timing and Area Evidence
+# eRISCV MCU FPGA and Sky130 Timing and Area Evidence
 
-This document owns the retained routed VCU108 timing and utilization evidence.
-It is FPGA implementation evidence, not an ASIC PPA estimate, external-I/O
-sign-off, guaranteed frequency, or board qualification.
+This document owns the retained routed VCU108 evidence and local Sky130
+OpenROAD implementation estimates. FPGA resources and ASIC standard-cell area
+are different units and must not be compared as a common area metric. Neither
+table is external-I/O sign-off, a guaranteed frequency, or board qualification.
 
-## Current routed results
+## FPGA: current routed results
 
 Target: AMD Virtex UltraScale+ VCU108 (`xcvu095-ffva2104-2-e`), Vivado 2025.2,
 `soc_clk_mmcm` at 100.010 MHz (9.999 ns). Values below are taken from each
@@ -20,10 +21,37 @@ M2 is fully routed and has no reported routing error, but its latest retained
 report does not meet the 100 MHz setup target. Do not describe M2 timing as
 closed until a newer passing routed report is captured here.
 
+## Sky130: current local OpenROAD estimate
+
+Target: SkyWater Sky130 HD (`sky130_fd_sc_hd`, `tt_025C_1v80`), local
+OpenROAD `bazel-nostamp`, 20 ns (50 MHz) system clock, current dirty worktree
+based on `e84e737`. The flow uses actual Sky130 integrated clock gates,
+floorplanning, placement, high-fanout repair, CTS, and global-routing RC.
+SRAM remains a black box: its macro area, timing, LEF, and routing are absent.
+
+| Product | Run date | Target | Setup result | Pre-P&R standard-cell area | Post-P&R area | Hold result | Status |
+| --- | --- | --- | --- | ---: | ---: | --- | --- |
+| M0 | 2026-08-06 | 20 ns (50 MHz) | **Not closed:** WNS -1.249 ns, 39 endpoints after setup repair | 297,141 µm² | — | — | OpenROAD stopped at 65% utilization before final reporting; initial RTL optimization baseline only |
+| M1 | — | — | Not run | — | — | — | Pending |
+| M2 | — | — | Not run | — | — | — | Pending |
+
+The M0 setup value is the last OpenROAD resizer result after global-routing RC,
+not a signoff report: final detailed routing, SPEF extraction, hold repair,
+PDN, IR/EM, and SRAM integration have not run. The observed worst path is the
+CSR/HPM next-state path into `mhpmcounter6_q[63]`, not the integer ALU path.
+
+### Update rule
+
+Keep this table as the current implementation baseline. Update a product row
+only after preserving the generated local log and recording the target period,
+PDK/library, tool version, area stage, setup and hold status. Do not replace a
+failed result with an extrapolated Fmax, and do not combine FPGA resource data
+with Sky130 area in a single numeric comparison.
+
 ## Interpretation boundary
 
 - M0 and M1 meet the internal 100 MHz setup target with the frozen RTL used by
-  their retained reports.
+  their retained FPGA reports; this does not imply Sky130 closure.
 - M2 resource growth reflects RV32F plus 128 KiB ITCM, 128 KiB DTCM, and the
   512 KiB eight-bank System SRAM. The report does not prove an ASIC area or
   frequency result.
@@ -37,4 +65,4 @@ closed until a newer passing routed report is captured here.
 
 [Verification Evidence Snapshot](../Verification/eriscv-mcu-simulation-evidence-snapshot.md)
 owns regression totals. The [product manual FPGA page](../product-manual/fpga-evaluation.html)
-is the reader-facing summary and must match this table.
+is the reader-facing summary of the FPGA table and must match its FPGA rows.

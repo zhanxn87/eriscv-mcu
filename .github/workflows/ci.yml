@@ -32,12 +32,20 @@ jobs:
           set -o pipefail
           mkdir -p build/ci
           make check 2>&1 | tee build/ci/static-checks.log
-      - name: Upload static-check reports
+      - name: Publish static-check summary
         if: always()
+        run: |
+          python3 tools/project/write_ci_summary.py regression \
+            --title "Static RTL checks" \
+            --suite "Source, TB-contract, and lint=build/ci/static-checks.log" \
+            >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload static-check diagnostics
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: static-rtl-checks
           path: build/ci
+          retention-days: 7
           if-no-files-found: warn
 
   pr-verilator-full:
@@ -64,8 +72,16 @@ jobs:
           set -o pipefail
           mkdir -p build/ci
           make eriscv-${{ matrix.product }}-act-smoke 2>&1 | tee build/ci/${{ matrix.product }}-act-smoke.log
-      - name: Upload PR regression reports
+      - name: Publish PR regression summary
         if: always()
+        run: |
+          python3 tools/project/write_ci_summary.py regression \
+            --title "Verilator regression (${{ matrix.product }})" \
+            --suite "Full core and SoC (no ACT4)=build/ci/${{ matrix.product }}-full-no-act.log" \
+            --suite "Committed ACT smoke=build/ci/${{ matrix.product }}-act-smoke.log" \
+            >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload PR failure diagnostics
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: pr-verilator-${{ matrix.product }}
@@ -73,6 +89,7 @@ jobs:
             build/ci
             eriscv-${{ matrix.product }}/dv/core/sim/regression_logs
             eriscv-${{ matrix.product }}/dv/soc/sim/regression_logs
+          retention-days: 7
           if-no-files-found: warn
 
   nightly-change-gate:
@@ -128,7 +145,7 @@ jobs:
           path: |
             .cache/act4
             eriscv-${{ matrix.product }}/compliance/riscv-arch-test/generated
-          key: ${{ runner.os }}-act4-${{ matrix.product }}-${{ steps.act4-revision.outputs.revision }}-${{ hashFiles('third_party/riscv-arch-test/.mise.toml', 'tools/compliance/riscv-arch-test/bootstrap_act4_native.sh', 'tools/compliance/riscv-arch-test/act4-standard-env.sh', 'eriscv-m0/compliance/riscv-arch-test/profile.json', 'eriscv-m1/compliance/riscv-arch-test/profile.json', 'eriscv-m2/compliance/riscv-arch-test/profile.json') }}
+          key: ${{ runner.os }}-act4-${{ matrix.product }}-${{ steps.act4-revision.outputs.revision }}-${{ hashFiles('third_party/riscv-arch-test/.mise.toml', 'tools/compliance/riscv-arch-test/bootstrap_act4_native.sh', 'tools/compliance/riscv-arch-test/act4-standard-env.sh', 'eriscv-m0/compliance/riscv-arch-test/profile.json', 'eriscv-m1/compliance/riscv-arch-test/profile.json', 'eriscv-m2/compliance/riscv-arch-test/profile.json', 'eriscv-m1/compliance/riscv-arch-test/u_profile.json', 'eriscv-m2/compliance/riscv-arch-test/u_profile.json', 'eriscv-m0/compliance/riscv-arch-test/test_config.yaml', 'eriscv-m1/compliance/riscv-arch-test/test_config.yaml', 'eriscv-m2/compliance/riscv-arch-test/test_config.yaml', 'eriscv-m1/compliance/riscv-arch-test/u_test_config.yaml', 'eriscv-m2/compliance/riscv-arch-test/u_test_config.yaml', 'eriscv-m0/compliance/riscv-arch-test/sail.json', 'eriscv-m1/compliance/riscv-arch-test/sail.json', 'eriscv-m2/compliance/riscv-arch-test/sail.json', 'eriscv-m0/compliance/riscv-arch-test/eriscv_mcu.yaml', 'eriscv-m1/compliance/riscv-arch-test/eriscv_mcu.yaml', 'eriscv-m2/compliance/riscv-arch-test/eriscv_mcu.yaml', 'eriscv-m0/compliance/riscv-arch-test/link.ld', 'eriscv-m1/compliance/riscv-arch-test/link.ld', 'eriscv-m2/compliance/riscv-arch-test/link.ld', 'eriscv-m0/compliance/riscv-arch-test/rvmodel_macros.h', 'eriscv-m1/compliance/riscv-arch-test/rvmodel_macros.h', 'eriscv-m2/compliance/riscv-arch-test/rvmodel_macros.h') }}
           restore-keys: |
             ${{ runner.os }}-act4-${{ matrix.product }}-
             ${{ runner.os }}-act4-
@@ -149,8 +166,15 @@ jobs:
           set -o pipefail
           mkdir -p build/ci
           make eriscv-${{ matrix.product }}-full 2>&1 | tee build/ci/${{ matrix.product }}-full.log
-      - name: Upload nightly regression reports
+      - name: Publish nightly regression summary
         if: always()
+        run: |
+          python3 tools/project/write_ci_summary.py regression \
+            --title "Full ACT4 regression (${{ matrix.product }})" \
+            --suite "Core, ACT4, and SoC=build/ci/${{ matrix.product }}-full.log" \
+            >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload nightly failure diagnostics
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: nightly-full-${{ matrix.product }}
@@ -158,6 +182,7 @@ jobs:
             build/ci
             eriscv-${{ matrix.product }}/dv/core/sim/regression_logs
             eriscv-${{ matrix.product }}/dv/soc/sim/regression_logs
+          retention-days: 7
           if-no-files-found: warn
 
   nightly-ppa:
@@ -166,6 +191,8 @@ jobs:
     name: Nightly generic Liberty PPA
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    outputs:
+      metrics_json: ${{ steps.metrics.outputs.ppa }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -190,24 +217,31 @@ jobs:
           source tools/ppa/env.sh
           mkdir -p build/ppa
           make ppa-all 2>&1 | tee build/ppa/nightly-ppa.log
-      - name: Upload PPA reports
+      - name: Publish PPA summary
+        id: metrics
         if: always()
+        run: |
+          python3 tools/project/write_ci_summary.py ppa --report-dir build/ppa >> "$GITHUB_STEP_SUMMARY"
+          echo "ppa=$(python3 tools/project/write_ci_summary.py ppa --report-dir build/ppa --format json)" >> "$GITHUB_OUTPUT"
+      - name: Upload PPA failure diagnostics
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: nightly-ppa-generic-liberty
           path: build/ppa
+          retention-days: 7
           if-no-files-found: warn
 
   nightly-benchmarks:
     needs: nightly-change-gate
     if: needs.nightly-change-gate.outputs.should_run == 'true'
-    name: Nightly benchmarks (${{ matrix.product }})
+    name: Nightly benchmarks
     runs-on: ubuntu-latest
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      matrix:
-        product: [m0, m1, m2]
+    timeout-minutes: 180
+    outputs:
+      m0_metrics: ${{ steps.metrics.outputs.m0 }}
+      m1_metrics: ${{ steps.metrics.outputs.m1 }}
+      m2_metrics: ${{ steps.metrics.outputs.m2 }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -216,30 +250,98 @@ jobs:
         run: git submodule update --init --depth 1 third_party/CoreMark third_party/embench-iot
       - name: Install benchmark tools
         run: sudo apt-get update && sudo apt-get install --yes gcc-riscv64-unknown-elf verilator
-      - name: Run CoreMark
+      - name: Run all benchmark smokes
         run: |
           set -o pipefail
           mkdir -p build/nightly-benchmarks
-          make eriscv-${{ matrix.product }}-coremark 2>&1 | tee build/nightly-benchmarks/${{ matrix.product }}-coremark.log
-      - name: Run Dhrystone
-        run: |
-          set -o pipefail
-          mkdir -p build/nightly-benchmarks
-          make eriscv-${{ matrix.product }}-dhrystone 2>&1 | tee build/nightly-benchmarks/${{ matrix.product }}-dhrystone.log
-      - name: Run Embench-IoT performance smoke
-        run: |
-          set -o pipefail
-          mkdir -p build/nightly-benchmarks
-          make eriscv-${{ matrix.product }}-embench EMBENCH_BENCH=matmult-int EMBENCH_PROFILE=speed EMBENCH_SCALE=1 2>&1 | tee build/nightly-benchmarks/${{ matrix.product }}-embench.log
-      - name: Upload benchmark reports
+          failed=0
+          for product in m0 m1 m2; do
+            if ! make eriscv-${product}-coremark 2>&1 | tee build/nightly-benchmarks/${product}-coremark.log; then failed=1; fi
+            if ! make eriscv-${product}-dhrystone 2>&1 | tee build/nightly-benchmarks/${product}-dhrystone.log; then failed=1; fi
+            if ! make eriscv-${product}-embench EMBENCH_BENCH=matmult-int EMBENCH_PROFILE=speed EMBENCH_SCALE=1 2>&1 | tee build/nightly-benchmarks/${product}-embench.log; then failed=1; fi
+          done
+          exit "$failed"
+      - name: Publish benchmark summaries
+        id: metrics
         if: always()
+        run: |
+          for product in m0 m1 m2; do
+            args=(benchmark --product "$product" --coremark "build/nightly-benchmarks/${product}-coremark.log" --dhrystone "build/nightly-benchmarks/${product}-dhrystone.log" --embench "build/nightly-benchmarks/${product}-embench.log")
+            python3 tools/project/write_ci_summary.py "${args[@]}" >> "$GITHUB_STEP_SUMMARY"
+            echo "$product=$(python3 tools/project/write_ci_summary.py "${args[@]}" --format json)" >> "$GITHUB_OUTPUT"
+          done
+      - name: Upload benchmark failure diagnostics
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: nightly-benchmarks-${{ matrix.product }}
+          name: nightly-benchmark-diagnostics
           path: |
             build/nightly-benchmarks
-            eriscv-${{ matrix.product }}/sw/benchmarks/dhrystone/dmips_runs.csv
-            eriscv-${{ matrix.product }}/sw/build/coremark
-            eriscv-${{ matrix.product }}/sw/build/dhrystone*
-            eriscv-${{ matrix.product }}/sw/build/embench
+            eriscv-m0/sw/benchmarks/dhrystone/dmips_runs.csv
+            eriscv-m1/sw/benchmarks/dhrystone/dmips_runs.csv
+            eriscv-m2/sw/benchmarks/dhrystone/dmips_runs.csv
+            eriscv-m0/sw/build
+            eriscv-m1/sw/build
+            eriscv-m2/sw/build
+          retention-days: 7
           if-no-files-found: warn
+
+  nightly-performance-history:
+    needs: [nightly-change-gate, nightly-ppa, nightly-benchmarks]
+    if: >-
+      always() && needs.nightly-change-gate.outputs.should_run == 'true' &&
+      needs.nightly-ppa.result == 'success' && needs.nightly-benchmarks.result == 'success'
+    name: Publish nightly performance history
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - name: Check out or create the Pages branch
+        id: pages
+        env:
+          PUSH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          pages_dir="$(mktemp -d)"
+          repo_url="https://x-access-token:${PUSH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if git ls-remote --exit-code --heads "$repo_url" gh-pages >/dev/null 2>&1; then
+            git clone --depth 1 --branch gh-pages "$repo_url" "$pages_dir"
+          else
+            git init --initial-branch=gh-pages "$pages_dir"
+            git -C "$pages_dir" remote add origin "$repo_url"
+          fi
+          echo "pages_dir=$pages_dir" >> "$GITHUB_OUTPUT"
+      - name: Update dashboard data and publish
+        env:
+          PAGES_DIR: ${{ steps.pages.outputs.pages_dir }}
+          PPA_METRICS: ${{ needs.nightly-ppa.outputs.metrics_json }}
+          M0_METRICS: ${{ needs.nightly-benchmarks.outputs.m0_metrics }}
+          M1_METRICS: ${{ needs.nightly-benchmarks.outputs.m1_metrics }}
+          M2_METRICS: ${{ needs.nightly-benchmarks.outputs.m2_metrics }}
+        run: |
+          set -euo pipefail
+          run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          python3 tools/project/publish_performance_history.py \
+            --site-dir "$PAGES_DIR" \
+            --timestamp "$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
+            --sha "$GITHUB_SHA" \
+            --run-url "$run_url" \
+            --ppa "$PPA_METRICS" \
+            --benchmark "$M0_METRICS" \
+            --benchmark "$M1_METRICS" \
+            --benchmark "$M2_METRICS"
+          git -C "$PAGES_DIR" config user.name 'github-actions[bot]'
+          git -C "$PAGES_DIR" config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C "$PAGES_DIR" add index.html data/history.json
+          git -C "$PAGES_DIR" commit -m "ci: nightly performance ${GITHUB_SHA::7}"
+          git -C "$PAGES_DIR" push origin HEAD:gh-pages
+          page_url="https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/}/"
+          {
+            echo "### Performance history"
+            echo
+            echo "Published [nightly metrics dashboard]($page_url)."
+            echo "If this is the first publication, enable GitHub Pages from the `gh-pages` branch root."
+          } >> "$GITHUB_STEP_SUMMARY"

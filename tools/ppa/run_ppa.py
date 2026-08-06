@@ -22,6 +22,8 @@ from resolve_filelist import FileListEntry, resolve_filelist  # noqa: E402
 
 BLACKBOX = Path(__file__).with_name("sram_1rw_blackbox.sv")
 CONSTRAINTS = Path(__file__).with_name("constraints.sdc")
+PATH_GROUPS = ("sys_clk", "core_clk", "peri_clk_0", "peri_clk_1", "peri_clk_2", "peri_clk_3", "peri_clk_4")
+REQUIRED_CLOCKS = (*PATH_GROUPS, "jtag_clk")
 
 
 class PpaError(RuntimeError):
@@ -32,8 +34,17 @@ def quote(value: Path | str) -> str:
     return shlex.quote(str(value))
 
 
-def source_arguments(entries: list[FileListEntry]) -> list[str]:
-    arguments = ["--top", "soc", "-D", "SYNTHESIS", "-D", "ERISCV_PPA_GENERIC"]
+def source_arguments(
+    entries: list[FileListEntry],
+    *,
+    clock_gate_model: str,
+    clock_gate_blackbox: Path | None,
+) -> list[str]:
+    arguments = ["--top", "soc", "-D", "SYNTHESIS"]
+    if clock_gate_model == "generic":
+        arguments.extend(["-D", "ERISCV_PPA_GENERIC"])
+    else:
+        arguments.extend(["-D", "ERISCV_ASIC"])
     for entry in entries:
         if entry.kind == "incdir":
             arguments.extend(["-I", str(entry.value)])
@@ -48,6 +59,8 @@ def source_arguments(entries: list[FileListEntry]) -> list[str]:
         else:
             raise PpaError(f"unsupported filelist option for Yosys: {entry.value}")
     arguments.append(str(BLACKBOX))
+    if clock_gate_blackbox is not None:
+        arguments.append(str(clock_gate_blackbox))
     return arguments
 
 
@@ -82,6 +95,17 @@ def marked_number(marker: str, text: str, group: str = "sys_clk") -> float | Non
     return find_number(rf"^{re.escape(group)}\s+(-?[0-9.eE+-]+)", block.group("body")) if block else None
 
 
+def marked_clock_names(marker: str, text: str) -> set[str]:
+    block = re.search(
+        rf"{re.escape(marker)}_BEGIN(?P<body>[\s\S]*?){re.escape(marker)}_END",
+        text,
+        flags=re.IGNORECASE,
+    )
+    if not block:
+        return set()
+    return set(re.findall(r"^\s*(\S+)\s+[0-9]+(?:\.[0-9]+)?\s", block.group("body"), flags=re.MULTILINE))
+
+
 def tcl_brace(value: Path | str) -> str:
     """Quote a simple Tcl word without treating spaces as separators."""
 
@@ -96,6 +120,7 @@ def render_constraints(args: argparse.Namespace, output_dir: Path) -> Path:
     assignments = [
         f"set ERISCV_PPA_SYS_CLK_PERIOD_NS {args.period_ns:g}",
         f"set ERISCV_PPA_JTAG_CLK_PERIOD_NS {args.jtag_period_ns:g}",
+        f"set ERISCV_PPA_CLOCK_GATE_MODEL {tcl_brace(args.clock_gate_model)}",
     ]
     optional_values = {
         "ERISCV_PPA_IO_DELAY_NS": args.io_delay_ns,
@@ -149,6 +174,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--input-driver-cell", default="BUF_X1", help="Liberty input driver cell (default: BUF_X1)")
     parser.add_argument("--input-driver-pin", default="Z", help="Liberty input driver output pin (default: Z)")
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument(
+        "--clock-gate-model",
+        choices=("generic", "sky130"),
+        default="generic",
+        help="clock-gate implementation (default: generic)",
+    )
+    parser.add_argument(
+        "--clock-gate-blackbox",
+        type=Path,
+        help="cell declarations required by --clock-gate-model sky130",
+    )
     parser.add_argument("--yosys", default="yosys")
     parser.add_argument("--sta", default="sta")
     return parser.parse_args()
@@ -171,6 +207,9 @@ def main() -> int:
             raise SystemExit(f"--{name.replace('_', '-')} must not be negative")
     if not args.liberty.is_file():
         raise SystemExit(f"Liberty file not found: {args.liberty}")
+    if args.clock_gate_model == "sky130":
+        if args.clock_gate_blackbox is None or not args.clock_gate_blackbox.is_file():
+            raise SystemExit("--clock-gate-model sky130 requires --clock-gate-blackbox <file>")
     for executable in (args.yosys, args.sta):
         if shutil.which(executable) is None:
             raise SystemExit(f"required executable not found in PATH: {executable}")
@@ -185,7 +224,15 @@ def main() -> int:
     yosys_script.write_text(
         "\n".join(
             [
-                "read_slang " + " ".join(quote(item) for item in source_arguments(entries)),
+                "read_slang "
+                + " ".join(
+                    quote(item)
+                    for item in source_arguments(
+                        entries,
+                        clock_gate_model=args.clock_gate_model,
+                        clock_gate_blackbox=args.clock_gate_blackbox,
+                    )
+                ),
                 "hierarchy -check -top soc",
                 "proc",
                 "flatten",
@@ -210,10 +257,9 @@ def main() -> int:
     try:
         yosys_log = run([args.yosys, "-m", "slang", "-s", str(yosys_script)], output_dir / "yosys.log")
         sta_base = sta_preamble(args, netlist, constraints)
-        path_groups = ["sys_clk", "core_clk", "peri_clk_0", "peri_clk_1", "peri_clk_2", "peri_clk_3", "peri_clk_4"]
         raw_sta_script = output_dir / "run_sta_timing.tcl"
-        raw_commands = [*sta_base, "puts TIMING_GROUPS_BEGIN"]
-        for group in path_groups:
+        raw_commands = [*sta_base, "puts CLOCK_PROPERTIES_BEGIN", "report_clock_properties [all_clocks]", "puts CLOCK_PROPERTIES_END", "puts TIMING_GROUPS_BEGIN"]
+        for group in PATH_GROUPS:
             raw_commands.extend(
                 [
                     f"puts TIMING_GROUP_{group}_BEGIN",
@@ -233,7 +279,7 @@ def main() -> int:
         )
         data_sta_script = output_dir / "run_sta_data_paths.tcl"
         data_commands = [*sta_base, "puts DATA_PATH_WNS_BEGIN"]
-        for group in path_groups:
+        for group in PATH_GROUPS:
             marker = re.sub(r"[^A-Za-z0-9_]", "_", group)
             data_commands.extend(
                 [
@@ -285,12 +331,25 @@ def main() -> int:
         print(f"PPA FAIL: {exc}", file=sys.stderr)
         return 1
 
+    clock_names = marked_clock_names("CLOCK_PROPERTIES", raw_sta_log)
+    missing_clocks = sorted(set(REQUIRED_CLOCKS) - clock_names)
+    if missing_clocks:
+        print(f"PPA FAIL: missing required clock constraints: {', '.join(missing_clocks)}", file=sys.stderr)
+        return 1
+
     path_group_wns_ns: dict[str, float] = {}
-    for group in ["sys_clk", "core_clk", "peri_clk_0", "peri_clk_1", "peri_clk_2", "peri_clk_3", "peri_clk_4"]:
+    for group in PATH_GROUPS:
         marker = re.sub(r"[^A-Za-z0-9_]", "_", group)
         value = marked_number(f"DATA_PATH_WNS_{marker}", data_sta_log, group)
         if value is not None:
             path_group_wns_ns[group] = value
+    missing_path_groups = [group for group in PATH_GROUPS if group not in path_group_wns_ns]
+    if missing_path_groups:
+        print(
+            "PPA FAIL: missing synchronous timing report for " + ", ".join(missing_path_groups),
+            file=sys.stderr,
+        )
+        return 1
     synchronous_path_wns_ns = min(path_group_wns_ns.values()) if path_group_wns_ns else None
     reset_recovery_wns_ns = marked_number("RESET_RECOVERY_WNS", reset_sta_log, "asynchronous")
     reset_removal_wns_ns = marked_number("RESET_REMOVAL_WNS", reset_sta_log, "asynchronous")
@@ -305,6 +364,7 @@ def main() -> int:
         "clock_period_ns": args.period_ns,
         "liberty": str(args.liberty.resolve()),
         "constraints": str(constraints),
+        "clock_names": sorted(clock_names),
         "area_um2": find_number(r"Chip area for module '\\?soc':\s*([0-9.eE+-]+)", yosys_log),
         "path_group_wns_ns": path_group_wns_ns,
         "synchronous_path_wns_ns": synchronous_path_wns_ns,
@@ -315,6 +375,8 @@ def main() -> int:
         "all_path_wns_ns": find_number(r"^worst slack max\s+(-?[0-9.eE+-]+)", raw_sta_log),
         "all_path_tns_ns": find_number(r"^tns max\s+(-?[0-9.eE+-]+)", raw_sta_log),
         "memory_model": "sram_1rw blackbox; SRAM macro area and timing excluded",
+        "clock_gate_model": args.clock_gate_model,
+        "implementation_scope": "logic-only Yosys mapping plus ideal-clock STA; no PDK LEF/RC, placement, reset/data fanout repair, CTS, routing, or SPEF",
         "timing_scope": "fmax uses synchronous_path_wns across sys_clk, core_clk, and peripheral gated-clock groups; all_path_wns also includes async reset checks; reset recovery/removal are reported separately",
     }
     (output_dir / "summary.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")

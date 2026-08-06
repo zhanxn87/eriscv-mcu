@@ -142,7 +142,7 @@ def build_elfs(root: Path, profile: dict[str, object], jobs: int) -> None:
             raise subprocess.CalledProcessError(process.returncode, command)
 
 
-def selected_elfs(workdir: Path) -> list[Path]:
+def selected_elfs(workdir: Path, excluded_sources: set[Path] | None = None) -> list[Path]:
     if not workdir.is_dir():
         raise NotADirectoryError(f"ACT4 workdir not found: {workdir}")
     # ACT4 keeps intermediate <test>.sig.elf files below build/. Only the
@@ -150,7 +150,23 @@ def selected_elfs(workdir: Path) -> list[Path]:
     elfs = sorted(path for path in workdir.glob("*/elfs/**/*.elf") if path.is_file())
     if not elfs:
         raise FileNotFoundError(f"no final ACT4 ELF files found below {workdir}")
-    return elfs
+    if not excluded_sources:
+        return elfs
+
+    selected: list[Path] = []
+    for elf in elfs:
+        relative = elf.relative_to(workdir)
+        try:
+            elfs_index = relative.parts.index("elfs")
+        except ValueError:
+            selected.append(elf)
+            continue
+        source = Path(*relative.parts[elfs_index + 1 :]).with_suffix(".S")
+        if source not in excluded_sources:
+            selected.append(elf)
+    if not selected:
+        raise FileNotFoundError(f"all ACT4 ELF files below {workdir} were excluded")
+    return selected
 
 
 def original_source(root: Path, elf: Path) -> Path:
@@ -242,7 +258,12 @@ def main() -> int:
         return 0
     if not args.import_only:
         build_elfs(root, profile, jobs)
-    import_elfs(root, profile, selected_elfs(workdir))
+    excluded_sources = profile.get("exclude_test_sources", [])
+    if not isinstance(excluded_sources, list) or not all(
+        isinstance(item, str) for item in excluded_sources
+    ):
+        raise ValueError("exclude_test_sources must be a list of ACT test-source paths")
+    import_elfs(root, profile, selected_elfs(workdir, {Path(item) for item in excluded_sources}))
     return 0
 
 

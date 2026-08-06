@@ -33,6 +33,9 @@ if {![info exists ERISCV_PPA_MAX_FANOUT]} {
 if {![info exists ERISCV_PPA_MAX_TRANSITION_NS]} {
   set ERISCV_PPA_MAX_TRANSITION_NS 1.0
 }
+if {![info exists ERISCV_PPA_CLOCK_GATE_MODEL]} {
+  set ERISCV_PPA_CLOCK_GATE_MODEL generic
+}
 if {![info exists ERISCV_PPA_INPUT_DRIVER_CELL]} {
   set ERISCV_PPA_INPUT_DRIVER_CELL BUF_X1
 }
@@ -53,26 +56,48 @@ create_clock -name jtag_clk \
   $jtag_clk_port
 
 # The core and peripheral clocks are clock-gate derivatives of sys_clk.  The
-# generic PPA netlist retains the hierarchy-bearing gate output nets.  A
-# missing generated clock is a hard error: silently continuing would publish
-# an optimistic result with unconstrained sequential paths.
-set core_clk_nets [get_nets -quiet *core_reset_sync_i.clk_i*]
-if {[llength $core_clk_nets] == 1} {
-  create_generated_clock -name core_clk -source $sys_clk_port \
-    -combinational [lindex $core_clk_nets 0]
-} else {
-  error "core gated-clock net was not found; refusing unconstrained PPA"
-}
+# generic netlist retains the gated output nets; the Sky130 physical flow uses
+# the actual ICG CLK/GCLK pins.  Missing generated clocks are hard errors:
+# silently continuing would publish unconstrained sequential paths.
+if {$ERISCV_PPA_CLOCK_GATE_MODEL eq "sky130"} {
+  set core_clk_sources [get_pins -quiet -hierarchical *core_clock_gate_i.icg_i/CLK]
+  set core_clk_targets [get_pins -quiet -hierarchical *core_clock_gate_i.icg_i/GCLK]
+  if {[llength $core_clk_sources] == 1 && [llength $core_clk_targets] == 1} {
+    create_generated_clock -name core_clk -source [lindex $core_clk_sources 0] \
+      -combinational [lindex $core_clk_targets 0]
+  } else {
+    error "core Sky130 ICG pins were not found; refusing unconstrained PPA"
+  }
 
-set peri_clk_nets [get_nets -quiet *gen_peri_clock_gate*peripheral_reset_sync_i.clk_i*]
-set peri_clk_index 0
-foreach peri_clk_net $peri_clk_nets {
-  create_generated_clock -name "peri_clk_${peri_clk_index}" -source $sys_clk_port \
-    -combinational $peri_clk_net
-  incr peri_clk_index
-}
-if {$peri_clk_index == 0} {
-  error "peripheral gated-clock nets were not found; refusing unconstrained PPA"
+  set peri_clk_sources [get_pins -quiet -hierarchical *gen_peri_clock_gate*icg_i/CLK]
+  set peri_clk_targets [get_pins -quiet -hierarchical *gen_peri_clock_gate*icg_i/GCLK]
+  if {[llength $peri_clk_sources] != 5 || [llength $peri_clk_targets] != 5} {
+    error "expected five peripheral Sky130 ICGs; refusing unconstrained PPA"
+  }
+  for {set peri_clk_index 0} {$peri_clk_index < 5} {incr peri_clk_index} {
+    create_generated_clock -name "peri_clk_${peri_clk_index}" \
+      -source [lindex $peri_clk_sources $peri_clk_index] -combinational \
+      [lindex $peri_clk_targets $peri_clk_index]
+  }
+} else {
+  set core_clk_nets [get_nets -quiet *core_reset_sync_i.clk_i*]
+  if {[llength $core_clk_nets] == 1} {
+    create_generated_clock -name core_clk -source $sys_clk_port \
+      -combinational [lindex $core_clk_nets 0]
+  } else {
+    error "core gated-clock net was not found; refusing unconstrained PPA"
+  }
+
+  set peri_clk_nets [get_nets -quiet *gen_peri_clock_gate*peripheral_reset_sync_i.clk_i*]
+  set peri_clk_index 0
+  foreach peri_clk_net $peri_clk_nets {
+    create_generated_clock -name "peri_clk_${peri_clk_index}" -source $sys_clk_port \
+      -combinational $peri_clk_net
+    incr peri_clk_index
+  }
+  if {$peri_clk_index == 0} {
+    error "peripheral gated-clock nets were not found; refusing unconstrained PPA"
+  }
 }
 
 set sys_clocks [get_clocks {sys_clk core_clk peri_clk_*}]
@@ -81,16 +106,16 @@ set_clock_groups -asynchronous -group $sys_clocks -group $jtag_clocks
 set_clock_uncertainty $ERISCV_PPA_CLOCK_UNCERTAINTY_NS [all_clocks]
 set_clock_transition $ERISCV_PPA_CLOCK_TRANSITION_NS [all_clocks]
 
-# Synchronous system-domain inputs and outputs.
-set sys_inputs [get_ports {
+# Timed system-domain inputs and outputs.  This generic PPA model assumes the
+# configuration straps, GPIO, and SPI MISO meet sys_clk timing at the chip
+# boundary; a production integration must replace this list with its board/IO
+# contract or virtual interface clocks.
+set sys_timed_inputs [get_ports {
   fetch_enable_i
   boot_mode_i[*]
-  boot_uart_rx_i
   boot_addr_i[*]
-  uart_rx_i
   gpio_i[*]
   spi_miso_i
-  ext_irq_i[*]
 }]
 set sys_outputs [get_ports {
   boot_uart_overrun_o
@@ -105,18 +130,28 @@ set sys_outputs [get_ports {
 set jtag_inputs [get_ports {jtag_tms_i jtag_tdi_i}]
 set jtag_outputs [get_ports jtag_tdo_o]
 
+# These signals are asynchronous to sys_clk in the RTL.  Their receiving
+# synchronizers are verified by CDC/reset checks, not fabricated sys_clk IO
+# delays.  Do not include them in the generic Fmax path budget.
+set sys_async_inputs [get_ports {
+  boot_uart_rx_i
+  uart_rx_i
+  ext_irq_i[*]
+}]
+
 proc require_nonempty {label collection} {
   if {[llength $collection] == 0} {
     error "$label collection is empty; refusing incomplete IO constraints"
   }
 }
-require_nonempty "system input" $sys_inputs
+require_nonempty "timed system input" $sys_timed_inputs
 require_nonempty "system output" $sys_outputs
 require_nonempty "JTAG input" $jtag_inputs
 require_nonempty "JTAG output" $jtag_outputs
+require_nonempty "asynchronous system input" $sys_async_inputs
 
-set_input_delay -max $ERISCV_PPA_IO_DELAY_NS -clock sys_clk $sys_inputs
-set_input_delay -min 0.0 -clock sys_clk $sys_inputs
+set_input_delay -max $ERISCV_PPA_IO_DELAY_NS -clock sys_clk $sys_timed_inputs
+set_input_delay -min 0.0 -clock sys_clk $sys_timed_inputs
 set_output_delay -max $ERISCV_PPA_IO_DELAY_NS -clock sys_clk $sys_outputs
 set_output_delay -min 0.0 -clock sys_clk $sys_outputs
 set_input_delay -max $ERISCV_PPA_IO_DELAY_NS -clock jtag_clk $jtag_inputs
@@ -124,8 +159,8 @@ set_input_delay -min 0.0 -clock jtag_clk $jtag_inputs
 set_output_delay -max $ERISCV_PPA_IO_DELAY_NS -clock jtag_clk $jtag_outputs
 set_output_delay -min 0.0 -clock jtag_clk $jtag_outputs
 
-set_input_transition -max $ERISCV_PPA_INPUT_TRANSITION_NS $sys_inputs
-set_input_transition -min $ERISCV_PPA_INPUT_TRANSITION_NS $sys_inputs
+set_input_transition -max $ERISCV_PPA_INPUT_TRANSITION_NS $sys_timed_inputs
+set_input_transition -min $ERISCV_PPA_INPUT_TRANSITION_NS $sys_timed_inputs
 set_input_transition -max $ERISCV_PPA_INPUT_TRANSITION_NS $jtag_inputs
 set_input_transition -min $ERISCV_PPA_INPUT_TRANSITION_NS $jtag_inputs
 set_input_transition -max $ERISCV_PPA_INPUT_TRANSITION_NS \
@@ -139,7 +174,7 @@ set driver_pins [get_lib_pins -quiet \
   "${ERISCV_PPA_INPUT_DRIVER_CELL}/${ERISCV_PPA_INPUT_DRIVER_PIN}"]
 if {[llength $driver_pins] == 1} {
   set_driving_cell -lib_cell $ERISCV_PPA_INPUT_DRIVER_CELL \
-    -pin $ERISCV_PPA_INPUT_DRIVER_PIN $sys_inputs
+    -pin $ERISCV_PPA_INPUT_DRIVER_PIN $sys_timed_inputs
   set_driving_cell -lib_cell $ERISCV_PPA_INPUT_DRIVER_CELL \
     -pin $ERISCV_PPA_INPUT_DRIVER_PIN $jtag_inputs
 } else {
@@ -153,6 +188,10 @@ set_load $ERISCV_PPA_OUTPUT_LOAD_PF $jtag_outputs
 # checks on async reset pins for the dedicated reset report.
 set reset_inputs [get_ports {rst_n ext_rst_n_i jtag_trst_n_i}]
 set_false_path -from $reset_inputs -to [all_registers]
+set_false_path -from $sys_async_inputs -to [all_registers]
 
+# These limits are consumed by synthesis and physical repair in a real flow.
+# This logic-only PPA runner reports their consequences but cannot insert a
+# reset or data buffer tree after Yosys mapping.
 set_max_fanout $ERISCV_PPA_MAX_FANOUT [current_design]
 set_max_transition $ERISCV_PPA_MAX_TRANSITION_NS [current_design]

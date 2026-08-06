@@ -138,7 +138,7 @@
         },
         "size": {
           "len": 64,
-          "value": "0x10000"
+          "value": "0x20000"
         },
         "attributes": {
           "mem_type": "MainMemory",

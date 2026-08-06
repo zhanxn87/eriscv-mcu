@@ -31,7 +31,16 @@ module clock_gate (
     .O (clk_o)
   );
 `else
-  assign clk_o = clk_i & en_i;
+  // Match ICG semantics in RTL simulation: an enable transition while clk_i
+  // is high must wait for the next low phase rather than create a short pulse.
+  logic en_latched;
+
+  always_latch begin
+    if (!clk_i)
+      en_latched = en_i;
+  end
+
+  assign clk_o = clk_i & en_latched;
 `endif
 
 endmodule

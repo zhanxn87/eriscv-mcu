@@ -67,8 +67,10 @@ full Verilator core/SoC regression without generated ACT4, and committed ACT
 smoke.
 The scheduled or manually dispatched nightly path runs cached full ACT4,
 generic-Liberty Yosys/OpenSTA PPA, and bounded CoreMark/Dhrystone/Embench
-benchmarks. Logs and reports are uploaded as workflow artifacts; the PPA job is
-pre-layout evidence, not ASIC signoff.
+benchmarks. Each job writes its result to the GitHub Actions Job Summary;
+failure diagnostics are retained as seven-day artifacts. Successful nightly PPA
+and benchmark results also update the GitHub Pages performance-history view.
+The PPA job is pre-layout evidence, not ASIC signoff.
 
 The benchmark and RTOS submodules are optional for RTL lint and standard
 core/SoC regression.  Initialize only a dependency needed by a selected

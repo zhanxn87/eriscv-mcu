@@ -18,6 +18,8 @@ M2_SOC_SMOKE_TESTS ?= MCU-C-01 MCU-TCM-UPPER-HALF-01 MCU-BOOT-DATA-INIT-01 MCU-C
 PPA_PERIOD_NS ?= 10.0
 PPA_LIBERTY ?=
 PPA_OUT_DIR ?= build/ppa
+PPA_OPENROAD_PERIOD_NS ?= 20.0
+PPA_OPENROAD_OUT_DIR ?= build/ppa-openroad
 EMBENCH_BENCH ?= matmult-int
 EMBENCH_PROFILE ?= speed
 EMBENCH_SCALE ?= 1
@@ -37,7 +39,7 @@ EMBENCH_SCALE ?= 1
 	eriscv-m2-bsp eriscv-m2-bsp-async eriscv-m2-bsp-fpu-dma-sram eriscv-m2-sw eriscv-m2-sw-async eriscv-m2-sw-fpu-dma-sram eriscv-m2-mcycle-counter eriscv-m2-coremark eriscv-m2-dhrystone eriscv-m2-embench eriscv-m2-microbench eriscv-m2-freertos eriscv-m2-freertos-qualification eriscv-m2-freertos-umode eriscv-m2-zephyr \
 	eriscv-m0-full eriscv-m1-full eriscv-m2-full \
 	eriscv-m0-full-no-act eriscv-m1-full-no-act eriscv-m2-full-no-act \
-	eriscv-mcu-full ppa-m0 ppa-m1 ppa-m2 ppa-all ppa-setup ppa-setup-wsl clean clean-dry-run
+	eriscv-mcu-full ppa-m0 ppa-m1 ppa-m2 ppa-all ppa-openroad-m0 ppa-setup ppa-setup-wsl clean clean-dry-run
 
 all: help
 
@@ -109,6 +111,9 @@ help:
 	@echo "  Overrides: PPA_PERIOD_NS=<ns> PPA_LIBERTY=<file> PPA_OUT_DIR=<dir>"
 	@echo "  SDC: tools/ppa/constraints.sdc (clock/reset/IO, generated-clock, load/transition/fanout)"
 	@echo "       defaults: sys_clk 10ns, jtag 100ns, IO delay 20%, uncertainty 5%"
+	@echo "  make ppa-openroad-m0             - local Sky130/OpenROAD M0 placement/CTS/global-route estimate"
+	@echo "       needs local Sky130 PDK; set PPA_SKY130_ROOT if auto-discovery is ambiguous"
+	@echo "       default: 20ns (50MHz); override: PPA_OPENROAD_PERIOD_NS=<ns> PPA_OPENROAD_OUT_DIR=<dir>"
 	@echo ""
 	@echo "Debug and focused platform tests:"
 	@echo "  make eriscv-m0-openocd-gdb       - M0 OpenOCD/GDB smoke; ADAPTER_CFG required, FIRMWARE_ELF optional"
@@ -201,6 +206,9 @@ ppa-all:
 	$(MAKE) ppa-m0
 	$(MAKE) ppa-m1
 	$(MAKE) ppa-m2
+
+ppa-openroad-m0:
+	$(PYTHON) tools/ppa/run_openroad.py --product m0 --period-ns $(PPA_OPENROAD_PERIOD_NS) --output-dir "$(PPA_OPENROAD_OUT_DIR)/m0"
 
 eriscv-m0-core:
 	$(MAKE) -C eriscv-m0/dv/core/sim $(SIM_BACKEND)

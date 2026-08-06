@@ -21,20 +21,40 @@ the nightly path.
 
 ## Nightly jobs
 
-| Job | Matrix | Main entry point | Uploaded artifact |
+| Job | Coverage | Result surface | Failure diagnostic |
 | --- | --- | --- | --- |
-| Full ACT4 regression | M0, M1, M2 | `make eriscv-<product>-full` | `nightly-full-<product>` |
-| Generic-Liberty PPA | M0, M1, M2 in one job | `source tools/ppa/env.sh && make ppa-all` | `nightly-ppa-generic-liberty` |
-| Software benchmarks | M0, M1, M2 | CoreMark, Dhrystone, and Embench `matmult-int` smoke | `nightly-benchmarks-<product>` |
+| Full ACT4 regression | M0, M1, M2; `make eriscv-<product>-full` | Job Summary | `nightly-full-<product>` |
+| Generic-Liberty PPA | M0, M1, M2 in one job; `source tools/ppa/env.sh && make ppa-all` | Job Summary and performance history | `nightly-ppa-generic-liberty` |
+| Software benchmarks | M0, M1, M2 sequentially; CoreMark, Dhrystone, and Embench `matmult-int` smoke | Job Summary and performance history | `nightly-benchmark-diagnostics` |
+| Performance-history publisher | Runs after successful PPA and benchmarks | GitHub Pages `gh-pages` branch | None; it does not publish a partial record |
 
-All report-upload steps use `if: always()`, so logs are retained after a
-failed job whenever the runner reaches the upload step.
+Every job writes a compact result to its GitHub Actions Job Summary. Raw logs
+are uploaded only when that job fails, with seven-day retention: static and
+regression logs under `build/ci` and product `regression_logs/`; PPA
+`summary.json`, generated SDC, synthesis, and OpenSTA logs under `build/ppa`;
+and benchmark logs plus generated software outputs under
+`build/nightly-benchmarks` and the product software build directories.
 
-The uploaded paths are deliberately raw evidence: static and regression logs
-under `build/ci` and product `regression_logs/`; PPA `summary.json`, generated
-SDC, synthesis, and OpenSTA logs under `build/ppa`; and benchmark logs plus
-the generated benchmark outputs under `build/nightly-benchmarks` and the
-product software build directories.
+The benchmark job runs the three products sequentially so it can publish one
+complete metrics record without using a successful-run artifact as an internal
+transport. It attempts all nine bounded benchmark commands before returning a
+failure status.
+
+## Performance history
+
+When the change gate permits a nightly run and both PPA and benchmark jobs
+succeed, `nightly-performance-history` appends the run's generic-Liberty Cell
+Area, pre-layout Fmax, synchronous-path WNS, CoreMark/MHz, DMIPS/MHz, and
+Embench cycle results to `gh-pages/data/history.json`. It regenerates a small
+static dashboard at `gh-pages/index.html`; repeated runs of the same workflow
+run URL replace rather than duplicate a record, and the dashboard retains the
+latest 180 records.
+
+The first successful publisher job creates the `gh-pages` branch. Enable it
+once in repository **Settings → Pages** by selecting **Deploy from a branch**,
+branch `gh-pages`, folder `/(root)`. The dashboard URL is
+`https://<owner>.github.io/<repository>/`. It is intentionally not updated for
+an unchanged scheduled day, a failed PPA/benchmark run, or a partial result.
 
 ## Caches
 
@@ -69,11 +89,17 @@ listed by `make help`; the nightly workflow fixes the Embench case to
 
 - Verilator is the CI simulator. ModelSim remains a local focused-debug and
   waveform backend.
-- CI artifacts are raw evidence and logs. Current dated regression totals are
-  owned by the [MCU Evidence Snapshot](eriscv-mcu-simulation-evidence-snapshot.md).
+- Job Summaries provide per-run results; failure artifacts provide raw
+  diagnostics. The performance-history page is a trend view, not a signoff
+  record. Current dated regression totals are owned by the [MCU Evidence
+  Snapshot](eriscv-mcu-simulation-evidence-snapshot.md).
 - PPA reports are logic-only pre-layout estimates using generic Liberty; SRAM
   macro area/timing, LEF/DEF, RC extraction, IO placement, and signoff are out
-  of scope. The PPA constraints and report format are documented in
+  of scope. The generic SDC verifies root, JTAG, core, and peripheral generated
+  clocks, treats UART and external PLIC inputs as asynchronous, and reports
+  reset recovery/removal separately. It does not insert CTS or reset/data
+  fanout buffers, so its Fmax is a trend estimate rather than a physical target.
+  The PPA constraints and report format are documented in
   [`tools/ppa/constraints.sdc`](../../tools/ppa/constraints.sdc) and the
   [PPA section of `make help`](../../Makefile).
 - A green workflow is CI evidence, not a certification, ASIC timing closure,

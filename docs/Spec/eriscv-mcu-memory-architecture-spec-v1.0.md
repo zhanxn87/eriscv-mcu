@@ -102,10 +102,11 @@ physical-board interoperability.
 
 ## 4. ACT executable-data compatibility
 
-Some ACT PMP artifacts jump to data-image payloads, which requires executable
-data unavailable in M0/M1. Only manifest-declared `exec_data_mirror: true`
-artifacts may use the core-TB-only IMEM mirror. This is harness compatibility,
-not an XRAM/DMEM-execution claim; the preferred fix is a dedicated IMEM window.
+Some upstream ACT PMP artifacts jump to data-image payloads. Only
+manifest-declared `exec_data_mirror: true` artifacts may use the core-TB-only
+IMEM mirror. This is harness compatibility, not an XRAM/DMEM-execution claim
+for the product memory contract. Sail marks the test-harness data region
+executable solely to model that declared shadow.
 
 ## 5. M2 direction
 
