@@ -212,8 +212,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: false
-      - name: Checkout Embench-IoT submodule
-        run: git submodule update --init --depth 1 third_party/embench-iot
+      - name: Checkout benchmark submodules
+        run: git submodule update --init --depth 1 third_party/CoreMark third_party/embench-iot
       - name: Install benchmark tools
         run: sudo apt-get update && sudo apt-get install --yes gcc-riscv64-unknown-elf verilator
       - name: Run CoreMark

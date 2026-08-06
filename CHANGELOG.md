@@ -36,6 +36,11 @@ to a numbered release only with the corresponding public Git tag.
 - Added Embench-IoT regression entry points and bounded CI benchmark coverage
   alongside CoreMark and Dhrystone.
 
+### Fixed
+
+- Nightly benchmark jobs now initialize both the CoreMark and Embench-IoT
+  submodules before compiling benchmark images.
+
 ### Known limitations
 
 - M2 VCU108 implementation remains slightly short of the 100 MHz timing
