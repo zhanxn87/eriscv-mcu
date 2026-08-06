@@ -10,8 +10,8 @@ YAML.
 
 | Trigger | Jobs | Scope |
 | --- | --- | --- |
-| Push | `static-rtl-checks` | SPDX check, testbench-contract check, and Verilator lint for M0/M1/M2. |
-| Pull request | `static-rtl-checks`, `pr-verilator-full` | Static checks plus, per product, full core/SoC regression without generated ACT4 followed by committed ACT smoke. |
+| Push | `static-rtl-checks`, `pr-verilator-full` | Static checks plus, per product, full core/SoC regression without generated ACT4 followed by committed ACT smoke. |
+| Pull request | `static-rtl-checks`, `pr-verilator-full` | Same static checks and per-product full core/SoC regression without generated ACT4 followed by committed ACT smoke. |
 | Daily schedule, 02:17 UTC | `nightly-change-gate` then nightly jobs | Runs only when the repository has a commit in the previous 24 hours. |
 | Manual dispatch | `nightly-change-gate` then nightly jobs | Always runs the nightly jobs; it bypasses the daily change-window test. |
 

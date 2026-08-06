@@ -43,6 +43,11 @@ cache_root="${ERISCV_ACT4_CACHE_ROOT:-${repo_root}/.cache/act4}"
 toolchain_root="${ERISCV_ACT4_TOOLCHAIN_ROOT:-${cache_root}/toolchain}"
 sail_root="${ERISCV_ACT4_SAIL_ROOT:-${cache_root}/sail}"
 mise_bin="${cache_root}/mise/bin/mise"
+# mise invokes its own binary from Ruby gem post-install hooks while it is
+# installing the pinned ACT4 tool set.  Keep the cache-local binary visible
+# throughout bootstrap; the generated standard environment repeats this for
+# later ACT4 commands.
+export PATH="$(dirname -- "${mise_bin}"):${PATH}"
 
 if [[ ! -e "${act_root}/.git" ]]; then
   echo "Missing ACT4 submodule. Run: git submodule update --init third_party/riscv-arch-test" >&2

@@ -41,8 +41,8 @@ jobs:
           if-no-files-found: warn
 
   pr-verilator-full:
-    if: github.event_name == 'pull_request'
-    name: PR full Verilator (${{ matrix.product }})
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    name: Push/PR full Verilator (${{ matrix.product }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -116,8 +116,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: true
-      - name: Install Verilator
-        run: sudo apt-get update && sudo apt-get install --yes verilator
+      - name: Install Verilator and ACT4 compiler
+        run: sudo apt-get update && sudo apt-get install --yes gcc-riscv64-unknown-elf verilator
       - name: Identify ACT4 revision
         id: act4-revision
         run: echo "revision=$(git -C third_party/riscv-arch-test rev-parse HEAD)" >> "$GITHUB_OUTPUT"

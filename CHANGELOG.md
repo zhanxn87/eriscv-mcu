@@ -40,6 +40,14 @@ to a numbered release only with the corresponding public Git tag.
 
 - Nightly benchmark jobs now initialize both the CoreMark and Embench-IoT
   submodules before compiling benchmark images.
+- ACT4 bootstrap now keeps the cache-local `mise` executable on `PATH` while
+  installing its pinned Ruby tool set.
+- PPA bootstrap now installs the Flex and readline development headers needed
+  to configure OpenSTA on the GitHub-hosted Ubuntu runner.
+- Nightly ACT4 jobs now install the RISC-V cross compiler required to generate
+  and validate the runtime corpus.
+- Pushes now run the same full Verilator core/SoC regression and committed ACT
+  smoke matrix as pull requests.
 
 ### Known limitations
 

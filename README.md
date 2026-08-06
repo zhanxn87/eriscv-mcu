@@ -62,8 +62,9 @@ make eriscv-m0-smoke              # run M0 core/SoC/committed-ACT smoke
 ### GitHub Actions CI
 
 The [GitHub Actions CI guide](docs/Verification/eriscv-mcu-github-ci.md)
-documents the repository workflow. Pull requests run static checks, full
-Verilator core/SoC regression without generated ACT4, and committed ACT smoke.
+documents the repository workflow. Pushes and pull requests run static checks,
+full Verilator core/SoC regression without generated ACT4, and committed ACT
+smoke.
 The scheduled or manually dispatched nightly path runs cached full ACT4,
 generic-Liberty Yosys/OpenSTA PPA, and bounded CoreMark/Dhrystone/Embench
 benchmarks. Logs and reports are uploaded as workflow artifacts; the PPA job is

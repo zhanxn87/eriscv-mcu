@@ -17,7 +17,7 @@ liberty_path="${ppa_home}/liberty/NangateOpenCellLibrary_typical.lib"
 liberty_url="https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/${liberty_ref}/flow/platforms/nangate45/lib/NangateOpenCellLibrary_typical.lib"
 
 sudo apt-get update
-sudo apt-get install --yes build-essential bison cmake curl flex git libeigen3-dev swig tcl-dev
+sudo apt-get install --yes build-essential bison cmake curl flex git libeigen3-dev libfl-dev libreadline-dev swig tcl-dev
 
 mkdir -p "${ppa_home}/src" "${ppa_home}/build" "${ppa_home}/liberty" "${prefix}"
 
