@@ -39,6 +39,7 @@ def source_arguments(
     *,
     clock_gate_model: str,
     clock_gate_blackbox: Path | None,
+    sram_wrapper: Path,
 ) -> list[str]:
     arguments = ["--top", "soc", "-D", "SYNTHESIS"]
     if clock_gate_model == "generic":
@@ -58,7 +59,7 @@ def source_arguments(
                     arguments.extend(["-D", define])
         else:
             raise PpaError(f"unsupported filelist option for Yosys: {entry.value}")
-    arguments.append(str(BLACKBOX))
+    arguments.append(str(sram_wrapper))
     if clock_gate_blackbox is not None:
         arguments.append(str(clock_gate_blackbox))
     return arguments
@@ -122,9 +123,16 @@ def render_constraints(args: argparse.Namespace, output_dir: Path) -> Path:
         f"set ERISCV_PPA_JTAG_CLK_PERIOD_NS {args.jtag_period_ns:g}",
         f"set ERISCV_PPA_CLOCK_GATE_MODEL {tcl_brace(args.clock_gate_model)}",
     ]
+    setup_clock_uncertainty_ns = args.clock_uncertainty_ns
+    hold_clock_uncertainty_ns = args.clock_uncertainty_ns
+    if setup_clock_uncertainty_ns is None:
+        setup_clock_uncertainty_ns = args.setup_clock_uncertainty_ns
+    if hold_clock_uncertainty_ns is None:
+        hold_clock_uncertainty_ns = args.hold_clock_uncertainty_ns
     optional_values = {
         "ERISCV_PPA_IO_DELAY_NS": args.io_delay_ns,
-        "ERISCV_PPA_CLOCK_UNCERTAINTY_NS": args.clock_uncertainty_ns,
+        "ERISCV_PPA_SETUP_CLOCK_UNCERTAINTY_NS": setup_clock_uncertainty_ns,
+        "ERISCV_PPA_HOLD_CLOCK_UNCERTAINTY_NS": hold_clock_uncertainty_ns,
         "ERISCV_PPA_INPUT_TRANSITION_NS": args.input_transition_ns,
         "ERISCV_PPA_OUTPUT_LOAD_PF": args.output_load_pf,
         "ERISCV_PPA_MAX_FANOUT": args.max_fanout,
@@ -151,12 +159,19 @@ def render_constraints(args: argparse.Namespace, output_dir: Path) -> Path:
 
 
 def sta_preamble(args: argparse.Namespace, netlist: Path, constraints: Path) -> list[str]:
-    return [
+    commands = [
         f"read_liberty {tcl_brace(args.liberty.resolve())}",
-        f"read_verilog {tcl_brace(netlist)}",
-        "link_design soc",
-        f"source {tcl_brace(constraints)}",
     ]
+    if args.sram_liberty is not None:
+        commands.append(f"read_liberty {tcl_brace(args.sram_liberty.resolve())}")
+    commands.extend(
+        [
+            f"read_verilog {tcl_brace(netlist)}",
+            "link_design soc",
+            f"source {tcl_brace(constraints)}",
+        ]
+    )
+    return commands
 
 
 def parse_args() -> argparse.Namespace:
@@ -166,7 +181,21 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--period-ns", type=float, default=10.0, help="clock period in ns (default: 10.0)")
     parser.add_argument("--jtag-period-ns", type=float, default=100.0, help="JTAG clock period in ns (default: 100.0)")
     parser.add_argument("--io-delay-ns", type=float, help="external input/output delay in ns (default: 20%% of sys clock)")
-    parser.add_argument("--clock-uncertainty-ns", type=float, help="clock uncertainty in ns (default: 5%% of sys clock)")
+    parser.add_argument(
+        "--clock-uncertainty-ns",
+        type=float,
+        help="compatibility override that applies to both setup and hold uncertainty",
+    )
+    parser.add_argument(
+        "--setup-clock-uncertainty-ns",
+        type=float,
+        help="setup clock uncertainty in ns (default: 5%% of sys clock)",
+    )
+    parser.add_argument(
+        "--hold-clock-uncertainty-ns",
+        type=float,
+        help="hold clock uncertainty in ns (default: 0.10)",
+    )
     parser.add_argument("--input-transition-ns", type=float, help="external input transition in ns (default: 0.15)")
     parser.add_argument("--output-load-pf", type=float, help="external output load in pF (default: 0.02)")
     parser.add_argument("--max-fanout", type=float, help="maximum fanout constraint (default: 16)")
@@ -174,6 +203,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--input-driver-cell", default="BUF_X1", help="Liberty input driver cell (default: BUF_X1)")
     parser.add_argument("--input-driver-pin", default="Z", help="Liberty input driver output pin (default: Z)")
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument(
+        "--sram-wrapper",
+        type=Path,
+        default=BLACKBOX,
+        help="PPA-only replacement for behavioral sram_1rw.sv (default: blackbox)",
+    )
+    parser.add_argument("--sram-liberty", type=Path, help="hard-SRAM Liberty timing model")
     parser.add_argument(
         "--clock-gate-model",
         choices=("generic", "sky130"),
@@ -197,6 +233,8 @@ def main() -> int:
     for name in (
         "io_delay_ns",
         "clock_uncertainty_ns",
+        "setup_clock_uncertainty_ns",
+        "hold_clock_uncertainty_ns",
         "input_transition_ns",
         "output_load_pf",
         "max_fanout",
@@ -207,6 +245,12 @@ def main() -> int:
             raise SystemExit(f"--{name.replace('_', '-')} must not be negative")
     if not args.liberty.is_file():
         raise SystemExit(f"Liberty file not found: {args.liberty}")
+    if not args.sram_wrapper.is_file():
+        raise SystemExit(f"SRAM wrapper not found: {args.sram_wrapper}")
+    if args.sram_liberty is not None and not args.sram_liberty.is_file():
+        raise SystemExit(f"SRAM Liberty file not found: {args.sram_liberty}")
+    if args.sram_wrapper.resolve() == BLACKBOX.resolve() and args.sram_liberty is not None:
+        raise SystemExit("--sram-liberty requires a hard-macro --sram-wrapper")
     if args.clock_gate_model == "sky130":
         if args.clock_gate_blackbox is None or not args.clock_gate_blackbox.is_file():
             raise SystemExit("--clock-gate-model sky130 requires --clock-gate-blackbox <file>")
@@ -231,6 +275,7 @@ def main() -> int:
                         entries,
                         clock_gate_model=args.clock_gate_model,
                         clock_gate_blackbox=args.clock_gate_blackbox,
+                        sram_wrapper=args.sram_wrapper,
                     )
                 ),
                 "hierarchy -check -top soc",
@@ -241,11 +286,15 @@ def main() -> int:
                 "opt",
                 "memory",
                 "opt",
-                "delete t:sram_1rw",
+                *( ["delete t:sram_1rw"] if args.sram_wrapper.resolve() == BLACKBOX.resolve() else [] ),
                 "techmap",
                 "opt",
                 f"dfflibmap -liberty {quote(args.liberty.resolve())}",
                 f"abc -liberty {quote(args.liberty.resolve())}",
+                # Materialize logic constants as routable Sky130 tie cells.
+                # Direct Verilog constants become POWER/GROUND special nets
+                # in OpenROAD and cannot be detailed-routed as logic signals.
+                "hilomap -hicell sky130_fd_sc_hd__conb_1 HI -locell sky130_fd_sc_hd__conb_1 LO",
                 "clean",
                 f"tee -o {quote(synthesis_report)} stat -liberty {quote(args.liberty.resolve())}",
                 f"write_verilog -noattr -noexpr -nodec {quote(netlist)}",
@@ -278,7 +327,19 @@ def main() -> int:
             stream_output=True,
         )
         data_sta_script = output_dir / "run_sta_data_paths.tcl"
-        data_commands = [*sta_base, "puts DATA_PATH_WNS_BEGIN"]
+        data_commands = [
+            *sta_base,
+            # Reset synchronizer outputs are asynchronous reset controls.
+            # Exclude their release fanout only from the functional Fmax
+            # report; the separate reset STA run below retains its
+            # recovery/removal checks.
+            "set reset_sync_release_nets [get_nets -quiet *reset_sync_i.release_q*]",
+            "set reset_sync_release_drivers [get_pins -quiet -of_objects $reset_sync_release_nets -filter {direction == output}]",
+            "set reset_sync_release_cells [get_cells -of_objects $reset_sync_release_drivers]",
+            "if {[llength $reset_sync_release_cells] == 0} { error {reset synchronizer release cells were not found} }",
+            "set_false_path -from $reset_sync_release_cells -to [all_registers]",
+            "puts DATA_PATH_WNS_BEGIN",
+        ]
         for group in PATH_GROUPS:
             marker = re.sub(r"[^A-Za-z0-9_]", "_", group)
             data_commands.extend(
@@ -374,7 +435,11 @@ def main() -> int:
         "fmax_mhz": 1000.0 / critical_path_ns if critical_path_ns and critical_path_ns > 0 else None,
         "all_path_wns_ns": find_number(r"^worst slack max\s+(-?[0-9.eE+-]+)", raw_sta_log),
         "all_path_tns_ns": find_number(r"^tns max\s+(-?[0-9.eE+-]+)", raw_sta_log),
-        "memory_model": "sram_1rw blackbox; SRAM macro area and timing excluded",
+        "memory_model": (
+            "sram_1rw blackbox; SRAM macro area and timing excluded"
+            if args.sram_wrapper.resolve() == BLACKBOX.resolve()
+            else f"hard SRAM wrapper {args.sram_wrapper.resolve()}; macro timing included via {args.sram_liberty.resolve() if args.sram_liberty else 'no Liberty'}"
+        ),
         "clock_gate_model": args.clock_gate_model,
         "implementation_scope": "logic-only Yosys mapping plus ideal-clock STA; no PDK LEF/RC, placement, reset/data fanout repair, CTS, routing, or SPEF",
         "timing_scope": "fmax uses synchronous_path_wns across sys_clk, core_clk, and peripheral gated-clock groups; all_path_wns also includes async reset checks; reset recovery/removal are reported separately",

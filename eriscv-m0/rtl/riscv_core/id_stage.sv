@@ -92,9 +92,10 @@ module id_stage #(
                                 (decoded_instr[14:12] != 3'b010) &&
                                 (decoded_instr[14:12] != 3'b011);
   assign store_instruction_o = (decoded_instr[6:0] == 7'b010_0011);
-  // C instructions enter this module in normalized 32-bit form, so C.J/C.JAL
-  // and C.BEQZ/C.BNEZ share the native prediction contract. C.JALR remains
-  // EX-resolved because its target is indirect.
+  // The predictor receives the raw halfword as well as the normalized form:
+  // predictable C control instructions bypass the full decompressor on the
+  // early redirect path. C.JALR remains EX-resolved because its target is
+  // indirect.
   branch_predictor #(
     .ENABLE_BHT_P(ENABLE_BHT_P),
     .ENABLE_RAS_P(ENABLE_RAS_P)
@@ -109,6 +110,8 @@ module id_stage #(
     // Current normalized instruction
     .pc_i               (if_id_i.pc),
     .instr_i            (decoded_instr),
+    .compressed_i       (if_id_i.compressed),
+    .c_instr_i          (if_id_i.instr[15:0]),
     // Resolved-branch training
     .bht_update_valid_i (bht_update_valid_i),
     .bht_update_pc_i    (bht_update_pc_i),

@@ -15,8 +15,21 @@ if {![info exists ERISCV_PPA_JTAG_CLK_PERIOD_NS]} {
 if {![info exists ERISCV_PPA_IO_DELAY_NS]} {
   set ERISCV_PPA_IO_DELAY_NS [expr {$ERISCV_PPA_SYS_CLK_PERIOD_NS * 0.20}]
 }
-if {![info exists ERISCV_PPA_CLOCK_UNCERTAINTY_NS]} {
-  set ERISCV_PPA_CLOCK_UNCERTAINTY_NS [expr {$ERISCV_PPA_SYS_CLK_PERIOD_NS * 0.05}]
+if {![info exists ERISCV_PPA_SETUP_CLOCK_UNCERTAINTY_NS]} {
+  if {[info exists ERISCV_PPA_CLOCK_UNCERTAINTY_NS]} {
+    set ERISCV_PPA_SETUP_CLOCK_UNCERTAINTY_NS $ERISCV_PPA_CLOCK_UNCERTAINTY_NS
+  } else {
+    set ERISCV_PPA_SETUP_CLOCK_UNCERTAINTY_NS [expr {$ERISCV_PPA_SYS_CLK_PERIOD_NS * 0.05}]
+  }
+}
+if {![info exists ERISCV_PPA_HOLD_CLOCK_UNCERTAINTY_NS]} {
+  if {[info exists ERISCV_PPA_CLOCK_UNCERTAINTY_NS]} {
+    set ERISCV_PPA_HOLD_CLOCK_UNCERTAINTY_NS $ERISCV_PPA_CLOCK_UNCERTAINTY_NS
+  } else {
+    # Hold uncertainty models residual skew/early variation after CTS, not
+    # full-cycle source jitter. Keep it independent from the setup guardband.
+    set ERISCV_PPA_HOLD_CLOCK_UNCERTAINTY_NS 0.10
+  }
 }
 if {![info exists ERISCV_PPA_CLOCK_TRANSITION_NS]} {
   set ERISCV_PPA_CLOCK_TRANSITION_NS 0.15
@@ -103,7 +116,8 @@ if {$ERISCV_PPA_CLOCK_GATE_MODEL eq "sky130"} {
 set sys_clocks [get_clocks {sys_clk core_clk peri_clk_*}]
 set jtag_clocks [get_clocks jtag_clk]
 set_clock_groups -asynchronous -group $sys_clocks -group $jtag_clocks
-set_clock_uncertainty $ERISCV_PPA_CLOCK_UNCERTAINTY_NS [all_clocks]
+set_clock_uncertainty -setup $ERISCV_PPA_SETUP_CLOCK_UNCERTAINTY_NS [all_clocks]
+set_clock_uncertainty -hold $ERISCV_PPA_HOLD_CLOCK_UNCERTAINTY_NS [all_clocks]
 set_clock_transition $ERISCV_PPA_CLOCK_TRANSITION_NS [all_clocks]
 
 # Timed system-domain inputs and outputs.  This generic PPA model assumes the

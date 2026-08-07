@@ -22,4 +22,5 @@ if [ -d "${PPA_HOME}/prefix/usr/lib/x86_64-linux-gnu" ]; then
   export LD_LIBRARY_PATH="${PPA_HOME}/prefix/usr/lib/x86_64-linux-gnu${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
 fi
 export PPA_LIBERTY="${PPA_LIBERTY:-${PPA_HOME}/liberty/NangateOpenCellLibrary_typical.lib}"
+export PPA_OPENRAM_ROOT="${PPA_OPENRAM_ROOT:-${PPA_HOME}/src/OpenRAM}"
 unset _openroad _oss_cad _ppa_root

@@ -29,6 +29,10 @@ module branch_predictor #(
   // Current normalized instruction
   input  logic [31:0] pc_i,
   input  logic [31:0] instr_i,
+  // Raw C instruction. Keeping its predictable control forms separate from
+  // `instr_i` keeps the full decompressor out of the early redirect cone.
+  input  logic        compressed_i,
+  input  logic [15:0] c_instr_i,
 
   // Resolved-branch training from EX. The update is sampled at the clock
   // edge; it never feeds the current ID prediction combinationally.
@@ -62,10 +66,15 @@ module branch_predictor #(
   logic        native_jal;
   logic        canonical_return;
   logic        valid_branch;
+  logic        c_direct_jump;
+  logic        c_conditional_branch;
+  logic        c_return;
 
   // Immediate targets used by the static predictor
   logic [31:0] jal_imm;
   logic [31:0] branch_imm;
+  logic [31:0] c_jump_imm;
+  logic [31:0] c_branch_imm;
 
   function automatic logic [1:0] bht_next_counter(
     input logic [1:0] counter_i,
@@ -92,19 +101,43 @@ module branch_predictor #(
     end
   endfunction
 
-  assign jal_imm = {{11{instr_i[31]}}, instr_i[31], instr_i[19:12],
+  // C.J/C.JAL and C.BEQZ/C.BNEZ are the only compressed forms predicted in
+  // ID. Their immediate bit layouts are encoded directly here so the full
+  // RV32 decompressor remains on the ID/EX decode path, not the PC redirect
+  // path. C.JR x1/x5 preserves the existing RAS-return prediction.
+  assign c_direct_jump = (c_instr_i[1:0] == 2'b01) &&
+                         ((c_instr_i[15:13] == 3'b001) ||
+                          (c_instr_i[15:13] == 3'b101));
+  assign c_conditional_branch = (c_instr_i[1:0] == 2'b01) &&
+                                ((c_instr_i[15:13] == 3'b110) ||
+                                 (c_instr_i[15:13] == 3'b111));
+  assign c_return = (c_instr_i[1:0] == 2'b10) &&
+                    (c_instr_i[15:12] == 4'b1000) &&
+                    (c_instr_i[6:2] == 5'd0) &&
+                    ((c_instr_i[11:7] == 5'd1) ||
+                     (c_instr_i[11:7] == 5'd5));
+  assign c_jump_imm = {{20{c_instr_i[12]}}, c_instr_i[12], c_instr_i[8],
+                       c_instr_i[10:9], c_instr_i[6], c_instr_i[7],
+                       c_instr_i[2], c_instr_i[11], c_instr_i[5:3], 1'b0};
+  assign c_branch_imm = {{23{c_instr_i[12]}}, c_instr_i[12], c_instr_i[6:5],
+                         c_instr_i[2], c_instr_i[11:10], c_instr_i[4:3], 1'b0};
+  assign jal_imm = compressed_i ? c_jump_imm :
+                   {{11{instr_i[31]}}, instr_i[31], instr_i[19:12],
                     instr_i[20], instr_i[30:21], 1'b0};
-  assign branch_imm = {{19{instr_i[31]}}, instr_i[31], instr_i[7],
+  assign branch_imm = compressed_i ? c_branch_imm :
+                      {{19{instr_i[31]}}, instr_i[31], instr_i[7],
                        instr_i[30:25], instr_i[11:8], 1'b0};
-  assign native_jal = (instr_i[6:0] == 7'b110_1111);
-  assign canonical_return = (instr_i[6:0] == 7'b110_0111) &&
-                            (instr_i[11:7] == 5'd0) &&
-                            ((instr_i[19:15] == 5'd1) ||
-                             (instr_i[19:15] == 5'd5)) &&
-                            (instr_i[31:20] == 12'd0);
-  assign valid_branch = (instr_i[6:0] == 7'b110_0011) &&
-                        (instr_i[14:12] != 3'b010) &&
-                        (instr_i[14:12] != 3'b011);
+  assign native_jal = compressed_i ? c_direct_jump : (instr_i[6:0] == 7'b110_1111);
+  assign canonical_return = compressed_i ? c_return :
+                            ((instr_i[6:0] == 7'b110_0111) &&
+                             (instr_i[11:7] == 5'd0) &&
+                             ((instr_i[19:15] == 5'd1) ||
+                              (instr_i[19:15] == 5'd5)) &&
+                             (instr_i[31:20] == 12'd0));
+  assign valid_branch = compressed_i ? c_conditional_branch :
+                        ((instr_i[6:0] == 7'b110_0011) &&
+                         (instr_i[14:12] != 3'b010) &&
+                         (instr_i[14:12] != 3'b011));
 
   generate
     if (ENABLE_BHT_P) begin : g_bht

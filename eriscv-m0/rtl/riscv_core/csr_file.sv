@@ -96,6 +96,10 @@ module csr_file #(
   logic [7:0]  mhpmevent4_q;
   logic [7:0]  mhpmevent5_q;
   logic [7:0]  mhpmevent6_q;
+  // Sample the event/configuration decision at the observation boundary and
+  // update the counters in the following cycle.  This keeps EX event logic
+  // out of the HPM counter increment path without losing back-to-back events.
+  logic [3:0]  hpm_increment_q;
 
   // ---------------------------------------------------------------------------
   // Debug and trigger state
@@ -120,6 +124,7 @@ module csr_file #(
   logic        mtip_pending;
   logic        csr_known;
   logic        csr_write_legal;
+  logic [3:0]  hpm_counter_write;
 
   // ---------------------------------------------------------------------------
   // CSR write sanitizers and HPM event helpers
@@ -193,6 +198,24 @@ module csr_file #(
       hpm_event_active = 1'b0;
     end
   endfunction
+
+  always_comb begin
+    hpm_counter_write = 4'b0000;
+    if (csr_access_i && !csr_illegal_access_o && csr_write_intent_i) begin
+      unique case (csr_addr_i)
+        CSR_MHPMCOUNTER3,
+        CSR_MHPMCOUNTER3H: hpm_counter_write[0] = 1'b1;
+        CSR_MHPMCOUNTER4,
+        CSR_MHPMCOUNTER4H: hpm_counter_write[1] = 1'b1;
+        CSR_MHPMCOUNTER5,
+        CSR_MHPMCOUNTER5H: hpm_counter_write[2] = 1'b1;
+        CSR_MHPMCOUNTER6,
+        CSR_MHPMCOUNTER6H: hpm_counter_write[3] = 1'b1;
+        default: begin
+        end
+      endcase
+    end
+  end
 
   // ---------------------------------------------------------------------------
   // Interrupt pending view and priority
@@ -429,6 +452,7 @@ module csr_file #(
       mhpmevent4_q    <= HPM_EVENT_DATA_WAIT_CYCLES;
       mhpmevent5_q    <= HPM_EVENT_BRANCH_TAKEN;
       mhpmevent6_q    <= HPM_EVENT_INTERRUPT_TAKEN;
+      hpm_increment_q <= 4'b0000;
       dcsr_step_q    <= 1'b0;
       dcsr_ebreakm_q <= 1'b0;
       dcsr_cause_q   <= 3'd0;
@@ -451,18 +475,28 @@ module csr_file #(
       if (trigger_retire_i && !debug_mode_i && (icount_q[13:0] != 14'd0)) begin
         icount_q[13:0] <= icount_q[13:0] - 14'd1;
       end
-      if (!debug_mode_i && hpm_event_active(mhpmevent3_q) && !mcountinhibit_q[3]) begin
+      if (hpm_increment_q[0] && !hpm_counter_write[0]) begin
         mhpmcounter3_q <= mhpmcounter3_q + 64'd1;
       end
-      if (!debug_mode_i && hpm_event_active(mhpmevent4_q) && !mcountinhibit_q[4]) begin
+      if (hpm_increment_q[1] && !hpm_counter_write[1]) begin
         mhpmcounter4_q <= mhpmcounter4_q + 64'd1;
       end
-      if (!debug_mode_i && hpm_event_active(mhpmevent5_q) && !mcountinhibit_q[5]) begin
+      if (hpm_increment_q[2] && !hpm_counter_write[2]) begin
         mhpmcounter5_q <= mhpmcounter5_q + 64'd1;
       end
-      if (!debug_mode_i && hpm_event_active(mhpmevent6_q) && !mcountinhibit_q[6]) begin
+      if (hpm_increment_q[3] && !hpm_counter_write[3]) begin
         mhpmcounter6_q <= mhpmcounter6_q + 64'd1;
       end
+      // A counter write establishes an exact software-visible value and
+      // discards both a pending and same-cycle event for that counter.
+      hpm_increment_q[0] <= !hpm_counter_write[0] && !debug_mode_i &&
+                            hpm_event_active(mhpmevent3_q) && !mcountinhibit_q[3];
+      hpm_increment_q[1] <= !hpm_counter_write[1] && !debug_mode_i &&
+                            hpm_event_active(mhpmevent4_q) && !mcountinhibit_q[4];
+      hpm_increment_q[2] <= !hpm_counter_write[2] && !debug_mode_i &&
+                            hpm_event_active(mhpmevent5_q) && !mcountinhibit_q[5];
+      hpm_increment_q[3] <= !hpm_counter_write[3] && !debug_mode_i &&
+                            hpm_event_active(mhpmevent6_q) && !mcountinhibit_q[6];
       if (debug_enter_i) begin
         dpc_q        <= sanitize_mepc(debug_dpc_i);
         dcsr_cause_q <= debug_cause_i;

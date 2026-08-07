@@ -19,7 +19,14 @@ PPA_PERIOD_NS ?= 10.0
 PPA_LIBERTY ?=
 PPA_OUT_DIR ?= build/ppa
 PPA_OPENROAD_PERIOD_NS ?= 20.0
+PPA_OPENROAD_UTILIZATION ?= 30.0
+PPA_OPENROAD_SRAM_UTILIZATION ?= 35.0
+PPA_OPENROAD_SRAM_CHANNEL_UM ?= 40.0
+PPA_OPENROAD_SRAM_ROUTE_ITERATIONS ?= 20
 PPA_OPENROAD_OUT_DIR ?= build/ppa-openroad
+PPA_OPENRAM_MACRO_DIR ?= $(CURDIR)/.cache/ppa/openram/eriscv_sram_16kbyte_1rw_32x4096_8
+PPA_PREBUILT_SRAM4K_MACRO_DIR ?= $(CURDIR)/.cache/ppa/src/sky130_sram_macros/sky130_sram_4kbyte_1rw1r_32x1024_8
+PPA_OPENRAM_ARGS ?=
 EMBENCH_BENCH ?= matmult-int
 EMBENCH_PROFILE ?= speed
 EMBENCH_SCALE ?= 1
@@ -39,7 +46,7 @@ EMBENCH_SCALE ?= 1
 	eriscv-m2-bsp eriscv-m2-bsp-async eriscv-m2-bsp-fpu-dma-sram eriscv-m2-sw eriscv-m2-sw-async eriscv-m2-sw-fpu-dma-sram eriscv-m2-mcycle-counter eriscv-m2-coremark eriscv-m2-dhrystone eriscv-m2-embench eriscv-m2-microbench eriscv-m2-freertos eriscv-m2-freertos-qualification eriscv-m2-freertos-umode eriscv-m2-zephyr \
 	eriscv-m0-full eriscv-m1-full eriscv-m2-full \
 	eriscv-m0-full-no-act eriscv-m1-full-no-act eriscv-m2-full-no-act \
-	eriscv-mcu-full ppa-m0 ppa-m1 ppa-m2 ppa-all ppa-openroad-m0 ppa-setup ppa-setup-wsl clean clean-dry-run
+	eriscv-mcu-full ppa-m0 ppa-m1 ppa-m2 ppa-all ppa-openroad-m0 ppa-openroad-m1 ppa-openroad-m2 ppa-openroad-m0-sram ppa-openroad-m0-sram-close ppa-openroad-m0-sram-fast ppa-openroad-m0-openram ppa-openroad-view-m0 ppa-openroad-view-m0-sram ppa-openroad-view-m1 ppa-openroad-view-m2 ppa-openram-setup ppa-openram-m0 ppa-setup ppa-setup-wsl clean clean-dry-run
 
 all: help
 
@@ -110,10 +117,23 @@ help:
 	@echo "  Example override: source tools/ppa/env.sh && make ppa-m1 PPA_PERIOD_NS=5 PPA_OUT_DIR=build/ppa-fast"
 	@echo "  Overrides: PPA_PERIOD_NS=<ns> PPA_LIBERTY=<file> PPA_OUT_DIR=<dir>"
 	@echo "  SDC: tools/ppa/constraints.sdc (clock/reset/IO, generated-clock, load/transition/fanout)"
-	@echo "       defaults: sys_clk 10ns, jtag 100ns, IO delay 20%, uncertainty 5%"
-	@echo "  make ppa-openroad-m0             - local Sky130/OpenROAD M0 placement/CTS/global-route estimate"
+	@echo "       defaults: sys_clk 10ns, jtag 100ns, IO delay 20%, setup uncertainty 5%, hold 0.10ns"
+	@echo "  make ppa-openroad-m0/m1/m2       - local Sky130/OpenROAD placement/CTS/global-route estimate"
 	@echo "       needs local Sky130 PDK; set PPA_SKY130_ROOT if auto-discovery is ambiguous"
-	@echo "       default: 20ns (50MHz); override: PPA_OPENROAD_PERIOD_NS=<ns> PPA_OPENROAD_OUT_DIR=<dir>"
+	@echo "       defaults: 20ns (50MHz), 30% initial core utilization"
+	@echo "       overrides: PPA_OPENROAD_PERIOD_NS=<ns> PPA_OPENROAD_UTILIZATION=<pct> PPA_OPENROAD_OUT_DIR=<dir>"
+	@echo "  make ppa-openram-setup           - install pinned OpenRAM + Sky130 SRAM build-space under PPA_HOME"
+	@echo "  make ppa-openram-m0              - generate the M0 16 KiB x32, 1RW OpenRAM bank (Magic/Netgen verified)"
+	@echo "  make ppa-openroad-m0-sram        - M0 global/detailed-route P&R with 32 published 4 KiB Sky130 SRAM macros"
+	@echo "       defaults: 35% macro floorplan utilization and 40um channels; overrides: PPA_OPENROAD_SRAM_UTILIZATION=<pct> PPA_OPENROAD_SRAM_CHANNEL_UM=<um>"
+	@echo "       default: 20 global-route iterations/pass; override: PPA_OPENROAD_SRAM_ROUTE_ITERATIONS=<count>"
+	@echo "  make ppa-openroad-m0-sram-close  - add post-route setup/hold repair and two re-route passes"
+	@echo "       run ppa-openram-setup once to cache the published macro views under PPA_HOME"
+	@echo "  make ppa-openroad-m0-sram-fast   - M0 macro placement/CTS fast estimate (no routing)"
+	@echo "  make ppa-openroad-m0-openram     - M0 physical PPA with eight placed OpenRAM banks (IMEM + DMEM)"
+	@echo "       preliminary only: PPA_OPENRAM_ARGS=--skip-verification; this does not waive later macro DRC/LVS"
+	@echo "  make ppa-openroad-view-m0/m1/m2  - open the latest product DEF in KLayout using Sky130 LEF geometry"
+	@echo "  make ppa-openroad-view-m0-sram   - open the 32-macro M0 DEF in KLayout"
 	@echo ""
 	@echo "Debug and focused platform tests:"
 	@echo "  make eriscv-m0-openocd-gdb       - M0 OpenOCD/GDB smoke; ADAPTER_CFG required, FIRMWARE_ELF optional"
@@ -208,7 +228,43 @@ ppa-all:
 	$(MAKE) ppa-m2
 
 ppa-openroad-m0:
-	$(PYTHON) tools/ppa/run_openroad.py --product m0 --period-ns $(PPA_OPENROAD_PERIOD_NS) --output-dir "$(PPA_OPENROAD_OUT_DIR)/m0"
+	$(PYTHON) tools/ppa/run_openroad.py --product m0 --period-ns $(PPA_OPENROAD_PERIOD_NS) --utilization $(PPA_OPENROAD_UTILIZATION) --output-dir "$(PPA_OPENROAD_OUT_DIR)/m0"
+
+ppa-openroad-m1:
+	$(PYTHON) tools/ppa/run_openroad.py --product m1 --period-ns $(PPA_OPENROAD_PERIOD_NS) --utilization $(PPA_OPENROAD_UTILIZATION) --output-dir "$(PPA_OPENROAD_OUT_DIR)/m1"
+
+ppa-openroad-m2:
+	$(PYTHON) tools/ppa/run_openroad.py --product m2 --period-ns $(PPA_OPENROAD_PERIOD_NS) --utilization $(PPA_OPENROAD_UTILIZATION) --output-dir "$(PPA_OPENROAD_OUT_DIR)/m2"
+
+ppa-openroad-m0-sram:
+	$(PYTHON) tools/ppa/run_openroad.py --product m0 --period-ns $(PPA_OPENROAD_PERIOD_NS) --utilization $(PPA_OPENROAD_SRAM_UTILIZATION) --macro-channel-um $(PPA_OPENROAD_SRAM_CHANNEL_UM) --route-mode full --route-repair none --global-route-iterations $(PPA_OPENROAD_SRAM_ROUTE_ITERATIONS) --sram-profile prebuilt4k --sram-macro-dir "$(PPA_PREBUILT_SRAM4K_MACRO_DIR)" --output-dir "$(PPA_OPENROAD_OUT_DIR)/m0-sram"
+
+ppa-openroad-m0-sram-close:
+	$(PYTHON) tools/ppa/run_openroad.py --product m0 --period-ns $(PPA_OPENROAD_PERIOD_NS) --utilization $(PPA_OPENROAD_SRAM_UTILIZATION) --macro-channel-um $(PPA_OPENROAD_SRAM_CHANNEL_UM) --route-mode full --route-repair full --global-route-iterations $(PPA_OPENROAD_SRAM_ROUTE_ITERATIONS) --sram-profile prebuilt4k --sram-macro-dir "$(PPA_PREBUILT_SRAM4K_MACRO_DIR)" --output-dir "$(PPA_OPENROAD_OUT_DIR)/m0-sram-close"
+
+ppa-openroad-m0-sram-fast:
+	$(PYTHON) tools/ppa/run_openroad.py --product m0 --period-ns $(PPA_OPENROAD_PERIOD_NS) --utilization $(PPA_OPENROAD_SRAM_UTILIZATION) --macro-channel-um $(PPA_OPENROAD_SRAM_CHANNEL_UM) --route-mode post-cts --sram-profile prebuilt4k --sram-macro-dir "$(PPA_PREBUILT_SRAM4K_MACRO_DIR)" --output-dir "$(PPA_OPENROAD_OUT_DIR)/m0-sram-fast"
+
+ppa-openram-setup:
+	tools/ppa/setup_openram.sh
+
+ppa-openram-m0:
+	$(PYTHON) tools/ppa/run_openram.py --output-dir "$(PPA_OPENRAM_MACRO_DIR)" $(PPA_OPENRAM_ARGS)
+
+ppa-openroad-m0-openram: ppa-openram-m0
+	$(PYTHON) tools/ppa/run_openroad.py --product m0 --period-ns $(PPA_OPENROAD_PERIOD_NS) --utilization $(PPA_OPENROAD_UTILIZATION) --sram-macro-dir "$(PPA_OPENRAM_MACRO_DIR)" --output-dir "$(PPA_OPENROAD_OUT_DIR)/m0-openram"
+
+ppa-openroad-view-m0:
+	klayout -rr tools/ppa/view_openroad_def.rb -rd input_def="$(PPA_OPENROAD_OUT_DIR)/m0/soc.def"
+
+ppa-openroad-view-m0-sram:
+	klayout -rr tools/ppa/view_openroad_def.rb -rd input_def="$(PPA_OPENROAD_OUT_DIR)/m0-sram/soc.def"
+
+ppa-openroad-view-m1:
+	klayout -rr tools/ppa/view_openroad_def.rb -rd input_def="$(PPA_OPENROAD_OUT_DIR)/m1/soc.def"
+
+ppa-openroad-view-m2:
+	klayout -rr tools/ppa/view_openroad_def.rb -rd input_def="$(PPA_OPENROAD_OUT_DIR)/m2/soc.def"
 
 eriscv-m0-core:
 	$(MAKE) -C eriscv-m0/dv/core/sim $(SIM_BACKEND)
