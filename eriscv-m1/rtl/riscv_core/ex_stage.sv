@@ -308,7 +308,8 @@ module ex_stage #(
   end
 
   muldiv_unit #(
-    .MUL_ITER_BITS(MUL_ITER_BITS_P)
+    .MUL_ITER_BITS      (MUL_ITER_BITS_P),
+    .MUL_RESULT_REGISTER(1'b0)
   ) muldiv_unit_i (
     .clk         (clk),
     .rst_n       (rst_n),
