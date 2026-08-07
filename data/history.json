@@ -1,0 +1,60 @@
+{
+  "runs": [
+    {
+      "timestamp": "2026-08-07T04:50:33Z",
+      "sha": "d4fd3154d163a2681d963fe0a0991584c90be7ee",
+      "run_url": "https://github.com/zhanxn87/eriscv-mcu/actions/runs/31147712144",
+      "ppa": {
+        "products": {
+          "m0": {
+            "status": "complete",
+            "area_um2": 62053.278,
+            "fmax_mhz": 60.31363088057902,
+            "synchronous_path_wns_ns": -6.58
+          },
+          "m1": {
+            "status": "complete",
+            "area_um2": 97174.056,
+            "fmax_mhz": 50.30181086519114,
+            "synchronous_path_wns_ns": -9.88
+          },
+          "m2": {
+            "status": "complete",
+            "area_um2": 140233.604,
+            "fmax_mhz": 30.202355783751134,
+            "synchronous_path_wns_ns": -23.11
+          }
+        }
+      },
+      "benchmarks": {
+        "m0": {
+          "product": "m0",
+          "coremark_status": "\u2705 completed",
+          "coremark_per_mhz": 0.932089,
+          "dhrystone_status": "\u2705 completed",
+          "dmips_per_mhz": 0.906,
+          "embench_status": "\u2705 completed",
+          "embench_mcycle": 890624
+        },
+        "m1": {
+          "product": "m1",
+          "coremark_status": "\u2705 completed",
+          "coremark_per_mhz": 2.332677,
+          "dhrystone_status": "\u2705 completed",
+          "dmips_per_mhz": 0.968,
+          "embench_status": "\u2705 completed",
+          "embench_mcycle": 146331
+        },
+        "m2": {
+          "product": "m2",
+          "coremark_status": "\u2705 completed",
+          "coremark_per_mhz": 2.333837,
+          "dhrystone_status": "\u2705 completed",
+          "dmips_per_mhz": 0.98,
+          "embench_status": "\u2705 completed",
+          "embench_mcycle": 146291
+        }
+      }
+    }
+  ]
+}
