@@ -161,17 +161,29 @@ jobs:
           set -o pipefail
           mkdir -p build/ci
           make act-generate-${{ matrix.product }} 2>&1 | tee build/ci/${{ matrix.product }}-act-generate.log
-      - name: Run full core, ACT4, and SoC regression
+      - name: Run full directed-core regression
         run: |
           set -o pipefail
           mkdir -p build/ci
-          make eriscv-${{ matrix.product }}-full 2>&1 | tee build/ci/${{ matrix.product }}-full.log
+          make -C eriscv-${{ matrix.product }}/dv/core/sim verilator TESTS="--directed-only" 2>&1 | tee build/ci/${{ matrix.product }}-core.log
+      - name: Run full ACT4 regression
+        run: |
+          set -o pipefail
+          mkdir -p build/ci
+          make eriscv-${{ matrix.product }}-act 2>&1 | tee build/ci/${{ matrix.product }}-act.log
+      - name: Run full SoC regression
+        run: |
+          set -o pipefail
+          mkdir -p build/ci
+          make eriscv-${{ matrix.product }}-soc 2>&1 | tee build/ci/${{ matrix.product }}-soc.log
       - name: Publish nightly regression summary
         if: always()
         run: |
           python3 tools/project/write_ci_summary.py regression \
             --title "Full ACT4 regression (${{ matrix.product }})" \
-            --suite "Core, ACT4, and SoC=build/ci/${{ matrix.product }}-full.log" \
+            --suite "Directed core=build/ci/${{ matrix.product }}-core.log" \
+            --suite "ACT4=build/ci/${{ matrix.product }}-act.log" \
+            --suite "SoC=build/ci/${{ matrix.product }}-soc.log" \
             >> "$GITHUB_STEP_SUMMARY"
       - name: Upload nightly failure diagnostics
         if: failure()
@@ -258,7 +270,7 @@ jobs:
           for product in m0 m1 m2; do
             if ! make eriscv-${product}-coremark 2>&1 | tee build/nightly-benchmarks/${product}-coremark.log; then failed=1; fi
             if ! make eriscv-${product}-dhrystone 2>&1 | tee build/nightly-benchmarks/${product}-dhrystone.log; then failed=1; fi
-            if ! make eriscv-${product}-embench EMBENCH_BENCH=matmult-int EMBENCH_PROFILE=speed EMBENCH_SCALE=1 2>&1 | tee build/nightly-benchmarks/${product}-embench.log; then failed=1; fi
+            if ! make eriscv-${product}-embench 2>&1 | tee build/nightly-benchmarks/${product}-embench.log; then failed=1; fi
           done
           exit "$failed"
       - name: Publish benchmark summaries

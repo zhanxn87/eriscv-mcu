@@ -5,7 +5,7 @@ bring-up.  It records constraint reviews, tool observations, board sessions,
 and unresolved risks.  Each entry states whether it is static review or
 physical-board evidence.
 The family-level procedure and archive requirements are in
-[`board-jtag-debug.html`](../../../docs/product-manual/board-jtag-debug.html).
+[`board-jtag-debug`](https://eriscv-mcu-product-manual.zhanxnse.chatgpt.site/board-jtag-debug).
 
 ## Record 2026-07-28 — Pre-board interface review
 

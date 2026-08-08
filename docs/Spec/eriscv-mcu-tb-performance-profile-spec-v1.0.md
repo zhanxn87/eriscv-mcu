@@ -10,7 +10,7 @@ testbenches retain their own copies of the implementation; no MCU consumes
 another MCU directory.
 
 Published benchmark evidence is owned by the
-[Product Manual: Performance](../product-manual/performance.html).
+[Product Manual: Performance](https://eriscv-mcu-product-manual.zhanxnse.chatgpt.site/performance).
 The profile is diagnostic evidence, not a product-performance claim.
 
 ## 1. Measurement model

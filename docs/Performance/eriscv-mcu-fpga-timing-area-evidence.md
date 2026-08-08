@@ -64,5 +64,5 @@ with Sky130 area in a single numeric comparison.
 ## Cross-references
 
 [Verification Evidence Snapshot](../Verification/eriscv-mcu-simulation-evidence-snapshot.md)
-owns regression totals. The [product manual FPGA page](../product-manual/fpga-evaluation.html)
+owns regression totals. The [product manual FPGA page](https://eriscv-mcu-product-manual.zhanxnse.chatgpt.site/fpga-evaluation)
 is the reader-facing summary of the FPGA table and must match its FPGA rows.

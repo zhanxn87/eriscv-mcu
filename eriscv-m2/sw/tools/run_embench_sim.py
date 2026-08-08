@@ -34,6 +34,11 @@ DMEM_BASE = 0x11000000
 RESULT_SYMBOL = "eriscv_embench_result"
 PASS_MARKER = "ERISCV_M2_SOC PASS:"
 FAIL_MARKERS = ("ERISCV_M2_SOC FAIL:", "TB ERROR:", "** Error:", "** Fatal:", "Fatal:")
+EMBENCH_SUITE = (
+    "matmult-int", "crc32", "huffbench", "sglib-combined", "slre", "qrduino",
+    "aha-mont64", "minver", "nettle-aes", "nettle-sha256", "picojpeg", "wikisort",
+)
+WIKISORT_MAX_CYCLES = 4_000_000
 
 
 def result_word_index(elf: Path) -> int:
@@ -51,18 +56,39 @@ def result_word_index(elf: Path) -> int:
     raise RuntimeError(f"ELF does not define {RESULT_SYMBOL}")
 
 
+def run_suite(args: argparse.Namespace) -> int:
+    passed = 0
+    for bench in EMBENCH_SUITE:
+        max_cycles = WIKISORT_MAX_CYCLES if bench == "wikisort" else args.max_cycles
+        command = [
+            sys.executable, str(Path(__file__).resolve()), "--bench", bench,
+            "--profile", args.profile, "--scale", str(args.scale),
+            "--max-cycles", str(max_cycles), "--backend", args.backend,
+            "--vsim", args.vsim, "--verilator", args.verilator,
+        ]
+        if subprocess.run(command).returncode == 0:
+            passed += 1
+    failed = len(EMBENCH_SUITE) - passed
+    state = "PASS" if failed == 0 else "FAIL"
+    print(f"EMBENCH SUITE {state}: total={len(EMBENCH_SUITE)} passed={passed} failed={failed}")
+    return 0 if failed == 0 else 1
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--bench", default="matmult-int")
     parser.add_argument("--profile", choices=("speed", "size"), default="speed")
     parser.add_argument("--scale", type=int, default=1)
     parser.add_argument("--max-cycles", type=int, default=2_000_000)
+    parser.add_argument("--suite", action="store_true", help="run the qualified 12-workload speed suite")
     parser.add_argument("--backend", choices=("auto", "modelsim", "verilator"), default="auto")
     parser.add_argument("--vsim", default=default_vsim())
     parser.add_argument("--verilator", default="verilator")
     args = parser.parse_args()
     if args.max_cycles <= 0 or args.scale <= 0:
         parser.error("max-cycles and scale must be positive")
+    if args.suite:
+        return run_suite(args)
 
     subprocess.run(
         ["make", "-B", "-C", str(SW_DIR), "embench",

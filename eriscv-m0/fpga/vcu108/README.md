@@ -21,7 +21,7 @@ error. The on-chip SRAM has no fixed FPGA image: use boot mode 1 (JTAG DMI) or
 Board interface review findings and subsequent board-session evidence are kept
 in [DEBUG.md](DEBUG.md).
 The detailed build-to-observed-output explanation is in the product manual:
-[M0 UART Boot Hello World](../../../docs/product-manual/m0-uart-boot-hello-world.html).
+[M0 UART Boot Hello World](https://eriscv-mcu-product-manual.zhanxnse.chatgpt.site/m0-uart-boot-hello-world).
 
 ## Browser UART console (recommended)
 

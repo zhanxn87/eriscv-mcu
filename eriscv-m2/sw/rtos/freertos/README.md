@@ -38,7 +38,7 @@ metrics across repeated runs. The default runner executes only the normal
 profile. `--failstops` additionally rebuilds two controlled negative images:
 an application assertion and an untouched stack-guard-word corruption. Both
 must reach the fail-stop result `0xdead0001`. Current measurement boundaries
-are in the [family performance manual](../../../../docs/product-manual/performance.html).
+are in the [family performance manual](https://eriscv-mcu-product-manual.zhanxnse.chatgpt.site/performance).
 
 ## Driver layout
 

@@ -14,7 +14,7 @@ boot/firmware regions and enforces U-mode access policy.
 
 - [Architecture contract](docs/eriscv-m1-architecture.md)
 - [Verification contract](docs/eriscv-m1-verification.md)
-- [Family product manual](../docs/product-manual/products/eriscv-m1.html)
+- [Family product manual](https://eriscv-mcu-product-manual.zhanxnse.chatgpt.site/products/eriscv-m1)
 - [Family evidence snapshot](../docs/Verification/eriscv-mcu-simulation-evidence-snapshot.md)
 - [Design verification inventory](dv/README.md)
 - [ACT4 profile](compliance/riscv-arch-test/README.md)

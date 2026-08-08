@@ -26,7 +26,7 @@ LDFLAGS := -nostdlib -nostartfiles -Wl,--gc-sections -Wl,-Tlinker/eriscv_mcu.ld 
   -Wl,-Map,$(BUILD_DIR)/$(EXAMPLE).map -lgcc
 
 .PHONY: all images images-all ci sim sim-async clean print-config \
-  coremark sim-coremark embench sim-embench microbench sim-microbench \
+  coremark sim-coremark embench sim-embench embench-suite microbench sim-microbench \
   freertos sim-freertos sim-freertos-qualification dhrystone sim-dhrystone zephyr sim-zephyr
 
 COREMARK_ITERATIONS ?= 1
@@ -89,6 +89,9 @@ embench:
 
 sim-embench:
 	$(PYTHON) tools/run_embench_sim.py --backend $(SIM_BACKEND)
+
+embench-suite:
+	$(PYTHON) tools/run_embench_sim.py --suite --backend $(SIM_BACKEND)
 
 microbench:
 	$(MAKE) -C benchmarks/microbench SW_DIR=$(CURDIR) ISA=$(ISA) ABI=$(ABI) UART_DIVISOR=$(UART_DIVISOR) images

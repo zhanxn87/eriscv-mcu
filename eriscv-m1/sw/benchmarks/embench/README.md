@@ -1,8 +1,19 @@
 # M1 Embench-IoT Adapter
 
 This adapter leaves the pinned upstream `embench-iot` submodule unchanged. It
-links one selected workload with the M1 BSP, records its verified `mcycle`
+links a selected workload with the M1 BSP, records its verified `mcycle`
 delta in `eriscv_embench_result`, and emits standard IMEM/DTCM images.
+
+Run the qualified 12-workload speed suite locally:
+
+```sh
+make -C eriscv-m1/sw embench-suite
+```
+
+The suite is `matmult-int`, `crc32`, `huffbench`, `sglib-combined`, `slre`,
+`qrduino`, `aha-mont64`, `minver`, `nettle-aes`, `nettle-sha256`, `picojpeg`,
+and `wikisort`. `wikisort` uses a 4,000,000-cycle cap; the other workloads
+use the standard 2,000,000-cycle cap.
 
 Build a speed image:
 
@@ -19,9 +30,8 @@ make -C eriscv-m1/sw embench EMBENCH_BENCH=matmult-int EMBENCH_PROFILE=size EMBE
 `CPU_MHZ=1`, `WARMUP_HEAT=0`, and `EMBENCH_SCALE=1` are fixed simulation-profile
 settings. The adapter derives generated workload sources in `build/` and only
 replaces the upstream local repeat count; the pinned submodule remains
-unchanged. These smoke measurements are not Embench reference scores or
-wall-time measurements. Speed runs execute ModelSim and verify the workload;
+unchanged. These simulation measurements are not Embench reference scores or
+wall-time measurements. Speed runs execute the selected simulator and verify the workload;
 Size runs build the `-Os` image and report ELF sections without simulation.
-The speed runner currently qualifies one workload;
-additional upstream workloads use the same adapter after individual build and
-verification closure.
+The speed suite is an engineering simulation regression, not an upstream
+normalized Embench score.

@@ -32,7 +32,7 @@ the recommended first checks.
 | Dated verification evidence | [MCU Evidence Snapshot](Verification/eriscv-mcu-simulation-evidence-snapshot.md) | Regression totals, backend, date, and result boundaries. |
 | GitHub Actions CI behavior | [GitHub Actions CI Guide](Verification/eriscv-mcu-github-ci.md) | Trigger matrix, PR/nightly coverage, caches, Job Summaries, failure diagnostics, performance history, and CI evidence boundaries. |
 | FPGA and Sky130 timing and area | [Implementation Timing and Area Evidence](Performance/eriscv-mcu-fpga-timing-area-evidence.md) | Routed FPGA provenance plus current local Sky130/OpenROAD estimates. |
-| Performance dashboard and method | [Product Manual: Performance](product-manual/performance.html) | Current measurement boundaries plus reader-facing M0/M1/M2 trends and workload snapshots. |
+| Performance dashboard and method | [Product Manual: Performance](https://eriscv-mcu-product-manual.zhanxnse.chatgpt.site/performance) | Current measurement boundaries plus reader-facing M0/M1/M2 trends and workload snapshots. |
 | External debug smoke contract | [OpenOCD/GDB Board-Smoke Contract](Verification/eriscv-mcu-openocd-gdb-smoke.md) | Required hardware-debug interoperability evidence. |
 
 ## Historical engineering records
@@ -43,7 +43,7 @@ the recommended first checks.
 
 ## Reader-facing documentation
 
-- [HTML product manual](product-manual/index.html) is the English reader-facing
+- [HTML product manual](https://eriscv-mcu-product-manual.zhanxnse.chatgpt.site/) is the English reader-facing
   family guide. It summarizes contracts and evidence but does not replace them.
 
 When updating a result, update only its owner and link to it from other

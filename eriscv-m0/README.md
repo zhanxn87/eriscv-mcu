@@ -13,7 +13,7 @@ mechanism.
 
 - [Architecture contract](docs/eriscv-m0-architecture.md)
 - [Verification contract](docs/eriscv-m0-verification.md)
-- [Family product manual](../docs/product-manual/products/eriscv-m0.html)
+- [Family product manual](https://eriscv-mcu-product-manual.zhanxnse.chatgpt.site/products/eriscv-m0)
 - [Family evidence snapshot](../docs/Verification/eriscv-mcu-simulation-evidence-snapshot.md)
 - [Design verification inventory](dv/README.md)
 - [ACT4 profile](compliance/riscv-arch-test/README.md)

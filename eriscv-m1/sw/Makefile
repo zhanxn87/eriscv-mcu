@@ -31,7 +31,7 @@ CFLAGS := -march=$(ISA) -mabi=$(ABI) -mcmodel=medany \
 LDFLAGS := -nostdlib -nostartfiles -Wl,--gc-sections -Wl,-Tlinker/eriscv_mcu.ld \
   -Wl,-Map,$(BUILD_DIR)/$(EXAMPLE).map
 
-.PHONY: all images images-all ci sim sim-async sim-mcycle-counter coremark sim-coremark embench sim-embench microbench sim-microbench freertos sim-freertos sim-freertos-qualification freertos-umode sim-freertos-umode dhrystone sim-dhrystone zephyr sim-zephyr clean print-config
+.PHONY: all images images-all ci sim sim-async sim-mcycle-counter coremark sim-coremark embench sim-embench embench-suite microbench sim-microbench freertos sim-freertos sim-freertos-qualification freertos-umode sim-freertos-umode dhrystone sim-dhrystone zephyr sim-zephyr clean print-config
 
 all: images
 
@@ -65,6 +65,9 @@ embench:
 
 sim-embench:
 	$(PYTHON) tools/run_embench_sim.py --backend $(SIM_BACKEND)
+
+embench-suite:
+	$(PYTHON) tools/run_embench_sim.py --suite --backend $(SIM_BACKEND)
 
 microbench:
 	$(MAKE) -C benchmarks/microbench SW_DIR=$(CURDIR) ISA=$(ISA) ABI=$(ABI) UART_DIVISOR=$(UART_DIVISOR) images

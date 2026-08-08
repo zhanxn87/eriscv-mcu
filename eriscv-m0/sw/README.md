@@ -138,7 +138,7 @@ stalls, redirects, and forwarding. `--no-perf-profile` is for focused simulator
 diagnosis only and marks those fields unavailable.
 
 Current timing methodology and published results are summarized in the
-[family performance manual](../../docs/product-manual/performance.html).
+[family performance manual](https://eriscv-mcu-product-manual.zhanxnse.chatgpt.site/performance).
 
 ## Scope & Limitations
 

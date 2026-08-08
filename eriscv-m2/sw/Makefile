@@ -40,7 +40,7 @@ endif
 LDFLAGS := -nostdlib -nostartfiles -Wl,--gc-sections -Wl,-Tlinker/eriscv_mcu.ld \
   -Wl,-Map,$(BUILD_DIR)/$(EXAMPLE).map
 
-.PHONY: all fpu-fft-vectors images images-all ci sim sim-async sim-fpu-dma-sram sim-dma-uart-tx sim-fpu-fft sim-fpu-fft1024 sim-fpu-fft1024-mcycle sim-mcycle-counter coremark sim-coremark embench sim-embench microbench sim-microbench linpack sim-linpack freertos sim-freertos sim-freertos-qualification freertos-umode sim-freertos-umode dhrystone sim-dhrystone zephyr sim-zephyr clean print-config
+.PHONY: all fpu-fft-vectors images images-all ci sim sim-async sim-fpu-dma-sram sim-dma-uart-tx sim-fpu-fft sim-fpu-fft1024 sim-fpu-fft1024-mcycle sim-mcycle-counter coremark sim-coremark embench sim-embench embench-suite microbench sim-microbench linpack sim-linpack freertos sim-freertos sim-freertos-qualification freertos-umode sim-freertos-umode dhrystone sim-dhrystone zephyr sim-zephyr clean print-config
 
 all: images
 
@@ -82,13 +82,16 @@ coremark:
 	$(MAKE) -C benchmarks/coremark SW_DIR=$(CURDIR) ISA=$(ISA) ABI=$(ABI) SOC_CLOCK_HZ=$(SOC_CLOCK_HZ) UART_DIVISOR=$(UART_DIVISOR) ITERATIONS=$(COREMARK_ITERATIONS) images
 
 sim-coremark:
-	$(PYTHON) tools/run_coremark_sim.py
+	$(PYTHON) tools/run_coremark_sim.py --iterations $(COREMARK_ITERATIONS) --backend $(SIM_BACKEND)
 
 embench:
 	$(MAKE) -C benchmarks/embench SW_DIR=$(CURDIR) ISA=$(ISA) ABI=$(ABI) UART_DIVISOR=$(UART_DIVISOR) BENCH=$(EMBENCH_BENCH) PROFILE=$(EMBENCH_PROFILE) SCALE=$(EMBENCH_SCALE) images
 
 sim-embench:
 	$(PYTHON) tools/run_embench_sim.py --backend $(SIM_BACKEND)
+
+embench-suite:
+	$(PYTHON) tools/run_embench_sim.py --suite --backend $(SIM_BACKEND)
 
 microbench:
 	$(MAKE) -C benchmarks/microbench SW_DIR=$(CURDIR) ISA=$(ISA) ABI=$(ABI) UART_DIVISOR=$(UART_DIVISOR) images

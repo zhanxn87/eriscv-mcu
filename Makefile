@@ -98,7 +98,9 @@ help:
 	@echo "  make eriscv-m0-sw-async          - alias of the M0 asynchronous BSP simulation"
 	@echo "  make eriscv-m0-coremark          - build/run M0 CoreMark"
 	@echo "  make eriscv-m0-dhrystone         - build/run M0 Dhrystone"
-	@echo "  make eriscv-m0-embench           - build/run M0 Embench (default matmult-int/speed/1)"
+	@echo "  make eriscv-m0-embench           - run M0 Embench-IoT 12-workload speed suite"
+	@echo "  make eriscv-m1-embench           - run M1 Embench-IoT 12-workload speed suite"
+	@echo "  make eriscv-m2-embench           - run M2 Embench-IoT 12-workload speed suite"
 	@echo "  make eriscv-m0-microbench        - build/run M0 microbenchmarks"
 	@echo "  make eriscv-m0-freertos          - build/run M0 FreeRTOS"
 	@echo "  make eriscv-m0-freertos-qualification - M0 FreeRTOS fail-stop qualification"
@@ -366,7 +368,7 @@ eriscv-m0-dhrystone:
 	$(MAKE) -C eriscv-m0/sw dhrystone sim-dhrystone
 
 eriscv-m0-embench:
-	$(MAKE) -C eriscv-m0/sw embench sim-embench
+	$(MAKE) -C eriscv-m0/sw SIM_BACKEND=$(SIM_BACKEND) embench-suite
 
 eriscv-m0-microbench:
 	$(MAKE) -C eriscv-m0/sw microbench sim-microbench
@@ -399,7 +401,7 @@ eriscv-m1-dhrystone:
 	$(MAKE) -C eriscv-m1/sw dhrystone sim-dhrystone
 
 eriscv-m1-embench:
-	$(MAKE) -C eriscv-m1/sw embench sim-embench
+	$(MAKE) -C eriscv-m1/sw SIM_BACKEND=$(SIM_BACKEND) embench-suite
 
 eriscv-m1-microbench:
 	$(MAKE) -C eriscv-m1/sw microbench sim-microbench
@@ -439,7 +441,7 @@ eriscv-m2-dhrystone:
 	$(MAKE) -C eriscv-m2/sw SIM_BACKEND=$(SIM_BACKEND) dhrystone sim-dhrystone
 
 eriscv-m2-embench:
-	$(MAKE) -C eriscv-m2/sw SIM_BACKEND=$(SIM_BACKEND) embench sim-embench
+	$(MAKE) -C eriscv-m2/sw SIM_BACKEND=$(SIM_BACKEND) embench-suite
 
 eriscv-m2-microbench:
 	$(MAKE) -C eriscv-m2/sw SIM_BACKEND=$(SIM_BACKEND) microbench sim-microbench

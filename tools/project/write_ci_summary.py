@@ -12,6 +12,16 @@ import re
 from pathlib import Path
 
 
+EMBENCH_WORKLOADS = (
+    "matmult-int", "crc32", "huffbench", "sglib-combined", "slre", "qrduino",
+    "aha-mont64", "minver", "nettle-aes", "nettle-sha256", "picojpeg", "wikisort",
+)
+EMBENCH_RESULT_RE = re.compile(
+    r"EMBENCH SIM PASS: backend=(\S+) bench=([\w-]+) profile=(\w+) scale=(\d+) "
+    r"mcycle=(\d+) mcycle_per_scale=([0-9.]+)"
+)
+
+
 def status(log_path: Path) -> str:
     if not log_path.is_file():
         return "— not produced"
@@ -58,6 +68,23 @@ def number_or_none(value: str) -> float | None:
     return float(value) if value != "—" else None
 
 
+def embench_suite_data(log_path: Path) -> tuple[str, int | None, int | None, dict[str, int], str | None, int | None]:
+    text = log_path.read_text(encoding="utf-8", errors="replace") if log_path.is_file() else ""
+    matches = re.findall(r"EMBENCH SUITE (PASS|FAIL): total=(\d+) passed=(\d+) failed=(\d+)", text)
+    measurements = {
+        bench: int(mcycle)
+        for _backend, bench, _profile, _scale, mcycle, _per_scale in EMBENCH_RESULT_RE.findall(text)
+    }
+    configurations = {(profile, int(scale)) for _backend, _bench, profile, scale, _mcycle, _per_scale in EMBENCH_RESULT_RE.findall(text)}
+    profile, scale = next(iter(configurations)) if len(configurations) == 1 else (None, None)
+    if not matches:
+        return benchmark_value(log_path, r"mcycle=([0-9]+)")[0], None, None, measurements, profile, scale
+    state, total, passed, failed = matches[-1]
+    total_count, passed_count = int(total), int(passed)
+    result = f"✅ {passed}/{total} passed" if state == "PASS" and failed == "0" else f"❌ {failed}/{total} failed"
+    return result, passed_count, total_count, measurements, profile, scale
+
+
 def benchmark_data(product: str, coremark: Path, dhrystone: Path, embench: Path) -> dict[str, object]:
     coremark_status, coremark_value = benchmark_value(
         coremark, r"coremark_per_mhz=([0-9.]+)"
@@ -65,9 +92,7 @@ def benchmark_data(product: str, coremark: Path, dhrystone: Path, embench: Path)
     dhrystone_status, dhrystone_value = benchmark_value(
         dhrystone, r"dmips_per_mhz=([0-9.]+)"
     )
-    embench_status, embench_value = benchmark_value(
-        embench, r"mcycle=([0-9]+)"
-    )
+    embench_status, embench_passed, embench_total, embench_workloads, embench_profile, embench_scale = embench_suite_data(embench)
     return {
         "product": product.lower(),
         "coremark_status": coremark_status,
@@ -75,7 +100,11 @@ def benchmark_data(product: str, coremark: Path, dhrystone: Path, embench: Path)
         "dhrystone_status": dhrystone_status,
         "dmips_per_mhz": number_or_none(dhrystone_value),
         "embench_status": embench_status,
-        "embench_mcycle": int(embench_value) if embench_value != "—" else None,
+        "embench_passed": embench_passed,
+        "embench_total": embench_total,
+        "embench_workload_mcycles": embench_workloads,
+        "embench_profile": embench_profile,
+        "embench_scale": embench_scale,
     }
 
 
@@ -86,15 +115,26 @@ def write_benchmark(product: str, coremark: Path, dhrystone: Path, embench: Path
     embench_status = str(data["embench_status"])
     coremark_value = "—" if data["coremark_per_mhz"] is None else f"{data['coremark_per_mhz']:.6f}"
     dhrystone_value = "—" if data["dmips_per_mhz"] is None else f"{data['dmips_per_mhz']:.6f}"
-    embench_value = "—" if data["embench_mcycle"] is None else str(data["embench_mcycle"])
+    embench_value = (
+        "—" if data["embench_total"] is None
+        else f"{data['embench_passed']}/{data['embench_total']} workloads"
+    )
     print(f"### Nightly benchmarks ({product.upper()})\n")
     print("| Workload | Result | Measurement |")
     print("| --- | --- | --- |")
     print(f"| CoreMark smoke | {coremark_status} | {coremark_value} CoreMark/MHz |")
     print(f"| Dhrystone | {dhrystone_status} | {dhrystone_value} DMIPS/MHz |")
-    print(f"| Embench matmult-int smoke | {embench_status} | {embench_value} mcycle |")
+    print(f"| Embench-IoT suite | {embench_status} | {embench_value} |")
+    measurements = data["embench_workload_mcycles"]
+    if measurements:
+        print()
+        print("| Embench-IoT workload | Raw mcycle (lower is better) |")
+        print("| --- | ---: |")
+        for workload in EMBENCH_WORKLOADS:
+            value = measurements.get(workload)
+            print(f"| {workload} | {value if value is not None else '—'} |")
     print()
-    print("CoreMark and Embench values are simulation-smoke measurements, not official scores.")
+    print("CoreMark and Embench values are simulation measurements, not official scores.")
 
 
 def fmt_number(value: object, digits: int) -> str:
