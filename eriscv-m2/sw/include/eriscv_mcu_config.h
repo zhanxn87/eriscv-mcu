@@ -10,6 +10,9 @@
 #define ERISCV_MCU_HAS_F_EXT          1
 #define ERISCV_MCU_HAS_ZCF_EXT        1
 #define ERISCV_MCU_HAS_ZBA_EXT        1
+#define ERISCV_MCU_HAS_ZBB_EXT        1
+#define ERISCV_MCU_HAS_ZBS_EXT        1
+#define ERISCV_MCU_HAS_B_EXT          1
 #define ERISCV_MCU_HAS_PMP            1
 #define ERISCV_MCU_PMP_ENTRIES        16u
 #define ERISCV_MCU_SOC_CLOCK_HZ       100000000u

@@ -1,6 +1,6 @@
 # eRISCV-M2 VCU108 Vivado Project
 
-Independent VCU108 project for the M2 product (`RV32IMFC_Zicsr_Zifencei_Zicntr_Zihpm_Zihintpause_Zba_Zcf` plus PMP). It resolves
+Independent VCU108 project for the M2 product (`RV32IMFC_Zicsr_Zifencei_Zicntr_Zihpm_Zihintpause_Zba_Zbb_Zbs_Zcf` plus PMP). It resolves
 the product-local `rtl/soc/filelist.f` at project-creation time, so an M2 RTL
 change is picked up without copying a source list from M0.
 

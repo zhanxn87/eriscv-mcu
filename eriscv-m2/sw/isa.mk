@@ -5,12 +5,12 @@
 #
 # The pinned GCC accepts Zcf in -march, so generated software artifacts
 # explicitly declare it alongside the RV32F and RV32C base extensions.
-ISA ?= rv32imfc_zicsr_zifencei_zicntr_zihpm_zihintpause_zba_zcf
+ISA ?= rv32imfc_zicsr_zifencei_zicntr_zihpm_zihintpause_zba_zbb_zbs_zcf
 ABI ?= ilp32f
 # RTOS task context does not save FPR/FCSR yet. Keep RTOS objects in the
 # supported integer execution subset until that context support is added.
 RTOS_ABI ?= ilp32
-RTOS_ISA ?= rv32imc_zicsr_zifencei_zicntr_zihpm_zihintpause_zba
+RTOS_ISA ?= rv32imc_zicsr_zifencei_zicntr_zihpm_zihintpause_zba_zbb_zbs
 
 # Hardware timing values match rtl/soc/soc_pkg.sv. UART_MODE selects the
 # runtime-UART image profile; UART_DIVISOR remains an expert override.

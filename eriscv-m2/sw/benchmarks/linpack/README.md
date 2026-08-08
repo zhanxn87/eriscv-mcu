@@ -27,5 +27,5 @@ make -C eriscv-m2/sw linpack LINPACK_ORDER=100 LINPACK_REPETITIONS=1
 
 The runner prints raw mcycle count, cycles/solve, calculated MFLOPS/MHz,
 MFLOPS at 100 MHz, residual, and FCSR exception flags.  It builds with the
-M2 software contract (`rv32imfc_zicsr_zifencei_zicntr_zihpm_zihintpause_zba_zcf`,
+M2 software contract (`rv32imfc_zicsr_zifencei_zicntr_zihpm_zihintpause_zba_zbb_zbs_zcf`,
 `ilp32f`, `-O2`, and `-ffp-contract=off`).

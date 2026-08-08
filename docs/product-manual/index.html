@@ -81,7 +81,7 @@
           <h3>Compute and data movement</h3>
           <p>RV32IMFC with shared System SRAM and firewall-restricted DMA.</p>
           <ul>
-            <li>RV32F, Zcf, and Zba</li>
+            <li>RV32F, Zcf, and standard B</li>
             <li>Eight-bank System SRAM</li>
             <li>Direct and descriptor DMA</li>
           </ul>
@@ -101,7 +101,7 @@
         <ol class="selection-flow">
           <li>
             <span class="flow-number">01</span>
-            <div><h3>Need binary32 compute or controlled data movement?</h3><p>Choose <strong>M2</strong> for RV32F, Zcf, Zba, shared System SRAM, or the one-channel generic DMA contract.</p></div>
+            <div><h3>Need binary32 compute or controlled data movement?</h3><p>Choose <strong>M2</strong> for RV32F, Zcf, standard B, shared System SRAM, or the one-channel generic DMA contract.</p></div>
           </li>
           <li>
             <span class="flow-number">02</span>
@@ -152,7 +152,7 @@
         <table>
           <thead><tr><th>Capability</th><th>M0</th><th>M1</th><th>M2</th></tr></thead>
           <tbody>
-            <tr><th>ISA profile</th><td>RV32IC + Zicsr, Zifencei, Zicntr, Zihpm, Zihintpause</td><td>RV32IMC + Zicsr, Zifencei, Zicntr, Zihpm, Zihintpause</td><td>RV32IMFC + Zicsr, Zifencei, Zicntr, Zihpm, Zihintpause, Zba, Zcf</td></tr>
+            <tr><th>ISA profile</th><td>RV32IC + Zicsr, Zifencei, Zicntr, Zihpm, Zihintpause</td><td>RV32IMC + Zicsr, Zifencei, Zicntr, Zihpm, Zihintpause</td><td>RV32IMFC + Zicsr, Zifencei, Zicntr, Zihpm, Zihintpause, Zba, Zbb, Zbs, Zcf</td></tr>
             <tr><th>ABI</th><td>ilp32</td><td>ilp32</td><td>ilp32f</td></tr>
             <tr><th>Privilege modes</th><td>M</td><td>M, U</td><td>M, U</td></tr>
             <tr><th>Integer multiply / divide</th><td>Software library routines</td><td>RV32M hardware</td><td>RV32M hardware</td></tr>

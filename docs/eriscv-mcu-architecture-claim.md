@@ -12,7 +12,7 @@ and waivers belong to the
 | --- | --- | --- | --- |
 | M0 | `RV32IC_Zicsr_Zifencei_Zicntr_Zihpm_Zihintpause`; `ilp32`; M-mode | 32-source PLIC, Debug 1.0 Minimal, freestanding BSP | M, B, PMP, U-mode, caches |
 | M1 | `RV32IMC_Zicsr_Zifencei_Zicntr_Zihpm_Zihintpause`; `ilp32`; M/U modes | multi-cycle M/D; 16-entry PMP | B, F/D/Zfa, S-mode/address translation, caches |
-| M2 | `RV32IMFC_Zicsr_Zifencei_Zicntr_Zihpm_Zihintpause_Zba_Zcf`; `ilp32f`; M/U modes | faster core, RV32F, 128 KiB ITCM/DTCM, 512 KiB System SRAM, generic DMA | B, D, Zfa, S-mode/address translation, caches, Zbc, XRAM |
+| M2 | `RV32IMFC_Zicsr_Zifencei_Zicntr_Zihpm_Zihintpause_Zba_Zbb_Zbs_Zcf`; `ilp32f`; M/U modes | faster core, RV32F, standard B, 128 KiB ITCM/DTCM, 512 KiB System SRAM, generic DMA | D, Zfa, S-mode/address translation, caches, Zbc, XRAM |
 
 M2 is single-precision RV32F only. Its FPU integration pins the selected
 CVFPU/FPnew revision and configuration; no deferred floating-point or crypto

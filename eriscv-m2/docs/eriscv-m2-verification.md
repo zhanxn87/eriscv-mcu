@@ -26,7 +26,7 @@ Routed timing and utilization belong in
 | RV32F and Zcf | Arithmetic, conversion, comparison, FMA, `FLW`/`FSW`, compressed FP loads/stores, rounding, FCSR/`fflags`, FS-Off illegality, NaN/subnormal/divide/square-root, and precise trap/debug ordering. |
 | Pipeline and protection | Hazard, forwarding, stall, flush, branch, trap, interrupt, debug, M/U mode, `mcounteren`, and 16-entry PMP CSR/TOR/NA4/NAPOT/MPRV/fault coverage. |
 | Memories and DMA | ITCM/DTCM boundaries; eight-bank System SRAM mapping, arbitration, and errors; direct/descriptor DMA, firewall, ABORT, source-5 PLIC/MEI/WFI, descriptor errors/loop/limit, CPU/DMA contention, and UART-TX byte-stream backpressure. |
-| Toolchain and workloads | Exact `rv32imfc_zicsr_zifencei_zicntr_zihpm_zihintpause_zba_zcf` / `ilp32f` build contract, BSP, Zba generation, RV32F FFT, and representative software workloads |
+| Toolchain and workloads | Exact `rv32imfc_zicsr_zifencei_zicntr_zihpm_zihintpause_zba_zbb_zbs_zcf` / `ilp32f` build contract, BSP, standard-B generation, RV32F FFT, and representative software workloads |
 | No-cache rule | Structural and regression evidence that no cache, cacheable alias, cache-maintenance operation, or coherency path is present. |
 
 ## Evidence Boundaries

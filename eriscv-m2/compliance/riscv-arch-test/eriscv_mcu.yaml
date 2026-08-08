@@ -11,7 +11,7 @@ $schema: config_schema.json#
 kind: architecture configuration
 type: fully configured
 name: eriscv_m2
-description: eRISCV-M2 RV32IMFC_Zicsr_Zifencei_Zicntr_Zihpm_Zihintpause_Zba_Zcf M/U-mode MCU profile
+description: eRISCV-M2 RV32IMFC_Zicsr_Zifencei_Zicntr_Zihpm_Zihintpause_Zba_Zbb_Zbs_Zcf M/U-mode MCU profile
 implemented_extensions:
   - { name: I, version: "= 2.1" }
   - { name: M, version: "= 2.0" }
@@ -27,6 +27,8 @@ implemented_extensions:
   - { name: Zihpm, version: "= 2.0" }
   - { name: Zihintpause, version: "= 2.0.0" }
   - { name: Zba, version: "= 1.0.0" }
+  - { name: Zbb, version: "= 1.0.0" }
+  - { name: Zbs, version: "= 1.0.0" }
   - { name: U, version: "= 1.0.0" }
   # UDB uses Sm for the M-mode privileged architecture. This is not an
   # S/U/Smepmp product claim; the default ACT corpus still excludes Sm tests.
@@ -37,7 +39,7 @@ params:
   MXLEN: 32
   PHYS_ADDR_WIDTH: 32
 
-  # eRISCV-M2 implements misa and advertises RV32IMFC. Implementation/vendor IDs
+  # eRISCV-M2 implements misa and advertises RV32IMFCB. Implementation/vendor IDs
   # are not part of the product claim today.
   MISA_CSR_IMPLEMENTED: true
   MUTABLE_MISA_C: false

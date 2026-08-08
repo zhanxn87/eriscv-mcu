@@ -483,6 +483,7 @@ module csr_file #(
       CSR_FCSR:         csr_rdata_o = {24'd0, frm_q, fflags_q};
       CSR_MSTATUS:      csr_rdata_o = mstatus_q;
       CSR_MISA:         csr_rdata_o = 32'h4000_1104 |
+                                      (HAS_B_EXT ? 32'h0000_0002 : 32'h0000_0000) |
                                       (HAS_UMODE ? 32'h0010_0000 : 32'h0000_0000) |
                                       (HAS_F_EXT ? 32'h0000_0020 : 32'h0000_0000);
       CSR_MIE:          csr_rdata_o = mie_q;

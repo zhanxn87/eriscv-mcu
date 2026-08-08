@@ -23,13 +23,13 @@ benchmark measurements, routed PPA figures, or board-debug transcripts.
 | M1 | 139 | 42 | 181 | PASS — 0 failed |
 | M2 | 221 | 43 | 264 | PASS — 0 failed |
 
-M2 coverage includes RV32F, Zcf, Zba, PMP/HPM, System SRAM, generic DMA, and
+M2 coverage includes RV32F, Zcf, standard B (Zba/Zbb/Zbs), PMP/HPM, System SRAM, generic DMA, and
 product-directed SoC behavior. These results supersede the older M1 183/183
 and pre-M2-closure snapshots.
 
 ## Evidence boundaries
 
-- The [product manual performance page](../product-manual/performance.html)
+- The [product manual performance page](https://eriscv-mcu-product-manual.zhanxnse.chatgpt.site/performance)
   owns controlled benchmark conditions and results.
 - [FPGA Timing and Area Evidence](../Performance/eriscv-mcu-fpga-timing-area-evidence.md)
   owns routed timing, utilization, and board-status provenance. Its latest M2

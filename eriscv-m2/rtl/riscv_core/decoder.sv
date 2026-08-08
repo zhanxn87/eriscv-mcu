@@ -124,6 +124,37 @@ module decoder
               o_id_ex.illegal_instr = 1'b0;
               o_id_ex.alu_op        = ALU_SLL;
               o_id_ex.rd_we         = 1'b1;
+            end else if (funct7 == 7'b011_0000) begin
+              unique case (i_inst[24:20])
+                5'b00000: o_id_ex.alu_op = ALU_CLZ;
+                5'b00001: o_id_ex.alu_op = ALU_CTZ;
+                5'b00010: o_id_ex.alu_op = ALU_CPOP;
+                5'b00100: o_id_ex.alu_op = ALU_SEXTB;
+                5'b00101: o_id_ex.alu_op = ALU_SEXTH;
+                default:   o_id_ex.alu_op = ALU_ADD;
+              endcase
+              if (i_inst[24:20] == 5'b00000 || i_inst[24:20] == 5'b00001 ||
+                  i_inst[24:20] == 5'b00010 || i_inst[24:20] == 5'b00100 ||
+                  i_inst[24:20] == 5'b00101) begin
+                o_id_ex.valid         = i_valid;
+                o_id_ex.illegal_instr = 1'b0;
+                o_id_ex.rd_we         = 1'b1;
+              end
+            end else if (funct7 == 7'b001_0100) begin
+              o_id_ex.valid         = i_valid;
+              o_id_ex.illegal_instr = 1'b0;
+              o_id_ex.alu_op        = ALU_BSET;
+              o_id_ex.rd_we         = 1'b1;
+            end else if (funct7 == 7'b010_0100) begin
+              o_id_ex.valid         = i_valid;
+              o_id_ex.illegal_instr = 1'b0;
+              o_id_ex.alu_op        = ALU_BCLR;
+              o_id_ex.rd_we         = 1'b1;
+            end else if (funct7 == 7'b011_0100) begin
+              o_id_ex.valid         = i_valid;
+              o_id_ex.illegal_instr = 1'b0;
+              o_id_ex.alu_op        = ALU_BINV;
+              o_id_ex.rd_we         = 1'b1;
             end
           end
           3'b101: begin
@@ -136,6 +167,26 @@ module decoder
               o_id_ex.valid         = i_valid;
               o_id_ex.illegal_instr = 1'b0;
               o_id_ex.alu_op        = ALU_SRA;
+              o_id_ex.rd_we         = 1'b1;
+            end else if (funct7 == 7'b011_0000) begin
+              o_id_ex.valid         = i_valid;
+              o_id_ex.illegal_instr = 1'b0;
+              o_id_ex.alu_op        = ALU_ROR;
+              o_id_ex.rd_we         = 1'b1;
+            end else if (funct7 == 7'b001_0100 && i_inst[24:20] == 5'b00111) begin
+              o_id_ex.valid         = i_valid;
+              o_id_ex.illegal_instr = 1'b0;
+              o_id_ex.alu_op        = ALU_ORCB;
+              o_id_ex.rd_we         = 1'b1;
+            end else if (funct7 == 7'b011_0100 && i_inst[24:20] == 5'b11000) begin
+              o_id_ex.valid         = i_valid;
+              o_id_ex.illegal_instr = 1'b0;
+              o_id_ex.alu_op        = ALU_REV8;
+              o_id_ex.rd_we         = 1'b1;
+            end else if (funct7 == 7'b010_0100) begin
+              o_id_ex.valid         = i_valid;
+              o_id_ex.illegal_instr = 1'b0;
+              o_id_ex.alu_op        = ALU_BEXT;
               o_id_ex.rd_we         = 1'b1;
             end
           end
@@ -193,6 +244,24 @@ module decoder
             o_id_ex.alu_op        = ALU_SRA;
             o_id_ex.rd_we         = 1'b1;
           end
+          {7'b010_0000, 3'b100}: begin
+            o_id_ex.valid         = i_valid;
+            o_id_ex.illegal_instr = 1'b0;
+            o_id_ex.alu_op        = ALU_XNOR;
+            o_id_ex.rd_we         = 1'b1;
+          end
+          {7'b010_0000, 3'b110}: begin
+            o_id_ex.valid         = i_valid;
+            o_id_ex.illegal_instr = 1'b0;
+            o_id_ex.alu_op        = ALU_ORN;
+            o_id_ex.rd_we         = 1'b1;
+          end
+          {7'b010_0000, 3'b111}: begin
+            o_id_ex.valid         = i_valid;
+            o_id_ex.illegal_instr = 1'b0;
+            o_id_ex.alu_op        = ALU_ANDN;
+            o_id_ex.rd_we         = 1'b1;
+          end
           {7'b000_0000, 3'b110}: begin
             o_id_ex.valid         = i_valid;
             o_id_ex.illegal_instr = 1'b0;
@@ -222,6 +291,76 @@ module decoder
             o_id_ex.valid         = i_valid;
             o_id_ex.illegal_instr = 1'b0;
             o_id_ex.alu_op        = ALU_SH3ADD;
+            o_id_ex.rd_we         = 1'b1;
+          end
+          // Zbb register forms.
+          {7'b000_0101, 3'b100}: begin
+            o_id_ex.valid         = i_valid;
+            o_id_ex.illegal_instr = 1'b0;
+            o_id_ex.alu_op        = ALU_MIN;
+            o_id_ex.rd_we         = 1'b1;
+          end
+          {7'b000_0101, 3'b101}: begin
+            o_id_ex.valid         = i_valid;
+            o_id_ex.illegal_instr = 1'b0;
+            o_id_ex.alu_op        = ALU_MAX;
+            o_id_ex.rd_we         = 1'b1;
+          end
+          {7'b000_0101, 3'b110}: begin
+            o_id_ex.valid         = i_valid;
+            o_id_ex.illegal_instr = 1'b0;
+            o_id_ex.alu_op        = ALU_MINU;
+            o_id_ex.rd_we         = 1'b1;
+          end
+          {7'b000_0101, 3'b111}: begin
+            o_id_ex.valid         = i_valid;
+            o_id_ex.illegal_instr = 1'b0;
+            o_id_ex.alu_op        = ALU_MAXU;
+            o_id_ex.rd_we         = 1'b1;
+          end
+          {7'b000_0100, 3'b100}: begin
+            if (i_inst[24:20] == 5'd0) begin
+              o_id_ex.valid         = i_valid;
+              o_id_ex.illegal_instr = 1'b0;
+              o_id_ex.alu_op        = ALU_ZEXTH;
+              o_id_ex.rd_we         = 1'b1;
+            end
+          end
+          {7'b011_0000, 3'b001}: begin
+            o_id_ex.valid         = i_valid;
+            o_id_ex.illegal_instr = 1'b0;
+            o_id_ex.alu_op        = ALU_ROL;
+            o_id_ex.rd_we         = 1'b1;
+          end
+          {7'b011_0000, 3'b101}: begin
+            o_id_ex.valid         = i_valid;
+            o_id_ex.illegal_instr = 1'b0;
+            o_id_ex.alu_op        = ALU_ROR;
+            o_id_ex.rd_we         = 1'b1;
+          end
+          // Zbs register forms; immediate forms reuse the OP-IMM cases above.
+          {7'b001_0100, 3'b001}: begin
+            o_id_ex.valid         = i_valid;
+            o_id_ex.illegal_instr = 1'b0;
+            o_id_ex.alu_op        = ALU_BSET;
+            o_id_ex.rd_we         = 1'b1;
+          end
+          {7'b010_0100, 3'b001}: begin
+            o_id_ex.valid         = i_valid;
+            o_id_ex.illegal_instr = 1'b0;
+            o_id_ex.alu_op        = ALU_BCLR;
+            o_id_ex.rd_we         = 1'b1;
+          end
+          {7'b011_0100, 3'b001}: begin
+            o_id_ex.valid         = i_valid;
+            o_id_ex.illegal_instr = 1'b0;
+            o_id_ex.alu_op        = ALU_BINV;
+            o_id_ex.rd_we         = 1'b1;
+          end
+          {7'b010_0100, 3'b101}: begin
+            o_id_ex.valid         = i_valid;
+            o_id_ex.illegal_instr = 1'b0;
+            o_id_ex.alu_op        = ALU_BEXT;
             o_id_ex.rd_we         = 1'b1;
           end
           {7'b000_0001, 3'b000}: begin

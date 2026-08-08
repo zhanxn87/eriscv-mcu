@@ -25,7 +25,7 @@ claim.
 | --- | --- | --- |
 | [eRISCV-M0](eriscv-m0/README.md) | `RV32IC_Zicsr_Zifencei_Zicntr_Zihpm_Zihintpause` | Compact M-mode control MCU |
 | [eRISCV-M1](eriscv-m1/README.md) | `RV32IMC_Zicsr_Zifencei_Zicntr_Zihpm_Zihintpause` | Mainstream M/U-mode MCU with PMP |
-| [eRISCV-M2](eriscv-m2/README.md) | `RV32IMFC_Zicsr_Zifencei_Zicntr_Zihpm_Zihintpause_Zba_Zcf` | Performance MCU with FPU, TCM, System SRAM, and DMA |
+| [eRISCV-M2](eriscv-m2/README.md) | `RV32IMFC_Zicsr_Zifencei_Zicntr_Zihpm_Zihintpause_Zba_Zbb_Zbs_Zcf` | Performance MCU with FPU, TCM, System SRAM, DMA, and standard B |
 
 ## Product manual
 
@@ -173,7 +173,7 @@ make eriscv-m2-full
 make eriscv-mcu-full
 ```
 
-See the [verification guide](docs/product-manual/verification.html) for scope,
+See the [verification guide](https://eriscv-mcu-product-manual.zhanxnse.chatgpt.site/verification) for scope,
 focused targets, and evidence boundaries.  Third-party terms are described in
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md); the top-level BSD-3-Clause
 license applies only to original eRISCV content.
