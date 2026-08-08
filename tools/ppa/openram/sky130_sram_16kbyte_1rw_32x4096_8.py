@@ -12,6 +12,9 @@ write_size = 8
 num_rw_ports = 1
 num_r_ports = 0
 num_w_ports = 0
+# One physical 16 KiB macro.  The SoC memory wrapper composes four of these
+# macros per 64 KiB TCM; do not add an internal OpenRAM bank hierarchy here.
+num_banks = 1
 num_spare_rows = 1
 num_spare_cols = 1
 tech_name = "sky130"

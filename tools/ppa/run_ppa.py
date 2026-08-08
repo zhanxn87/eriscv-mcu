@@ -291,10 +291,17 @@ def main() -> int:
                 "opt",
                 f"dfflibmap -liberty {quote(args.liberty.resolve())}",
                 f"abc -liberty {quote(args.liberty.resolve())}",
-                # Materialize logic constants as routable Sky130 tie cells.
-                # Direct Verilog constants become POWER/GROUND special nets
-                # in OpenROAD and cannot be detailed-routed as logic signals.
-                "hilomap -hicell sky130_fd_sc_hd__conb_1 HI -locell sky130_fd_sc_hd__conb_1 LO",
+                # Materialize constants as tie cells from the active library.
+                # Direct Verilog constants become POWER/GROUND special nets in
+                # OpenROAD and cannot be detailed-routed as logic signals.
+                # The generic PPA flow uses Nangate, whose tie cells and pins
+                # differ from Sky130's conb cell.
+                (
+                    "hilomap -hicell sky130_fd_sc_hd__conb_1 HI "
+                    "-locell sky130_fd_sc_hd__conb_1 LO"
+                    if args.clock_gate_model == "sky130"
+                    else "hilomap -hicell LOGIC1_X1 Z -locell LOGIC0_X1 Z"
+                ),
                 "clean",
                 f"tee -o {quote(synthesis_report)} stat -liberty {quote(args.liberty.resolve())}",
                 f"write_verilog -noattr -noexpr -nodec {quote(netlist)}",
