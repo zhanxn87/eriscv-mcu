@@ -34,9 +34,7 @@ module pipeline_control #(
   // Pipeline stage enables
   output logic        pc_en_o,
   output logic        if_id_en_o,
-  output logic        id_ex_en_o,
-  output logic        ex_mem_en_o,
-  output logic        mem_wb_en_o,
+  output logic        backend_advance_o,
 
   // Pipeline stage flushes
   output logic        if_id_flush_o,
@@ -49,10 +47,12 @@ module pipeline_control #(
 );
 
   // Derived stall classes. A front-end stall holds PC and IF/ID; a full stall
-  // additionally holds EX while a D-bus response or M/D result is outstanding.
+  // additionally holds both ID/EX and EX/MEM while a D-bus response or M/D
+  // result is outstanding.
   logic front_stall;
   logic full_stall;
   logic pmp_csr_barrier;
+  logic front_end_advance;
 
   generate
     if (ENABLE_PMP_P) begin : g_pmp_csr_barrier
@@ -64,24 +64,28 @@ module pipeline_control #(
 
   // ---------------------------------------------------------------------------
   // Redirect arbitration
-  // Frozen priority: trap > debug > FENCE.I > WFI > branch/jump.
+  // Frozen PC priority: trap > debug > FENCE.I > WFI > branch/jump.
+  // Validity is intentionally independent of PC priority: every source is a
+  // redirect, so a shallow OR avoids putting the common valid signal through
+  // the PC-selection mux chain.
   // ---------------------------------------------------------------------------
+  assign redirect_valid_o = trap_redirect_i | debug_redirect_i |
+                            fence_i_redirect_i | wfi_redirect_i |
+                            branch_redirect_i;
+
   always_comb begin
+    redirect_pc_o = branch_redirect_pc_i;
+    if (wfi_redirect_i) begin
+      redirect_pc_o = wfi_redirect_pc_i;
+    end
+    if (fence_i_redirect_i) begin
+      redirect_pc_o = fence_i_redirect_pc_i;
+    end
+    if (debug_redirect_i) begin
+      redirect_pc_o = debug_redirect_pc_i;
+    end
     if (trap_redirect_i) begin
-      redirect_valid_o = 1'b1;
       redirect_pc_o    = trap_redirect_pc_i;
-    end else if (debug_redirect_i) begin
-      redirect_valid_o = 1'b1;
-      redirect_pc_o    = debug_redirect_pc_i;
-    end else if (fence_i_redirect_i) begin
-      redirect_valid_o = 1'b1;
-      redirect_pc_o    = fence_i_redirect_pc_i;
-    end else if (wfi_redirect_i) begin
-      redirect_valid_o = 1'b1;
-      redirect_pc_o    = wfi_redirect_pc_i;
-    end else begin
-      redirect_valid_o = branch_redirect_i;
-      redirect_pc_o    = branch_redirect_pc_i;
     end
   end
 
@@ -91,13 +95,13 @@ module pipeline_control #(
   assign front_stall = imem_wait_i | load_use_stall_i;
   assign full_stall  = dmem_wait_i | muldiv_wait_i;
 
-  assign pc_en_o     = fetch_enable_i & ~front_stall & ~full_stall & ~pmp_csr_barrier;
-  assign if_id_en_o  = ~front_stall & ~full_stall & ~pmp_csr_barrier;
-  assign id_ex_en_o  = ~full_stall;
-  assign ex_mem_en_o = ~full_stall;
-  // Reserved MEM/WB boundary enable. M0 currently updates this boundary every
-  // cycle; keeping the control point matches M1 and permits future backpressure.
-  assign mem_wb_en_o = 1'b1;
+  // IF/ID may drain while fetch_enable_i is low; only a new PC request needs
+  // that run-state qualification. Keep the common boundary condition named so
+  // PC and IF/ID cannot silently diverge on a future stall source.
+  assign front_end_advance = ~front_stall & ~full_stall & ~pmp_csr_barrier;
+  assign pc_en_o     = fetch_enable_i & front_end_advance;
+  assign if_id_en_o  = front_end_advance;
+  assign backend_advance_o = ~full_stall;
 
   assign if_id_flush_o = redirect_valid_o;
   // A PMP CSR write is an IF-side configuration barrier. EX still commits

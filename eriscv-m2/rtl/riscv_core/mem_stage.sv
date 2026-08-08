@@ -16,7 +16,6 @@ module mem_stage #(
   input  var ex_mem_t ex_mem_i,
   input  var mem_wb_t mem_wb_fwd_i,
   input  logic        ex_mem_en_i,
-  input  logic        mem_wb_en_i,
 
   // Normal D-bus transaction (MEM <-> SoC)
   input  logic        data_req_ready_i,
@@ -53,7 +52,9 @@ module mem_stage #(
   output mem_wb_t     mem_wb_o
 );
 
-  // MEM/WB packet and normal D-bus outstanding-request state
+  // MEM/WB packet and normal D-bus outstanding-request state. MEM/WB is the
+  // architectural completion boundary and advances every cycle; MEM stalls
+  // keep its packet invalid until a response is available.
   mem_wb_t mem_wb_d;
   logic mem_pending_q;
 
@@ -281,7 +282,7 @@ module mem_stage #(
 
   // ---------------------------------------------------------------------------
   // Sequential MEM state
-  // mem_wb_en_i reserves an independently controlled MEM/WB boundary.
+  // MEM/WB advances every cycle; mem_wb_d marks incomplete operations invalid.
   // ---------------------------------------------------------------------------
   always_ff @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
@@ -305,9 +306,7 @@ module mem_stage #(
         mem_pending_q <= 1'b0;
       end
 
-      if (mem_wb_en_i) begin
-        mem_wb_o <= mem_wb_d;
-      end
+      mem_wb_o <= mem_wb_d;
     end
   end
 

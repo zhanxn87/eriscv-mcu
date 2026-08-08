@@ -1065,7 +1065,7 @@ always_ff @(posedge clk or negedge rst_n) begin
       perf_ifid_invalid_delivery_reason_q <= PERF_IF_DELIVERY_VALID;
       perf_ifid_invalid_delivery_pc_q <= '0;
       perf_ifid_invalid_delivery_value0_q <= '0;
-    end else if (dut.riscv_core_i.id_ex_en) begin
+    end else if (dut.riscv_core_i.backend_advance) begin
       if (!dut.riscv_core_i.if_id_q.valid) begin
         perf_idex_bubble_cause_q <= PERF_IDEX_BUBBLE_IFID_INVALID;
         perf_ifid_invalid_delivery_sample_q <= perf_if_delivery_sample_q;

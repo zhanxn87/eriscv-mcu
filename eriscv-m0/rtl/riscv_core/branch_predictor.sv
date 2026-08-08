@@ -69,6 +69,7 @@ module branch_predictor #(
   logic        c_direct_jump;
   logic        c_conditional_branch;
   logic        c_return;
+  logic        return_pred_candidate;
 
   // Immediate targets used by the static predictor
   logic [31:0] jal_imm;
@@ -204,10 +205,15 @@ module branch_predictor #(
         .top_addr_o  (ras_top_addr)
       );
 
-      assign return_pred_valid_o = enable_i && valid_i && !illegal_i &&
-                                   canonical_return && ras_valid;
+      // `enable_i` can depend on an older EX redirect. Keep that issue
+      // qualification out of the return-target mux: redirect_pc_o is ignored
+      // whenever redirect_o is low, while a qualified redirect still uses the
+      // identical RAS target.
+      assign return_pred_candidate = valid_i && !illegal_i && canonical_return && ras_valid;
+      assign return_pred_valid_o = enable_i && return_pred_candidate;
       assign return_pred_target_o = ras_top_addr;
     end else begin : g_no_ras
+      assign return_pred_candidate = 1'b0;
       assign return_pred_valid_o  = 1'b0;
       assign return_pred_target_o = 32'h0000_0000;
     end
@@ -219,8 +225,9 @@ module branch_predictor #(
   // Keep issue qualification out of the redirect-address data path. `enable_i`
   // and the flush/stall signals behind it can depend on older pipeline state;
   // they qualify redirect_o, while this address mux depends only on the ID
-  // instruction. The address is ignored whenever redirect_o is low.
-  assign redirect_pc_o = return_pred_valid_o ? return_pred_target_o :
+  // instruction and registered RAS state. The address is ignored whenever
+  // redirect_o is low.
+  assign redirect_pc_o = return_pred_candidate ? return_pred_target_o :
                          pc_i + (native_jal ? jal_imm : branch_imm);
 
 endmodule

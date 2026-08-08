@@ -7,6 +7,7 @@ venv/
 
 # Simulator and waveform output
 **/obj_dir/
+**/obj_dir_*/
 **/work/
 **/regression_logs/
 **/regression_data/

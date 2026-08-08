@@ -109,7 +109,8 @@ module ex_stage #(
   output logic [PMP_ENTRY_COUNT_P*32-1:0] pmpaddr_o,
   output logic         pmp_instruction_user_o,
   output logic         pmp_csr_write_o,
-  output control_source_e control_source_o,
+  output logic         control_event_o,
+  output logic         wfi_redirect_o,
   output logic         muldiv_wait_o,
   output logic         pmp_trap_active_o,
 
@@ -133,6 +134,14 @@ module ex_stage #(
   logic    ex_complete;
   logic    control_event;
   control_source_e control_source;
+  logic    control_pmp_trap;
+  logic    control_exception;
+  logic    control_mret;
+  logic    control_debug_enter;
+  logic    control_debug_step;
+  logic    control_dret;
+  logic    control_wfi;
+  logic    control_allows_side_effects;
   logic    debug_enter;
   logic    wfi_legal;
   logic    wfi_event;
@@ -364,9 +373,7 @@ module ex_stage #(
   // ---------------------------------------------------------------------------
   // Memory-access qualification shared by the local-read and PMP paths.
   // ---------------------------------------------------------------------------
-  assign ex_mem_data_access = ex_complete &&
-                              ((control_source == CONTROL_NONE) ||
-                               (control_source == CONTROL_DEBUG_STEP)) &&
+  assign ex_mem_data_access = ex_complete && control_allows_side_effects &&
                               (id_ex_i.mem_load || id_ex_i.mem_store);
 
   // ---------------------------------------------------------------------------
@@ -609,25 +616,52 @@ module ex_stage #(
   // in EX, while the sleep state changes only when the packet reaches WB.
   assign wfi_event = ex_accept && (id_ex_i.sys_op == SYS_WFI) && wfi_legal &&
                      !pmp_side_effect_block;
+
+  // Make the serialized-control causes mutually exclusive before encoding
+  // their MEM/WB metadata. This keeps common control booleans out of the
+  // priority encoder and documents the architectural arbitration directly.
+  assign control_pmp_trap    = pmp_trap_pending;
+  assign control_exception   = !control_pmp_trap && exception_trap && !pmp_side_effect_block;
+  assign control_mret        = !control_pmp_trap && !control_exception &&
+                               mret_trap && !pmp_side_effect_block;
+  assign control_debug_enter = !control_pmp_trap && !control_exception && !control_mret &&
+                               debug_exception_entry;
+  assign control_debug_step  = !control_pmp_trap && !control_exception && !control_mret &&
+                               !control_debug_enter && step_debug_entry;
+  assign control_dret        = !control_pmp_trap && !control_exception && !control_mret &&
+                               !control_debug_enter && !control_debug_step &&
+                               dret_return && !pmp_side_effect_block;
+  assign control_wfi         = !control_pmp_trap && !control_exception && !control_mret &&
+                               !control_debug_enter && !control_debug_step && !control_dret &&
+                               wfi_event;
+
   always_comb begin
     control_source = CONTROL_NONE;
-    if (pmp_trap_pending)
+    if (control_pmp_trap)
       control_source = CONTROL_PMP_TRAP;
-    else if (exception_trap && !pmp_side_effect_block)
+    else if (control_exception)
       control_source = CONTROL_EXCEPTION;
-    else if (mret_trap && !pmp_side_effect_block)
+    else if (control_mret)
       control_source = CONTROL_MRET;
-    else if (debug_exception_entry)
+    else if (control_debug_enter)
       control_source = CONTROL_DEBUG_ENTER;
-    else if (step_debug_entry)
+    else if (control_debug_step)
       control_source = CONTROL_DEBUG_STEP;
-    else if (dret_return && !pmp_side_effect_block)
+    else if (control_dret)
       control_source = CONTROL_DRET;
-    else if (wfi_event)
+    else if (control_wfi)
       control_source = CONTROL_WFI;
   end
-  assign control_event    = (control_source != CONTROL_NONE);
-  assign control_source_o = control_source;
+  assign control_event = control_pmp_trap | control_exception | control_mret |
+                         control_debug_enter | control_debug_step | control_dret |
+                         control_wfi;
+  // A single-step Debug entry retires the triggering instruction. All other
+  // serialized control packets suppress its architectural side effects.
+  // Keep this local predicate separate from control_source: the enum is
+  // pipeline metadata, not a prerequisite for the EX side-effect cone.
+  assign control_allows_side_effects = !control_event | control_debug_step;
+  assign control_event_o = control_event;
+  assign wfi_redirect_o  = control_wfi;
   // The registered PMP packet has highest redirect priority. Its metadata is
   // stable before the redirect tree and instruction fetch consume it.
   assign trap_redirect_o      = pmp_trap_pending |
@@ -853,20 +887,17 @@ module ex_stage #(
     ex_mem_d.pmp_data_fault = pmp_data_fault;
     ex_mem_d.lmem_load = lmem_req_o && lmem_accept_i;
     ex_mem_d.rd_addr   = id_ex_i.rd_addr;
-    ex_mem_d.mem_load  = ex_mem_d.valid &&
-                         ((control_source == CONTROL_NONE) ||
-                          (control_source == CONTROL_DEBUG_STEP)) && id_ex_i.mem_load;
-    ex_mem_d.mem_store = ex_mem_d.valid &&
-                         ((control_source == CONTROL_NONE) ||
-                          (control_source == CONTROL_DEBUG_STEP)) && id_ex_i.mem_store;
+    ex_mem_d.mem_load  = ex_mem_d.valid && control_allows_side_effects &&
+                         id_ex_i.mem_load;
+    ex_mem_d.mem_store = ex_mem_d.valid && control_allows_side_effects &&
+                         id_ex_i.mem_store;
     ex_mem_d.mem_type  = id_ex_i.mem_type;
     ex_mem_d.fp_write  = ex_mem_d.valid && id_ex_i.fp_write;
     ex_mem_d.fp_dirty  = ex_mem_d.valid && id_ex_i.fp_access;
     ex_mem_d.fp_rd_addr = id_ex_i.rd_addr;
     ex_mem_d.fp_fflags = id_ex_i.fp_op ? fpu_complete_i.fflags : 5'd0;
-    ex_mem_d.rd_we     = ex_mem_d.valid &&
-                         ((control_source == CONTROL_NONE) ||
-                          (control_source == CONTROL_DEBUG_STEP)) && id_ex_i.rd_we;
+    ex_mem_d.rd_we     = ex_mem_d.valid && control_allows_side_effects &&
+                         id_ex_i.rd_we;
     ex_mem_d.wb_sel    = id_ex_i.wb_sel;
   end
 

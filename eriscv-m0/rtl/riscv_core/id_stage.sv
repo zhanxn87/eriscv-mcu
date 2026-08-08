@@ -104,7 +104,10 @@ module id_stage #(
     .clk                (clk),
     .rst_n              (rst_n),
     // Prediction eligibility
-    .enable_i           (early_redirect_enable_i && id_ex_en_i && !id_ex_flush_i),
+    // Redirect flushes kill this ID packet and take priority at IF, so they
+    // need not suppress the combinational query. The core already removes
+    // replay-stall conditions from early_redirect_enable_i.
+    .enable_i           (early_redirect_enable_i),
     .valid_i            (if_id_i.valid),
     .illegal_i          (if_id_i.compressed && c_illegal),
     // Current normalized instruction

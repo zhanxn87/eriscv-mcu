@@ -166,10 +166,8 @@ module riscv_core #(
 
   // EX/WB serialized-control lifecycle and architectural commit data
   logic        ex_control_event;
-  control_source_e ex_control_source;
   logic        control_serialize_q;
   logic        control_commit;
-  control_source_e control_source;
   logic        control_trap_enter;
   logic        control_trap_return;
   logic        control_debug_enter;
@@ -191,9 +189,7 @@ module riscv_core #(
   // ---------------------------------------------------------------------------
   logic        pc_en;
   logic        if_id_en;
-  logic        id_ex_en;
-  logic        ex_mem_en;
-  logic        mem_wb_en;
+  logic        backend_advance;
   logic        if_id_flush;
   logic        id_ex_flush;
   logic        ex_mem_flush;
@@ -202,6 +198,7 @@ module riscv_core #(
   logic        muldiv_wait;
   logic        load_use_stall;
   logic        mem_load_use_stall;
+  logic        id_ex_replay_stall;
   logic        if_id_conditional_branch;
   logic        if_id_store_instruction;
   logic        load_bypass_eligible;
@@ -252,10 +249,12 @@ module riscv_core #(
   logic        debug_external_session_q;
   logic        debug_external_enter;
   logic        debug_resume_redirect;
+  logic        frontend_run_enable;
   logic        effective_fetch_enable;
   logic        wfi_sleep_q;
   logic        wfi_wake;
   logic        pipeline_empty;
+  logic        id_predict_enable;
   logic        debug_gpr_sel;
   logic        debug_csr_sel;
   logic        debug_gpr_write;
@@ -297,28 +296,24 @@ module riscv_core #(
   // A younger FENCE.I redirect is harmless speculation behind a D-side PMP
   // fault and is overwritten by the registered trap on the following cycle.
   // WFI changes architectural sleep state, so it remains locally suppressed.
-  assign fence_i_redirect    = id_ex_q.valid && id_ex_q.fence_i && ex_mem_en;
+  assign fence_i_redirect    = id_ex_q.valid && id_ex_q.fence_i && backend_advance;
   assign fence_i_redirect_pc = id_ex_q.pc + 32'd4;
-  // An illegal U-mode WFI traps in EX and must not advance into sleep state.
-  assign ex_control_event    = (ex_control_source != CONTROL_NONE);
-  assign control_trap_enter  = control_commit &&
-                               ((control_source == CONTROL_PMP_TRAP) ||
-                                (control_source == CONTROL_EXCEPTION));
-  assign control_trap_return = control_commit && (control_source == CONTROL_MRET);
-  assign control_debug_enter = control_commit &&
-                               ((control_source == CONTROL_DEBUG_ENTER) ||
-                                (control_source == CONTROL_DEBUG_STEP));
-  assign control_debug_return = control_commit && (control_source == CONTROL_DRET);
-  assign control_wfi          = control_commit && (control_source == CONTROL_WFI);
-  assign wfi_redirect         = (ex_control_source == CONTROL_WFI);
+  // An illegal U-mode WFI reaches WB as a trap rather than a sleep event.
+  // WB owns the control-source decode and exports these mutually exclusive
+  // architectural actions directly.
   assign wfi_redirect_pc     = id_ex_q.pc + 32'd4;
   assign wfi_sleep_o         = wfi_sleep_q;
 
   assign debug_external_enter   = debug_halt_pending_q && pipeline_empty && !pmp_trap_active;
   assign debug_resume_redirect  = debug_halted_q && debug_resume_req_i;
   assign wfi_wake               = wfi_wake_i || (|irq_i) || debug_halt_req_i || debug_resume_req_i;
-  assign effective_fetch_enable = fetch_enable_i && !debug_halt_pending_q && !debug_halted_q &&
-                                  !wfi_sleep_q && !control_serialize_q && !ex_control_event;
+  // Run-state gating common to IF issue and the ID predictor. An EX control
+  // event suppresses a real IF transaction, but need not suppress a predictor
+  // query: its result is overridden by the older EX redirect in the same cycle.
+  assign frontend_run_enable = fetch_enable_i && !debug_halt_pending_q && !debug_halted_q &&
+                               !wfi_sleep_q && !control_serialize_q;
+  assign effective_fetch_enable = frontend_run_enable && !ex_control_event;
+  // An EX redirect wins over ID prediction and flushes the ID/EX packet.
 
   // WFI commits by redirecting to its successor, then blocks fetch until one
   // of the architectural wake sources is observed.
@@ -416,6 +411,13 @@ module riscv_core #(
                               ((if_id_uses_rs1 && (ex_mem_q.rd_addr == if_id_rs1_addr)) ||
                                (if_id_uses_rs2 && (ex_mem_q.rd_addr == if_id_rs2_addr)));
 
+  // These conditions insert an ID/EX bubble while retaining IF/ID for replay.
+  // They are distinct from redirect flushes: a redirect discards IF/ID, so an
+  // ID prediction in that cycle is safely overridden by the older redirect.
+  assign id_ex_replay_stall = load_use_stall | mem_load_use_stall;
+  assign id_predict_enable = frontend_run_enable && backend_advance &&
+                             !id_ex_replay_stall && !pmp_csr_write;
+
   // All redirects are merged in one place so IF sees a single next-PC decision.
   pipeline_control #(
     .ENABLE_PMP_P        (ENABLE_PMP_P)
@@ -426,7 +428,7 @@ module riscv_core #(
     .imem_wait_i          (if_fetch_wait),
     .dmem_wait_i          (mem_wait),
     .muldiv_wait_i        (muldiv_wait),
-    .load_use_stall_i     (load_use_stall | mem_load_use_stall),
+    .load_use_stall_i     (id_ex_replay_stall),
     .pmp_csr_write_i      (pmp_csr_write),
     // Serialized EX control event
     .control_event_i      (ex_control_event),
@@ -444,9 +446,7 @@ module riscv_core #(
     // Pipeline stage enables
     .pc_en_o              (pc_en),
     .if_id_en_o           (if_id_en),
-    .id_ex_en_o           (id_ex_en),
-    .ex_mem_en_o          (ex_mem_en),
-    .mem_wb_en_o          (mem_wb_en),
+    .backend_advance_o    (backend_advance),
     // Pipeline stage flushes
     .if_id_flush_o        (if_id_flush),
     .id_ex_flush_o        (id_ex_flush),
@@ -456,9 +456,10 @@ module riscv_core #(
     .redirect_pc_o        (redirect_pc)
   );
 
-  // EX-side traps and redirects retain their frozen priority. ID issues only
-  // a direct-jump or BTFNT redirect that will enter ID/EX in this cycle, so it
-  // cannot discard a held instruction or compete with an older outcome.
+  // EX-side redirects retain priority. An ID prediction only takes effect when
+  // no older redirect is present; id_predict_enable suppresses only replay
+  // bubbles, not redirect flushes, because the mux and ID/EX flush below make
+  // those predictions architecturally inert.
   assign fetch_redirect_valid = redirect_valid | id_predict_redirect;
   assign fetch_redirect_pc = redirect_valid ? redirect_pc : id_predict_redirect_pc;
 
@@ -508,7 +509,7 @@ module riscv_core #(
     .rst_n                (rst_n),
     // IF/ID -> ID/EX pipeline boundary
     .if_id_i              (if_id_q),
-    .id_ex_en_i           (id_ex_en),
+    .id_ex_en_i           (backend_advance),
     .id_ex_flush_i        (id_ex_flush),
     .id_ex_o              (id_ex_q),
     // WB register-file writeback
@@ -537,7 +538,7 @@ module riscv_core #(
     .ras_push_addr_i      (ras_push_addr),
     .ras_pop_valid_i      (ras_pop_valid),
     // ID-stage direct-control prediction
-    .early_redirect_enable_i(effective_fetch_enable && !redirect_valid),
+    .early_redirect_enable_i(id_predict_enable),
     .predict_redirect_o   (id_predict_redirect),
     .predict_redirect_pc_o(id_predict_redirect_pc)
   );
@@ -559,7 +560,7 @@ module riscv_core #(
     .load_result_bypass_valid_i(load_response_bypass_valid),
     .load_result_bypass_rd_addr_i(load_result_bypass_rd_addr),
     .load_result_bypass_data_i(load_result_bypass_data),
-    .ex_mem_en_i          (ex_mem_en),
+    .ex_mem_en_i          (backend_advance),
     .ex_mem_flush_i       (ex_mem_flush),
     .ex_mem_o             (ex_mem_q),
     // Platform event inputs
@@ -620,7 +621,8 @@ module riscv_core #(
     .pmpaddr_o            (pmpaddr),
     .pmp_instruction_user_o(pmp_instruction_user),
     .pmp_csr_write_o      (pmp_csr_write),
-    .control_source_o     (ex_control_source),
+    .control_event_o      (ex_control_event),
+    .wfi_redirect_o       (wfi_redirect),
     .muldiv_wait_o        (muldiv_wait),
     .pmp_trap_active_o    (pmp_trap_active),
     // Optional local-memory read handshake
@@ -638,8 +640,7 @@ module riscv_core #(
     // EX/MEM -> MEM/WB pipeline boundary
     .ex_mem_i             (ex_mem_q),
     .mem_wb_fwd_i         (mem_wb_q),
-    .ex_mem_en_i          (ex_mem_en),
-    .mem_wb_en_i          (mem_wb_en),
+    .ex_mem_en_i          (backend_advance),
     // Normal D-bus transaction (MEM <-> SoC)
     .data_req_ready_i     (1'b1),
     .data_resp_valid_i    (data_resp_valid_i),
@@ -678,9 +679,13 @@ module riscv_core #(
     .rd_addr_o            (wb_rd_addr),
     .rd_data_o            (wb_rd_data),
     .rd_we_o              (wb_rd_we),
-    // Committed trap, return, or Debug control event
+    // Committed architectural control actions
     .control_commit_o     (control_commit),
-    .control_source_o     (control_source),
+    .control_trap_enter_o (control_trap_enter),
+    .control_trap_return_o(control_trap_return),
+    .control_debug_enter_o(control_debug_enter),
+    .control_debug_return_o(control_debug_return),
+    .control_wfi_o        (control_wfi),
     .control_trap_pc_o    (control_trap_pc),
     .control_trap_cause_o (control_trap_cause),
     .control_trap_value_o (control_trap_value),

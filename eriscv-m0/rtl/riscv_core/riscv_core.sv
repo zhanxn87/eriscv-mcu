@@ -144,9 +144,7 @@ module riscv_core #(
   // ---------------------------------------------------------------------------
   logic        pc_en;
   logic        if_id_en;
-  logic        id_ex_en;
-  logic        ex_mem_en;
-  logic        mem_wb_en;
+  logic        backend_advance;
   logic        if_id_flush;
   logic        id_ex_flush;
   logic        ex_mem_flush;
@@ -154,6 +152,7 @@ module riscv_core #(
   // Pipeline-control stall observations
   logic        load_use_stall;
   logic        mem_load_use_stall;
+  logic        id_ex_replay_stall;
   logic        if_id_conditional_branch;
   logic        if_id_store_instruction;
   logic        load_bypass_eligible;
@@ -205,10 +204,12 @@ module riscv_core #(
   logic        debug_handler_active_q;
   logic        debug_external_enter;
   logic        debug_resume_redirect;
+  logic        frontend_run_enable;
   logic        effective_fetch_enable;
   logic        wfi_sleep_q;
   logic        wfi_wake;
   logic        pipeline_empty;
+  logic        id_predict_enable;
   logic        debug_gpr_sel;
   logic        debug_csr_sel;
   logic        debug_gpr_write;
@@ -247,9 +248,9 @@ module riscv_core #(
   // ---------------------------------------------------------------------------
   // FENCE.I discards any prefetched instruction. WFI advances once, then
   // gates fetch until a wake source is observed.
-  assign fence_i_redirect    = id_ex_q.valid && id_ex_q.fence_i && ex_mem_en;
+  assign fence_i_redirect    = id_ex_q.valid && id_ex_q.fence_i && backend_advance;
   assign fence_i_redirect_pc = id_ex_q.pc + 32'd4;
-  assign wfi_redirect        = id_ex_q.valid && (id_ex_q.sys_op == SYS_WFI) && ex_mem_en;
+  assign wfi_redirect        = id_ex_q.valid && (id_ex_q.sys_op == SYS_WFI) && backend_advance;
   assign wfi_redirect_pc     = id_ex_q.pc + 32'd4;
   assign wfi_sleep_o         = wfi_sleep_q;
 
@@ -259,9 +260,13 @@ module riscv_core #(
   // An externally halted hart must stop fetching, while a software/trigger
   // Debug handler still executes with debug_halted_q visible to DMI.  The
   // session bit distinguishes those two states without adding an interface.
-  assign effective_fetch_enable = fetch_enable_i && !debug_halt_pending_q &&
-                                  (!debug_halted_q || debug_handler_active_q) &&
-                                  !wfi_sleep_q && !wfi_redirect;
+  // Run-state gating common to IF issue and the ID predictor. A WFI redirect
+  // suppresses a real IF transaction, but need not suppress a predictor query:
+  // its result is overridden by the older EX redirect in the same cycle.
+  assign frontend_run_enable = fetch_enable_i && !debug_halt_pending_q &&
+                               (!debug_halted_q || debug_handler_active_q) &&
+                               !wfi_sleep_q;
+  assign effective_fetch_enable = frontend_run_enable && !wfi_redirect;
 
   // WFI commits by redirecting to its successor, then blocks fetch until one
   // of the architectural wake sources is observed.
@@ -351,6 +356,13 @@ module riscv_core #(
                               ((if_id_uses_rs1 && (ex_mem_q.rd_addr == if_id_rs1_addr)) ||
                                (if_id_uses_rs2 && (ex_mem_q.rd_addr == if_id_rs2_addr)));
 
+  // These conditions insert an ID/EX bubble while retaining IF/ID for replay.
+  // They are distinct from redirect flushes: a redirect discards IF/ID, so an
+  // ID prediction in that cycle is safely overridden by the older redirect.
+  assign id_ex_replay_stall = load_use_stall | mem_load_use_stall;
+  assign id_predict_enable = frontend_run_enable && backend_advance &&
+                             !id_ex_replay_stall;
+
   // All redirects are merged in one place so IF sees a single next-PC decision.
   pipeline_control pipeline_control_i (
     // Pipeline activation
@@ -358,7 +370,7 @@ module riscv_core #(
     // Stall sources
     .imem_wait_i          (if_fetch_wait),
     .dmem_wait_i          (mem_wait),
-    .load_use_stall_i     (load_use_stall | mem_load_use_stall),
+    .load_use_stall_i     (id_ex_replay_stall),
     // Redirect sources, in frozen arbitration-priority order
     .trap_redirect_i      (trap_redirect),
     .trap_redirect_pc_i   (trap_redirect_pc),
@@ -373,9 +385,7 @@ module riscv_core #(
     // Pipeline stage enables
     .pc_en_o              (pc_en),
     .if_id_en_o           (if_id_en),
-    .id_ex_en_o           (id_ex_en),
-    .ex_mem_en_o          (ex_mem_en),
-    .mem_wb_en_o          (mem_wb_en),
+    .backend_advance_o    (backend_advance),
     // Pipeline stage flushes
     .if_id_flush_o        (if_id_flush),
     .id_ex_flush_o        (id_ex_flush),
@@ -385,9 +395,10 @@ module riscv_core #(
     .redirect_pc_o        (redirect_pc)
   );
 
-  // EX-side traps and redirects retain their frozen priority. ID issues only
-  // a direct-jump or BTFNT redirect that will enter ID/EX this cycle, so it
-  // cannot discard a held instruction or compete with an older outcome.
+  // EX-side redirects retain priority. An ID prediction only takes effect when
+  // no older redirect is present; id_predict_enable suppresses only replay
+  // bubbles, not redirect flushes, because the mux and ID/EX flush below make
+  // those predictions architecturally inert.
   assign fetch_redirect_valid = redirect_valid | id_predict_redirect;
   assign fetch_redirect_pc = redirect_valid ? redirect_pc : id_predict_redirect_pc;
 
@@ -431,7 +442,7 @@ module riscv_core #(
     .rst_n                (rst_n),
     // IF/ID -> ID/EX pipeline boundary
     .if_id_i              (if_id_q),
-    .id_ex_en_i           (id_ex_en),
+    .id_ex_en_i           (backend_advance),
     .id_ex_flush_i        (id_ex_flush),
     .id_ex_o              (id_ex_q),
     // WB register-file writeback
@@ -460,7 +471,7 @@ module riscv_core #(
     .ras_push_addr_i     (ras_push_addr),
     .ras_pop_valid_i     (ras_pop_valid),
     // ID-stage direct-control prediction
-    .early_redirect_enable_i(effective_fetch_enable && !redirect_valid),
+    .early_redirect_enable_i(id_predict_enable),
     .predict_redirect_o   (id_predict_redirect),
     .predict_redirect_pc_o(id_predict_redirect_pc)
   );
@@ -479,7 +490,7 @@ module riscv_core #(
     .load_result_bypass_valid_i(load_response_bypass_valid),
     .load_result_bypass_rd_addr_i(load_result_bypass_rd_addr),
     .load_result_bypass_data_i(load_result_bypass_data),
-    .ex_mem_en_i          (ex_mem_en),
+    .ex_mem_en_i          (backend_advance),
     .ex_mem_flush_i       (ex_mem_flush),
     .ex_mem_o             (ex_mem_q),
     // Platform event inputs
@@ -534,8 +545,7 @@ module riscv_core #(
     // EX/MEM -> MEM/WB pipeline boundary
     .ex_mem_i             (ex_mem_q),
     .mem_wb_fwd_i         (mem_wb_q),
-    .ex_mem_en_i          (ex_mem_en),
-    .mem_wb_en_i          (mem_wb_en),
+    .ex_mem_en_i          (backend_advance),
     // Normal D-bus transaction (MEM <-> SoC)
     .data_req_ready_i     (1'b1),
     .data_resp_valid_i    (data_resp_valid_i),

@@ -56,6 +56,8 @@ module branch_predictor_tb;
     .illegal_i             (illegal),
     .pc_i                  (pc),
     .instr_i               (instr),
+    .compressed_i          (1'b0),
+    .c_instr_i             (16'h0000),
     .redirect_o            (redirect),
     .redirect_pc_o         (redirect_pc),
     .direct_jump_o         (direct_jump),
@@ -84,6 +86,8 @@ module branch_predictor_tb;
     .illegal_i             (illegal),
     .pc_i                  (pc),
     .instr_i               (instr),
+    .compressed_i          (1'b0),
+    .c_instr_i             (16'h0000),
     .redirect_o            (bht_off_redirect),
     .redirect_pc_o         (bht_off_redirect_pc),
     .direct_jump_o         (bht_off_direct_jump),
@@ -112,6 +116,8 @@ module branch_predictor_tb;
     .illegal_i             (illegal),
     .pc_i                  (pc),
     .instr_i               (instr),
+    .compressed_i          (1'b0),
+    .c_instr_i             (16'h0000),
     .redirect_o            (ras_off_redirect),
     .redirect_pc_o         (ras_off_redirect_pc),
     .direct_jump_o         (ras_off_direct_jump),
@@ -247,6 +253,16 @@ module branch_predictor_tb;
     check(return_pred_valid && redirect, "RAS did not predict a return");
     check(return_pred_target == 32'h0000_0304 && redirect_pc == 32'h0000_0304,
           "RAS returned incorrect first address");
+    // Eligibility qualifies redirect_o only. The address data remains the
+    // registered RAS top while disabled, so an older redirect/stall control
+    // signal cannot become part of the return-target mux cone.
+    enable = 1'b0;
+    #1;
+    check(!return_pred_valid && !redirect, "disabled RAS prediction redirected");
+    check(redirect_pc == 32'h0000_0304,
+          "disabled RAS prediction changed its ignored target data");
+    enable = 1'b1;
+    #1;
     check(!ras_off_return_pred_valid && !ras_off_redirect,
           "RAS-off configuration predicted a return");
     check(ras_off_return_pred_target == 32'h0000_0000,

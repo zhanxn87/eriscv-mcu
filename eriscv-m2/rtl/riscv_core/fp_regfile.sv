@@ -28,11 +28,32 @@ module fp_regfile (
 );
 
   logic [31:0] regs [0:31];
+  logic [31:0] raddr_a_onehot;
+  logic [31:0] raddr_b_onehot;
+  logic [31:0] raddr_c_onehot;
+  logic [31:0] dbg_raddr_onehot;
 
-  assign rdata_a_o    = regs[raddr_a_i];
-  assign rdata_b_o    = regs[raddr_b_i];
-  assign rdata_c_o    = regs[raddr_c_i];
-  assign dbg_rdata_o  = regs[dbg_raddr_i];
+  // Keep address decoding local to each read port.  Indexing a packed array
+  // directly lets a generic mapper replicate every address bit across the
+  // 32-bit data mux tree; this one-hot form gives the mapper a shared decode
+  // term per selected register instead.
+  assign raddr_a_onehot   = 32'b1 << raddr_a_i;
+  assign raddr_b_onehot   = 32'b1 << raddr_b_i;
+  assign raddr_c_onehot   = 32'b1 << raddr_c_i;
+  assign dbg_raddr_onehot = 32'b1 << dbg_raddr_i;
+
+  always_comb begin
+    rdata_a_o   = '0;
+    rdata_b_o   = '0;
+    rdata_c_o   = '0;
+    dbg_rdata_o = '0;
+    for (int unsigned reg_index = 0; reg_index < 32; reg_index++) begin
+      rdata_a_o   |= regs[reg_index] & {32{raddr_a_onehot[reg_index]}};
+      rdata_b_o   |= regs[reg_index] & {32{raddr_b_onehot[reg_index]}};
+      rdata_c_o   |= regs[reg_index] & {32{raddr_c_onehot[reg_index]}};
+      dbg_rdata_o |= regs[reg_index] & {32{dbg_raddr_onehot[reg_index]}};
+    end
+  end
 
   always_ff @(posedge clk) begin
     if (we_i) begin

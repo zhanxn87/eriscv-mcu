@@ -47,7 +47,7 @@ proc source_file_present {source_files candidate} {
 
 proc configure_run_strategies {} {
   set_property strategy Flow_AlternateRoutability [get_runs synth_1]
-  set_property strategy Performance_NetDelay_high [get_runs impl_1]
+  #set_property strategy Performance_NetDelay_high [get_runs impl_1]
 }
 
 # Vivado-generated runme.bat invokes a bare `cscript`.  Normalize the
