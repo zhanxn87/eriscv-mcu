@@ -277,11 +277,13 @@ jobs:
         id: metrics
         if: always()
         run: |
+          matrix_args=(benchmark-matrix)
           for product in m0 m1 m2; do
             args=(benchmark --product "$product" --coremark "build/nightly-benchmarks/${product}-coremark.log" --dhrystone "build/nightly-benchmarks/${product}-dhrystone.log" --embench "build/nightly-benchmarks/${product}-embench.log")
-            python3 tools/project/write_ci_summary.py "${args[@]}" >> "$GITHUB_STEP_SUMMARY"
+            matrix_args+=(--product-logs "$product=build/nightly-benchmarks/${product}-coremark.log,build/nightly-benchmarks/${product}-dhrystone.log,build/nightly-benchmarks/${product}-embench.log")
             echo "$product=$(python3 tools/project/write_ci_summary.py "${args[@]}" --format json)" >> "$GITHUB_OUTPUT"
           done
+          python3 tools/project/write_ci_summary.py "${matrix_args[@]}" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload benchmark failure diagnostics
         if: failure()
         uses: actions/upload-artifact@v4

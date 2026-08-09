@@ -137,6 +137,51 @@ def write_benchmark(product: str, coremark: Path, dhrystone: Path, embench: Path
     print("CoreMark and Embench values are simulation measurements, not official scores.")
 
 
+def parse_benchmark_product(value: str) -> tuple[str, tuple[Path, Path, Path]]:
+    product, separator, raw_paths = value.partition("=")
+    paths = raw_paths.split(",")
+    if not separator or not product or len(paths) != 3 or any(not path for path in paths):
+        raise argparse.ArgumentTypeError(
+            "product logs must be PRODUCT=COREMARK_LOG,DHRYSTONE_LOG,EMBENCH_LOG"
+        )
+    return product.lower(), (Path(paths[0]), Path(paths[1]), Path(paths[2]))
+
+
+def write_benchmark_matrix(products: list[tuple[str, tuple[Path, Path, Path]]]) -> None:
+    data = {
+        product: benchmark_data(product, coremark, dhrystone, embench)
+        for product, (coremark, dhrystone, embench) in products
+    }
+    ordered_products = tuple(product for product in ("m0", "m1", "m2") if product in data)
+    ordered_products += tuple(sorted(product for product in data if product not in ordered_products))
+
+    print("### Nightly benchmarks\n")
+    print("| MCU | CoreMark smoke | CoreMark/MHz | Dhrystone | DMIPS/MHz | Embench-IoT suite |")
+    print("| --- | --- | ---: | --- | ---: | --- |")
+    for product in ordered_products:
+        report = data[product]
+        coremark_value = "—" if report["coremark_per_mhz"] is None else f"{report['coremark_per_mhz']:.6f}"
+        dhrystone_value = "—" if report["dmips_per_mhz"] is None else f"{report['dmips_per_mhz']:.6f}"
+        embench_value = (
+            "—" if report["embench_total"] is None
+            else str(report["embench_status"])
+        )
+        print(
+            f"| {product.upper()} | {report['coremark_status']} | {coremark_value} | "
+            f"{report['dhrystone_status']} | {dhrystone_value} | {embench_value} |"
+        )
+
+    if any(data[product]["embench_workload_mcycles"] for product in ordered_products):
+        print("\n#### Embench-IoT raw mcycle (lower is better)\n")
+        print("| Workload | " + " | ".join(product.upper() for product in ordered_products) + " |")
+        print("| --- | " + " | ".join("---:" for _ in ordered_products) + " |")
+        for workload in EMBENCH_WORKLOADS:
+            values = [data[product]["embench_workload_mcycles"].get(workload, "—") for product in ordered_products]
+            print(f"| {workload} | " + " | ".join(str(value) for value in values) + " |")
+    print()
+    print("CoreMark and Embench values are simulation measurements, not official scores.")
+
+
 def fmt_number(value: object, digits: int) -> str:
     return f"{float(value):.{digits}f}" if isinstance(value, (int, float)) else "—"
 
@@ -198,6 +243,9 @@ def main() -> int:
     benchmark.add_argument("--embench", type=Path, required=True)
     benchmark.add_argument("--format", choices=("markdown", "json"), default="markdown")
 
+    benchmark_matrix = subparsers.add_parser("benchmark-matrix")
+    benchmark_matrix.add_argument("--product-logs", action="append", type=parse_benchmark_product, required=True)
+
     ppa = subparsers.add_parser("ppa")
     ppa.add_argument("--report-dir", type=Path, required=True)
     ppa.add_argument("--format", choices=("markdown", "json"), default="markdown")
@@ -210,6 +258,8 @@ def main() -> int:
             print(json.dumps(benchmark_data(args.product, args.coremark, args.dhrystone, args.embench), separators=(",", ":")))
         else:
             write_benchmark(args.product, args.coremark, args.dhrystone, args.embench)
+    elif args.command == "benchmark-matrix":
+        write_benchmark_matrix(args.product_logs)
     else:
         if args.format == "json":
             print(json.dumps(ppa_data(args.report_dir), separators=(",", ":")))
