@@ -163,6 +163,11 @@ jobs:
           submodules: true
       - name: Install Verilator
         run: sudo apt-get update && sudo apt-get install --yes verilator
+      - name: Restore GCC 15.3 toolchain
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/eriscv-toolchains/gcc-15.3
+          key: ${{ runner.os }}-riscv64-unknown-elf-gcc-15.3.0-binutils-2.46.1-${{ hashFiles('tools/toolchain/bootstrap_riscv_gcc15.sh') }}
       - name: Activate GCC 15.3
         run: echo "$HOME/.local/eriscv-toolchains/gcc-15.3/bin" >> "$GITHUB_PATH"
       - name: Identify ACT4 revision
@@ -175,7 +180,7 @@ jobs:
           path: |
             .cache/act4
             eriscv-${{ matrix.product }}/compliance/riscv-arch-test/generated
-          key: ${{ runner.os }}-act4-${{ matrix.product }}-${{ steps.act4-revision.outputs.revision }}-${{ hashFiles('third_party/riscv-arch-test/.mise.toml', 'tools/compliance/riscv-arch-test/bootstrap_act4_native.sh', 'tools/compliance/riscv-arch-test/act4-standard-env.sh', 'eriscv-m0/compliance/riscv-arch-test/profile.json', 'eriscv-m1/compliance/riscv-arch-test/profile.json', 'eriscv-m2/compliance/riscv-arch-test/profile.json', 'eriscv-m1/compliance/riscv-arch-test/u_profile.json', 'eriscv-m2/compliance/riscv-arch-test/u_profile.json', 'eriscv-m0/compliance/riscv-arch-test/test_config.yaml', 'eriscv-m1/compliance/riscv-arch-test/test_config.yaml', 'eriscv-m2/compliance/riscv-arch-test/test_config.yaml', 'eriscv-m1/compliance/riscv-arch-test/u_test_config.yaml', 'eriscv-m2/compliance/riscv-arch-test/u_test_config.yaml', 'eriscv-m0/compliance/riscv-arch-test/sail.json', 'eriscv-m1/compliance/riscv-arch-test/sail.json', 'eriscv-m2/compliance/riscv-arch-test/sail.json', 'eriscv-m0/compliance/riscv-arch-test/eriscv_mcu.yaml', 'eriscv-m1/compliance/riscv-arch-test/eriscv_mcu.yaml', 'eriscv-m2/compliance/riscv-arch-test/eriscv_mcu.yaml', 'eriscv-m0/compliance/riscv-arch-test/link.ld', 'eriscv-m1/compliance/riscv-arch-test/link.ld', 'eriscv-m2/compliance/riscv-arch-test/link.ld', 'eriscv-m0/compliance/riscv-arch-test/rvmodel_macros.h', 'eriscv-m1/compliance/riscv-arch-test/rvmodel_macros.h', 'eriscv-m2/compliance/riscv-arch-test/rvmodel_macros.h') }}
+          key: ${{ runner.os }}-act4-${{ matrix.product }}-${{ steps.act4-revision.outputs.revision }}-${{ hashFiles('tools/toolchain/bootstrap_riscv_gcc15.sh', 'third_party/riscv-arch-test/.mise.toml', 'tools/compliance/riscv-arch-test/bootstrap_act4_native.sh', 'tools/compliance/riscv-arch-test/act4-standard-env.sh', 'eriscv-m0/compliance/riscv-arch-test/profile.json', 'eriscv-m1/compliance/riscv-arch-test/profile.json', 'eriscv-m2/compliance/riscv-arch-test/profile.json', 'eriscv-m1/compliance/riscv-arch-test/u_profile.json', 'eriscv-m2/compliance/riscv-arch-test/u_profile.json', 'eriscv-m0/compliance/riscv-arch-test/test_config.yaml', 'eriscv-m1/compliance/riscv-arch-test/test_config.yaml', 'eriscv-m2/compliance/riscv-arch-test/test_config.yaml', 'eriscv-m1/compliance/riscv-arch-test/u_test_config.yaml', 'eriscv-m2/compliance/riscv-arch-test/u_test_config.yaml', 'eriscv-m0/compliance/riscv-arch-test/sail.json', 'eriscv-m1/compliance/riscv-arch-test/sail.json', 'eriscv-m2/compliance/riscv-arch-test/sail.json', 'eriscv-m0/compliance/riscv-arch-test/eriscv_mcu.yaml', 'eriscv-m1/compliance/riscv-arch-test/eriscv_mcu.yaml', 'eriscv-m2/compliance/riscv-arch-test/eriscv_mcu.yaml', 'eriscv-m0/compliance/riscv-arch-test/link.ld', 'eriscv-m1/compliance/riscv-arch-test/link.ld', 'eriscv-m2/compliance/riscv-arch-test/link.ld', 'eriscv-m0/compliance/riscv-arch-test/rvmodel_macros.h', 'eriscv-m1/compliance/riscv-arch-test/rvmodel_macros.h', 'eriscv-m2/compliance/riscv-arch-test/rvmodel_macros.h') }}
           restore-keys: |
             ${{ runner.os }}-act4-${{ matrix.product }}-
             ${{ runner.os }}-act4-
@@ -292,6 +297,11 @@ jobs:
         run: git submodule update --init --depth 1 third_party/CoreMark third_party/embench-iot
       - name: Install Verilator
         run: sudo apt-get update && sudo apt-get install --yes verilator
+      - name: Restore GCC 15.3 toolchain
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/eriscv-toolchains/gcc-15.3
+          key: ${{ runner.os }}-riscv64-unknown-elf-gcc-15.3.0-binutils-2.46.1-${{ hashFiles('tools/toolchain/bootstrap_riscv_gcc15.sh') }}
       - name: Activate GCC 15.3
         run: echo "$HOME/.local/eriscv-toolchains/gcc-15.3/bin" >> "$GITHUB_PATH"
       - name: Run all benchmark smokes
