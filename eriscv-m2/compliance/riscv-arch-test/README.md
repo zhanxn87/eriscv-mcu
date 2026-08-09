@@ -1,7 +1,7 @@
 # eRISCV-M2 ACT4 Profile
 
 This is the sole architectural-test flow for eRISCV-M2 MCU verification. The
-base profile selects `I`, `M`, `F`, `Zca`, `Zcf`, `Zicsr`, `Zifencei`, `Zicntr`, `Zihpm`, `Zihintpause`, and standard B (`Zba`, `Zbb`, `Zbs`). A fresh corpus includes the generated F/Zcf artifacts and the M2-local `Zihpm` pair. The current upstream ACT selection produces no B artifact; `MCU-ZBA-01`, `MCU-ZBB-01`, and `MCU-ZBS-01` provide product-directed B evidence.
+base profile selects `I`, `M`, `F`, `Zca`, `Zcf`, `Zicsr`, `Zifencei`, `Zicntr`, `Zihpm`, `Zihintpause`, standard B (`Zba`, `Zbb`, `Zbs`), and `Zicond`. A fresh corpus includes the generated F/Zcf artifacts and the M2-local `Zihpm` pair. The current upstream ACT selection produces no B artifact; `MCU-ZBA-01`, `MCU-ZBB-01`, `MCU-ZBS-01`, and `MCU-ZICOND-01` provide product-directed extension evidence.
 `build_u.sh` adds the U-mode, PMPU/MPRV, and `ZicntrU` selection (12
 artifacts). UDB represents the RV32C base through `Zca`.
 

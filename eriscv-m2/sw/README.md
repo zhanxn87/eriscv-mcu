@@ -1,6 +1,6 @@
 # eRISCV-M2 BSP & Example Suite
 
-Freestanding bare-metal BSP for eRISCV-M2 (`rv32imfc_zicsr_zifencei_zicntr_zihpm_zihintpause_zba_zbb_zbs_zcf`,
+Freestanding bare-metal BSP for eRISCV-M2 (`rv32imfc_zicsr_zifencei_zicntr_zihpm_zihintpause_zba_zbb_zbs_zicond_zcf`,
 `ilp32f`). No libc, startup library, or vendor SDK required. The examples
 define the supported simulation suite; dated results are in the
 [MCU Evidence Snapshot](../../docs/Verification/eriscv-mcu-simulation-evidence-snapshot.md).

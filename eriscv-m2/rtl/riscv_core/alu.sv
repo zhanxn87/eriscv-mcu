@@ -115,6 +115,8 @@ module alu
       ALU_BCLR: o_result = i_operand_a & ~(32'b1 << i_operand_b[4:0]);
       ALU_BINV: o_result = i_operand_a ^ (32'b1 << i_operand_b[4:0]);
       ALU_BEXT: o_result = {31'd0, i_operand_a[i_operand_b[4:0]]};
+      ALU_CZERO_EQZ: o_result = (i_operand_b == 32'd0) ? 32'd0 : i_operand_a;
+      ALU_CZERO_NEZ: o_result = (i_operand_b != 32'd0) ? 32'd0 : i_operand_a;
       default :  o_result = add_result;
     endcase
   end

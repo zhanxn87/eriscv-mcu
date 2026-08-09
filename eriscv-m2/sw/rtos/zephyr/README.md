@@ -48,8 +48,8 @@ make -C eriscv-m2/sw sim-zephyr
 |---|---|
 | Board | `eriscv_mcu` |
 | SoC | `eriscv_mcu` |
-| Hardware ISA | RV32IMFC + Zicsr/Zifencei/Zicntr/Zihpm/Zihintpause/Zba/Zbb/Zbs/Zcf |
-| RTOS ISA | RV32IMC + Zicsr/Zifencei/Zicntr/Zihpm/Zihintpause/Zba/Zbb/Zbs (no F task context) |
+| Hardware ISA | RV32IMFC + Zicsr/Zifencei/Zicntr/Zihpm/Zihintpause/Zba/Zbb/Zbs/Zicond/Zcf |
+| RTOS ISA | RV32IMC + Zicsr/Zifencei/Zicntr/Zihpm/Zihintpause/Zba/Zbb/Zbs/Zicond (no F task context) |
 | M-mode | Yes (machine timer via CLINT) |
 | U-mode + PMP | 16-entry PMP, available but not exercised by default |
 | ITCM (FLASH) | 128 KB at 0x10000000 |

@@ -42,6 +42,8 @@ owned by the [family evidence snapshot](../../docs/Verification/eriscv-mcu-simul
   rotate, and byte operations, including zero-input count semantics and `misa.B`.
 - `Zbs/`: `MCU-ZBS-01` covers each register and immediate bit set/clear/invert/
   extract form, including bit 31 and dependent consumers.
+- `Zicond/`: `MCU-ZICOND-01` covers `czero.eqz` and `czero.nez` for both zero
+  and nonzero conditions, including `x0` value operands.
 - `PMP/`: `MCU-PMP-01` verifies the 16-entry PMP CSR address range, WARL and lock
   behavior, M-mode locked data permissions, and load/store/fetch access-fault reporting.
   `MCU-PMP-RESET-01` verifies reset values for all 16 pmpcfg/pmpaddr entries and
@@ -73,7 +75,7 @@ owned by the [family evidence snapshot](../../docs/Verification/eriscv-mcu-simul
 - `Zihintpause/`: `MCU-ZIHINTPAUSE-01`.
 
 The `C/` and `Zifencei/` images are run in the SoC regression because they
-verify delivered MCU integration. `M/`, `Zba/`, `Zbb/`, `Zbs/`, and `PMP/` are
+verify delivered MCU integration. `M/`, `Zba/`, `Zbb/`, `Zbs/`, `Zicond/`, and `PMP/` are
 core regressions; the B-extension tests exercise the shared integer-ALU execution
 and forwarding contract directly.
 

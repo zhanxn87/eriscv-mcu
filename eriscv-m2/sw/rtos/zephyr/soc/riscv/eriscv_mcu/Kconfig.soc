@@ -17,7 +17,7 @@ config SOC_ERISCV_MCU
 	select INCLUDE_RESET_VECTOR
 	help
 	  eRISCV-M2 is an educational RV32IMFC MCU-class SoC with PMP, standard B,
-	  Zcf, DMA, and System SRAM. This Zephyr port selects the integer ISA
+	  Zicond, Zcf, DMA, and System SRAM. This Zephyr port selects the integer ISA
 	  subset until its task-context save/restore supports F registers.
 
 if SOC_ERISCV_MCU

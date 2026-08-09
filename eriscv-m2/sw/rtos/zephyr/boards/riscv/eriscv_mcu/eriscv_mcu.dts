@@ -33,7 +33,7 @@
 			/* The physical core implements F/Zcf and standard B; the RTOS Makefile
 			 * deliberately selects its integer subset until F task-context
 			 * save/restore is supported. */
-			riscv,isa = "rv32imfc_zicsr_zifencei_zicntr_zihpm_zihintpause_zba_zbb_zbs_zcf";
+			riscv,isa = "rv32imfc_zicsr_zifencei_zicntr_zihpm_zihintpause_zba_zbb_zbs_zicond_zcf";
 			riscv,pmpregions = <16>;
 			riscv,machine-timer = <&clint>;
 

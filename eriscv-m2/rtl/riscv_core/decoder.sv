@@ -318,6 +318,19 @@ module decoder
             o_id_ex.alu_op        = ALU_MAXU;
             o_id_ex.rd_we         = 1'b1;
           end
+          // Zicond register forms. rs1 is the value; rs2 is the condition.
+          {7'b000_0111, 3'b101}: begin
+            o_id_ex.valid         = i_valid;
+            o_id_ex.illegal_instr = 1'b0;
+            o_id_ex.alu_op        = ALU_CZERO_EQZ;
+            o_id_ex.rd_we         = 1'b1;
+          end
+          {7'b000_0111, 3'b111}: begin
+            o_id_ex.valid         = i_valid;
+            o_id_ex.illegal_instr = 1'b0;
+            o_id_ex.alu_op        = ALU_CZERO_NEZ;
+            o_id_ex.rd_we         = 1'b1;
+          end
           {7'b000_0100, 3'b100}: begin
             if (i_inst[24:20] == 5'd0) begin
               o_id_ex.valid         = i_valid;

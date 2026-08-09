@@ -29,6 +29,7 @@ INHERITED_TESTS = {
     "MCU-ZBA-01": {"phase": "core/Zba", "max_cycles": 160},
     "MCU-ZBB-01": {"phase": "core/Zbb", "max_cycles": 240},
     "MCU-ZBS-01": {"phase": "core/Zbs", "max_cycles": 180},
+    "MCU-ZICOND-01": {"phase": "core/Zicond", "max_cycles": 120},
     "MCU-WFI-01": {"phase": "core/WFI", "max_cycles": 200, "irq_start_cycle": 40, "irq_duration": 6},
     "MCU-M-01": {"phase": "core/M", "max_cycles": 800},
     "MCU-M-DIV-SHORT-01": {"phase": "core/M", "max_cycles": 180},

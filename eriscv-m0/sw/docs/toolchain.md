@@ -7,6 +7,7 @@ creates a different BSP compatibility target.
 | Item | Contract |
 |---|---|
 | Compiler prefix | `riscv64-unknown-elf-` |
+| Compiler version | GCC 15.3.0, installed with `tools/toolchain/bootstrap_riscv_gcc15.sh` |
 | ISA | `rv32ic_zicsr_zifencei_zicntr_zihpm_zihintpause` |
 | Bare-metal ABI | `ilp32` |
 | RTOS ABI | `ilp32` (`RTOS_ABI`) |

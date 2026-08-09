@@ -460,6 +460,9 @@
     "Zbs": {
       "supported": true
     },
+    "Zicond": {
+      "supported": true
+    },
     "Zbc": {
       "supported": false
     },

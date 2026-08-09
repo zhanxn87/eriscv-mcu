@@ -3,7 +3,7 @@
 ## Product Claim
 
 `eriscv-m2` is a deterministic compute-and-data-movement MCU. Its fixed
-contract is `RV32IMFC_Zicsr_Zifencei_Zicntr_Zihpm_Zihintpause_Zba_Zbb_Zbs_Zcf`,
+contract is `RV32IMFC_Zicsr_Zifencei_Zicntr_Zihpm_Zihintpause_Zba_Zbb_Zbs_Zicond_Zcf`,
 `ilp32f`, M/U modes, and 16 PMP entries.
 
 ## M2-Specific Architecture
@@ -159,7 +159,7 @@ arbitrary fixed-address peripheral, or cyclic-ring modes. The normative ABI is
 ## Common Platform and Exclusions
 
 `eriscv-m2` implements M/U modes, 16 PMP entries, MSIP/MTIP/MEIP, a 32-source
-PLIC, the standard B extension (Zba/Zbb/Zbs), and the complete Debug 1.0 Minimal baseline. Its debug RTL also includes
+PLIC, the standard B extension (Zba/Zbb/Zbs), Zicond, and the complete Debug 1.0 Minimal baseline. Its debug RTL also includes
 `mcontrol`/`icount` triggers and 32-bit DMEM DMI System Bus Access; program
 buffer, trace, broader system-bus access, and FPR abstract access are deferred.
 U-mode fetches and data accesses are PMP-enforced; MPRV and `mcounteren` follow
@@ -171,7 +171,8 @@ clock/reset control in 64 KiB slots at `0x4000_0000` through `0x4005_0000`.
 WDT0 pre-timeout is PLIC source 4; generic DMA completion/error is source 5.
 
 M2 implements the complete standard B extension: Zba (`sh1add`, `sh2add`,
-`sh3add`), Zbb, and Zbs. `Zbc` remains excluded.
+`sh3add`), Zbb, and Zbs. It also implements Zicond (`czero.eqz`,
+`czero.nez`) for branchless conditional-zero operations. `Zbc` remains excluded.
 
 `Zihintpause` is a fixed product extension. `pause` is legal and has no
 required delay; the cacheless single-hart implementation retires it without

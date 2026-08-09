@@ -61,6 +61,11 @@ $(BUILD_DIR)/src/%.c: $(EMBENCH_DIR)/src/%.c | $(BUILD_DIR)
 	mkdir -p $(dir $@)
 	sed -e 's/^#define LOCAL_SCALE_FACTOR[[:space:]][[:space:]]*[0-9][0-9]*/#define LOCAL_SCALE_FACTOR $(SCALE)/' $< > $@
 
+$(BUILD_DIR)/src/wikisort/libwikisort.c: $(EMBENCH_DIR)/src/wikisort/libwikisort.c | $(BUILD_DIR)
+	mkdir -p $(dir $@)
+	sed -e 's/^#define LOCAL_SCALE_FACTOR[[:space:]][[:space:]]*[0-9][0-9]*/#define LOCAL_SCALE_FACTOR $(SCALE)/' \
+		-e 's@^#include <string.h>@#include <string.h>\n#include <stdbool.h>@' $< > $@
+
 $(IMEM_MEM) $(DMEM_MEM): $(ELF) $(SW_DIR)/tools/elf_to_mem.py
 	$(PYTHON) $(SW_DIR)/tools/elf_to_mem.py $(ELF) --imem-out $(IMEM_MEM) --dmem-out $(DMEM_MEM)
 

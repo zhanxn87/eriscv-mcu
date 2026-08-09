@@ -24,6 +24,7 @@ package riscv_pkg;
   localparam bit HAS_ZBA         = 1'b1;
   localparam bit HAS_ZBB         = 1'b1;
   localparam bit HAS_ZBS         = 1'b1;
+  localparam bit HAS_ZICOND      = 1'b1;
   localparam bit HAS_B_EXT       = HAS_ZBA && HAS_ZBB && HAS_ZBS;
   localparam bit HAS_WFI         = 1'b1;
   localparam bit HAS_DEBUG       = 1'b1;
@@ -164,7 +165,9 @@ package riscv_pkg;
     ALU_BSET  = 6'd30,
     ALU_BCLR  = 6'd31,
     ALU_BINV  = 6'd32,
-    ALU_BEXT  = 6'd33
+    ALU_BEXT       = 6'd33,
+    ALU_CZERO_EQZ  = 6'd34,
+    ALU_CZERO_NEZ  = 6'd35
   } alu_op_e;
 
   typedef enum logic [2:0] {
