@@ -303,13 +303,13 @@ module decoder
           {7'b000_0101, 3'b101}: begin
             o_id_ex.valid         = i_valid;
             o_id_ex.illegal_instr = 1'b0;
-            o_id_ex.alu_op        = ALU_MAX;
+            o_id_ex.alu_op        = ALU_MINU;
             o_id_ex.rd_we         = 1'b1;
           end
           {7'b000_0101, 3'b110}: begin
             o_id_ex.valid         = i_valid;
             o_id_ex.illegal_instr = 1'b0;
-            o_id_ex.alu_op        = ALU_MINU;
+            o_id_ex.alu_op        = ALU_MAX;
             o_id_ex.rd_we         = 1'b1;
           end
           {7'b000_0101, 3'b111}: begin

@@ -28,6 +28,10 @@
   ctz    x22, x0
   cpop   x23, x0
   csrr   x24, misa
+  lui    x25, 0x80000
+  addi   x26, x0, -1
+  max    x27, x25, x26
+  minu   x28, x25, x26
   nop
   nop
   nop
