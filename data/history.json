@@ -218,6 +218,113 @@
           "embench_scale": 1
         }
       }
+    },
+    {
+      "timestamp": "2026-08-11T04:28:30Z",
+      "sha": "dd08860dcdab3722276922fa86457890a2933b5d",
+      "run_url": "https://github.com/zhanxn87/eriscv-mcu/actions/runs/31456782418",
+      "ppa": {
+        "products": {
+          "m0": {
+            "status": "complete",
+            "area_um2": 61853.778,
+            "fmax_mhz": 84.03361344537815,
+            "synchronous_path_wns_ns": -1.9
+          },
+          "m1": {
+            "status": "complete",
+            "area_um2": 96539.912,
+            "fmax_mhz": 93.19664492078284,
+            "synchronous_path_wns_ns": -0.73
+          },
+          "m2": {
+            "status": "complete",
+            "area_um2": 139104.434,
+            "fmax_mhz": 107.75862068965517,
+            "synchronous_path_wns_ns": 0.72
+          }
+        }
+      },
+      "benchmarks": {
+        "m0": {
+          "product": "m0",
+          "coremark_status": "\u2705 completed",
+          "coremark_per_mhz": 0.96291,
+          "dhrystone_status": "\u2705 completed",
+          "dmips_per_mhz": 0.918,
+          "embench_status": "\u2705 12/12 passed",
+          "embench_passed": 12,
+          "embench_total": 12,
+          "embench_workload_mcycles": {
+            "matmult-int": 890493,
+            "crc32": 37940,
+            "huffbench": 288416,
+            "sglib-combined": 117126,
+            "slre": 29567,
+            "qrduino": 1319857,
+            "aha-mont64": 33684,
+            "minver": 29849,
+            "nettle-aes": 60338,
+            "nettle-sha256": 9463,
+            "picojpeg": 773731,
+            "wikisort": 4656191
+          },
+          "embench_profile": "speed",
+          "embench_scale": 1
+        },
+        "m1": {
+          "product": "m1",
+          "coremark_status": "\u2705 completed",
+          "coremark_per_mhz": 2.596802,
+          "dhrystone_status": "\u2705 completed",
+          "dmips_per_mhz": 0.961,
+          "embench_status": "\u2705 12/12 passed",
+          "embench_passed": 12,
+          "embench_total": 12,
+          "embench_workload_mcycles": {
+            "matmult-int": 130274,
+            "crc32": 30772,
+            "huffbench": 288416,
+            "sglib-combined": 110554,
+            "slre": 29567,
+            "qrduino": 765147,
+            "aha-mont64": 12587,
+            "minver": 12382,
+            "nettle-aes": 55266,
+            "nettle-sha256": 9463,
+            "picojpeg": 725349,
+            "wikisort": 2149760
+          },
+          "embench_profile": "speed",
+          "embench_scale": 1
+        },
+        "m2": {
+          "product": "m2",
+          "coremark_status": "\u2705 completed",
+          "coremark_per_mhz": 2.545216,
+          "dhrystone_status": "\u2705 completed",
+          "dmips_per_mhz": 0.968,
+          "embench_status": "\u2705 12/12 passed",
+          "embench_passed": 12,
+          "embench_total": 12,
+          "embench_workload_mcycles": {
+            "matmult-int": 138274,
+            "crc32": 29747,
+            "huffbench": 287132,
+            "sglib-combined": 107210,
+            "slre": 29757,
+            "qrduino": 733786,
+            "aha-mont64": 11976,
+            "minver": 2599,
+            "nettle-aes": 47902,
+            "nettle-sha256": 6990,
+            "picojpeg": 667227,
+            "wikisort": 2305806
+          },
+          "embench_profile": "speed",
+          "embench_scale": 1
+        }
+      }
     }
   ]
 }
