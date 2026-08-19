@@ -60,6 +60,7 @@ module ex_stage #(
   output logic        trap_redirect_o,
   output logic [31:0] trap_redirect_pc_o,
   output logic        debug_enter_o,
+  output logic        debug_trigger_enter_o,
   output logic        debug_return_o,
   output logic        debug_redirect_o,
   output logic [31:0] debug_redirect_pc_o,
@@ -383,6 +384,7 @@ module ex_stage #(
   assign debug_return_o       = dret_return;
   assign debug_enter_o        = debug_external_enter_i | debug_exception_entry |
                                 step_debug_entry;
+  assign debug_trigger_enter_o = trigger_debug_entry;
   assign debug_redirect_o     = debug_exception_entry | step_debug_entry | dret_return;
   assign debug_redirect_pc_o  = dret_return ? dpc : DEBUG_BASE_ADDR_P;
   assign debug_entry_dpc      = debug_external_enter_i ? debug_external_dpc_i :

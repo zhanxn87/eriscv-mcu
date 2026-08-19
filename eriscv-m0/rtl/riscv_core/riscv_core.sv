@@ -194,6 +194,7 @@ module riscv_core #(
   // Debug run state and abstract-access routing
   // ---------------------------------------------------------------------------
   logic        debug_enter;
+  logic        debug_trigger_enter;
   logic        debug_return;
   logic [31:0] debug_dpc;
   logic [2:0]  debug_cause;
@@ -299,10 +300,10 @@ module riscv_core #(
         debug_handler_active_q <= 1'b0;
       end else if (debug_enter) begin
         debug_mode_q <= 1'b1;
-        // Keep halted visible to DMI, but let the Debug handler run.  An
-        // external halt remains the session until DRET or a later resume.
+        // A trigger hit in an external debug session must remain halted.
+        // EBREAK and single-step still run the architectural Debug handler.
         debug_halted_q <= debug_external_session_q;
-        debug_handler_active_q <= 1'b1;
+        debug_handler_active_q <= !(debug_external_session_q && debug_trigger_enter);
         debug_halt_pending_q <= 1'b0;
       end
       // Chain debug state transitions in a single priority path so no two
@@ -519,6 +520,7 @@ module riscv_core #(
     .trap_redirect_o      (trap_redirect),
     .trap_redirect_pc_o   (trap_redirect_pc),
     .debug_enter_o        (debug_enter),
+    .debug_trigger_enter_o(debug_trigger_enter),
     .debug_return_o       (debug_return),
     .debug_redirect_o     (debug_redirect),
     .debug_redirect_pc_o  (debug_redirect_pc),
