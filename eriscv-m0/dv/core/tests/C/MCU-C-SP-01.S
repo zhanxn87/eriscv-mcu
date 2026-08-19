@@ -8,7 +8,7 @@
   .globl _start
   .option rvc
 _start:
-  li sp, 0x11010000
+  li sp, 0x11008000
   li x24, 0
   li x25, 0
   li x26, 0

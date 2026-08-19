@@ -411,7 +411,7 @@ static void monitor_print_info(void) {
   uart_put_u32((eriscv_mcu_u32)ERISCV_MONITOR_CPU_HZ);
   uart_puts(" uart_div=");
   uart_put_u32(ERISCV_MONITOR_UART_DIV);
-  uart_puts(" imem=65536 dmem=65536 sample_hz=");
+  uart_puts(" imem=32768 dmem=32768 sample_hz=");
   uart_put_u32(MONITOR_SAMPLE_RATE_HZ);
   uart_puts("\n");
 }

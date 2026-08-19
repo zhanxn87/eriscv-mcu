@@ -9,7 +9,7 @@
   .globl _start
   .option rvc
 _start:
-  li sp, 0x11010000
+  li sp, 0x11008000
 
   # Signature regs: x24-x31 = 0 means pass
   li x24, 0

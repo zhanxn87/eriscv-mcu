@@ -52,8 +52,8 @@ the populated capacity are unmapped and fault rather than aliasing SRAM.
 
 | Range | Region | Product attributes | Initial capacity |
 | --- | --- | --- | ---: |
-| `0x1000_0000`--`0x10ff_ffff` | ITCM | `RX`; boot/debug provisioning may write; CPU DBus patch requires `fence.i` | 64 KiB M0/M1; 128 KiB M2 |
-| `0x1100_0000`--`0x11ff_ffff` | DTCM | `RW`, non-executable | 64 KiB M0/M1; 128 KiB M2 |
+| `0x1000_0000`--`0x10ff_ffff` | ITCM | `RX`; boot/debug provisioning may write; CPU DBus patch requires `fence.i` | 32 KiB M0; 64 KiB M1; 128 KiB M2 |
+| `0x1100_0000`--`0x11ff_ffff` | DTCM | `RW`, non-executable | 32 KiB M0; 64 KiB M1; 128 KiB M2 |
 | `0x1200_0000`--`0x12ff_ffff` | XRAM | `RWX`; true IF + LSU access, PMP restrictable | reserved; unimplemented |
 | `0x1300_0000`--`0x1fff_ffff` | Local-memory reserve | trace RAM, additional banks, or future scratchpads | none |
 

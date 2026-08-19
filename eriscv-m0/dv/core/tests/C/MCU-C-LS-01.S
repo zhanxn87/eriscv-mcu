@@ -8,7 +8,7 @@
   .globl _start
   .option rvc
 _start:
-  li sp, 0x11010000
+  li sp, 0x11008000
   addi sp, sp, -256
   mv x8, sp              # x8/s0 is a compressed-register base
 

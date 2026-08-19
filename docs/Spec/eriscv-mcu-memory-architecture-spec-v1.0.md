@@ -23,10 +23,12 @@ rejects `--act-smoke` and `--act-full`; a core launch rejects non-bypass
 
 M0/M1 implement cacheless IMEM (ITCM-like) and DMEM (DTCM-like) SRAM.
 
-| Region | Range | Size | Product role | IF fetch | CPU data access | Default accepted-request latency |
-| --- | --- | ---: | --- | --- | --- | --- |
-| IMEM | `0x1000_0000`--`0x1000_ffff` | 64 KiB | ITCM-like code SRAM | yes | read/write through DBus | 1 cycle |
-| DMEM | `0x1100_0000`--`0x1100_ffff` | 64 KiB | DTCM-like data SRAM | no | read/write through DBus | 1 cycle |
+| Product | Region | Range | Size | Product role | IF fetch | CPU data access | Default accepted-request latency |
+| --- | --- | --- | ---: | --- | --- | --- | --- |
+| M0 | IMEM | `0x1000_0000`--`0x1000_7fff` | 32 KiB | ITCM-like code SRAM | yes | read/write through DBus | 1 cycle |
+| M0 | DMEM | `0x1100_0000`--`0x1100_7fff` | 32 KiB | DTCM-like data SRAM | no | read/write through DBus | 1 cycle |
+| M1 | IMEM | `0x1000_0000`--`0x1000_ffff` | 64 KiB | ITCM-like code SRAM | yes | read/write through DBus | 1 cycle |
+| M1 | DMEM | `0x1100_0000`--`0x1100_ffff` | 64 KiB | DTCM-like data SRAM | no | read/write through DBus | 1 cycle |
 
 Both regions use the 1RW byte-write, read-first SRAM boundary.  They have no
 instruction cache, data cache, external coherency, or DMA master in M0/M1.

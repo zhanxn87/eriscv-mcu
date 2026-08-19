@@ -19,8 +19,8 @@ package soc_pkg;
   localparam bit HAS_PLIC         = 1'b1;
   localparam bit HAS_DEBUG_MODULE = 1'b1;
 
-  localparam int IMEM_WORD_ADDR_WIDTH = 14; //16k words IMEM
-  localparam int DMEM_WORD_ADDR_WIDTH = 14; //16k words DMEM
+  localparam int IMEM_WORD_ADDR_WIDTH = 13; //8k words IMEM
+  localparam int DMEM_WORD_ADDR_WIDTH = 13; //8k words DMEM
   localparam logic [31:0] IMEM_SIZE_BYTES = 32'd4 << IMEM_WORD_ADDR_WIDTH;
   localparam logic [31:0] DMEM_SIZE_BYTES = 32'd4 << DMEM_WORD_ADDR_WIDTH;
 

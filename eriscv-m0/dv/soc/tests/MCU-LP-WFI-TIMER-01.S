@@ -7,7 +7,7 @@
   .globl _start
   .option rvc
 _start:
-  li sp, 0x11010000
+  li sp, 0x11008000
 
   # Install the machine external-interrupt handler.
   la x5, timer_handler

@@ -13,7 +13,7 @@ The cache contains instruction `.mem`, optional `.data.mem`, and `.act.json`
 manifests. It is ignored by Git. The pinned `riscv-arch-test` submodule remains
 the source of the ACT assembly.
 
-ACT4 build work is kept in `work/`; shared tool caches are kept in `.cache/act4/`. Both locations are ignored by Git. The Sail reference configuration maps a 256 KiB executable test-harness window so generated ACT code and its startup shim fit; this is not the product's fixed 64 KiB IMEM contract.
+ACT4 build work is kept in `work/`; shared tool caches are kept in `.cache/act4/`. Both locations are ignored by Git. The Sail reference configuration maps a 256 KiB executable test-harness window so generated ACT code and its startup shim fit; this is not the product's fixed 32 KiB IMEM contract.
 
 Rebuild the cache when needed:
 

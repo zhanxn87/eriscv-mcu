@@ -22,7 +22,7 @@ implemented block with open evidence is not a release claim.
 | Area | Contract | Boundary |
 | --- | --- | --- |
 | Core | RV32IC + `Zicsr` + `Zifencei` + `Zicntr` + `Zihpm` + `Zihintpause`, M-mode | Product-local core RTL |
-| Local memory | 64 KiB IMEM + 64 KiB DMEM | Fixed one-cycle local TCM contract |
+| Local memory | 32 KiB IMEM + 32 KiB DMEM | Fixed one-cycle local TCM contract |
 | Interrupt platform | CLINT plus 32-source PLIC | Machine-local and PLIC interrupt paths |
 | Debug | Debug 1.0 Minimal over JTAG DTM/DMI | Board interoperability is a separate hardware claim |
 | BSP | Freestanding startup, linker, MMIO definitions | Product-local software contract |
@@ -49,7 +49,7 @@ production image format.
                     v                 |
 +---------+  I-bus +-------------------+    DBus
 | RV32IC  |------->| shared single-port |<---------+
-| 5-stage |        | IMEM, 64 KiB       |          |
+| 5-stage |        | IMEM, 32 KiB       |          |
 | core    |        +-------------------+          |
 +----+----+                                         |
      |                                              |
@@ -61,7 +61,7 @@ production image format.
                  +--+---+---+--+--+
                     |   |   |  |
                  DMEM CLINT PLIC APB bridge
-                 64KiB  |    |     |
+                 32KiB  |    |     |
                          |    |  UART0 GPIO0 TIMER0 SPI0
                          |    |
                        MSIP/MTIP MEIP
@@ -132,8 +132,8 @@ Debug 1.0 Minimal contract is in [eRISCV MCU Debug 1.0 Minimal Target](../../doc
 
 | Region | Base | End | Size | Access |
 | --- | --- | --- | --- | --- |
-| ITCM (IMEM) | `0x1000_0000` | `0x1000_FFFF` | 64 KiB | Instruction fetch; DBus read/write |
-| DTCM (DMEM) | `0x1100_0000` | `0x1100_FFFF` | 64 KiB | DBus read/write; BSP data and stack; non-executable |
+| ITCM (IMEM) | `0x1000_0000` | `0x1000_7FFF` | 32 KiB | Instruction fetch; DBus read/write |
+| DTCM (DMEM) | `0x1100_0000` | `0x1100_7FFF` | 32 KiB | DBus read/write; BSP data and stack; non-executable |
 | CLINT | `0x0200_0000` | `0x0200_BFFF` | 48 KiB window | DBus read/write |
 | PLIC | `0x0C00_0000` | `0x0C20_0FFF` | `0x0020_1000` | DBus read/write |
 | APB window | `0x4000_0000` | `0x40FF_FFFF` | 16 MiB | DBus through APB bridge |
@@ -152,7 +152,7 @@ rules are defined by the product-line
 ### 5.2 Local Memories
 
 IMEM and DMEM are cacheless, locally coupled SRAM blocks with ITCM-like and
-DTCM-like product roles. Their address widths select 16K 32-bit words each.
+DTCM-like product roles. Their address widths select 8K 32-bit words each.
 The M0 product contract fixes accepted IMEM and DMEM requests at one cycle.
 Both use the portable
 `mem/sram_1rw.sv` 1RW boundary: the default behavioral array infers FPGA block

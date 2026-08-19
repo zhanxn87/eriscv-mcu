@@ -45,12 +45,12 @@
 
 	imem: memory@10000000 {
 		compatible = "mmio-sram";
-		reg = <0x10000000 0x10000>;
+		reg = <0x10000000 0x8000>;
 	};
 
 	dmem: memory@11000000 {
 		compatible = "mmio-sram";
-		reg = <0x11000000 0x10000>;
+		reg = <0x11000000 0x8000>;
 	};
 
 	clint: clint@2000000 {

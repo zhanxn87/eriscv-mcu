@@ -13,9 +13,9 @@ from pathlib import Path
 PT_LOAD = 1
 PF_W = 2
 IMEM_BASE = 0x10000000
-IMEM_LIMIT = 0x10010000
+IMEM_LIMIT = 0x10008000
 DMEM_BASE = 0x11000000
-DMEM_LIMIT = 0x11010000
+DMEM_LIMIT = 0x11008000
 
 
 def read_elf32_le(path: Path) -> bytes:

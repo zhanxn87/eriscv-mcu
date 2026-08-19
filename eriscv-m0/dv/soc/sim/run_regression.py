@@ -33,7 +33,7 @@ SOC_TESTS = {
     "MCU-ZIHINTPAUSE-01": {"phase": "core/Zihintpause", "max_cycles": 100, "boot_addr": BOOT_ADDR},
     "MCU-BUS-UNMAPPED-01": {
         "phase": "soc", "max_cycles": 160, "boot_addr": BOOT_ADDR,
-        "expected_bus_errors": 1,
+        "expected_bus_errors": 2,
     },
     "MCU-STORE-FAST-01": {"phase": "soc", "max_cycles": 220, "boot_addr": BOOT_ADDR},
     "MCU-LMEM-LOAD-BRANCH-01": {
@@ -141,10 +141,10 @@ CONFIG = PhaseRegressionConfig(
     default_boot_addr=BOOT_ADDR,
     supports_latency_parameters=False,
     supports_addr_width_parameters=False,
-    imem_word_addr_width=14,
-    dmem_word_addr_width=14,
-    act_imem_word_addr_width=14,
-    act_dmem_word_addr_width=14,
+    imem_word_addr_width=13,
+    dmem_word_addr_width=13,
+    act_imem_word_addr_width=13,
+    act_dmem_word_addr_width=13,
     testcase_root_override=str(Path(__file__).resolve().parents[4] / "eriscv-m0"),
     product_dv_layout=True,
 )

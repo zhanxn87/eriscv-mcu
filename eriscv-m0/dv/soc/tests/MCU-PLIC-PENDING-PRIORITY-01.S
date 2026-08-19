@@ -8,7 +8,7 @@
   .globl _start
   .option rvc
 _start:
-  li sp, 0x11010000
+  li sp, 0x11008000
   la x5, plic_handler
   csrw mtvec, x5
 

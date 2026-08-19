@@ -39,8 +39,8 @@ python3 eriscv-m0/sw/tools/run_zephyr_sim.py --low-power
 | M-mode | Yes (machine timer via CLINT) |
 | M-extension | No (MUL/DIV via libgcc) |
 | PMP | Not present |
-| ITCM (FLASH) | 64 KB at 0x10000000 |
-| DTCM (SRAM) | 64 KB at 0x11000000 |
+| ITCM (FLASH) | 32 KB at 0x10000000 |
+| DTCM (SRAM) | 32 KB at 0x11000000 |
 | System Clock | 100 MHz |
 | Tick Rate | 1000 Hz |
 
@@ -70,7 +70,7 @@ python3 eriscv-m0/sw/tools/run_zephyr_sim.py --low-power
 | Idle stack | 1024 B | kernel idle |
 | ISR stack | 4096 B | interrupt handlers |
 
-Total DTCM footprint: ~14 KB (of 64 KB available).
+Total DTCM footprint: ~14 KB (of 32 KB available).
 
 ## Limitations
 
